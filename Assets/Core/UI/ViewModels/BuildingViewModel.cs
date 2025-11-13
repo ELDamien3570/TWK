@@ -147,8 +147,8 @@ namespace TWK.UI.ViewModels
             else if (_legacyData != null)
             {
                 BuildingName = _legacyData.BuildingName;
-                BuildingCategory = _legacyData.BuildingCategory;
-                CategoryName = _legacyData.BuildingCategory.ToString();
+                BuildingCategory = _legacyData.buildingCategory;
+                CategoryName = _legacyData.buildingCategory.ToString();
             }
             else
             {
@@ -258,7 +258,7 @@ namespace TWK.UI.ViewModels
             {
                 // Use legacy BuildingData for costs
                 BuildCost = new Dictionary<ResourceType, int>(_legacyData.BaseBuildCost);
-                MaintenanceCost = new Dictionary<ResourceType, int>(_legacyData.MaintenanceCost);
+                MaintenanceCost = new Dictionary<ResourceType, int>(_legacyData.BaseMaintenanceCost);
             }
             else
             {
@@ -282,7 +282,7 @@ namespace TWK.UI.ViewModels
             {
                 // Use legacy BuildingData for production
                 BaseProduction = new Dictionary<ResourceType, int>(_legacyData.BaseProduction);
-                MaxProduction = new Dictionary<ResourceType, int>(_legacyData.MaxProduction);
+                MaxProduction = new Dictionary<ResourceType, int>(_legacyData.BaseProduction);
 
                 // Calculate current production based on legacy data and building state
                 CurrentProduction = new Dictionary<ResourceType, int>();

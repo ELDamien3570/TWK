@@ -26,7 +26,7 @@ namespace TWK.Economy
 
             BaseProduction = new Dictionary<ResourceType, int>
             {
-                { ResourceType.Food, 175 }
+                { ResourceType.Food, 10075 }
             };
 
             BaseEfficiency = 1f;

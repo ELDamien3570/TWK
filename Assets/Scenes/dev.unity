@@ -6253,6 +6253,10 @@ PrefabInstance:
       propertyPath: m_Spacing.y
       value: 20
       objectReference: {fileID: 0}
+    - target: {fileID: 3766140081874099421, guid: c11c00eb8df210d478d4432259986464, type: 3}
+      propertyPath: m_CellSize.y
+      value: 200
+      objectReference: {fileID: 0}
     - target: {fileID: 3839148131848499045, guid: c11c00eb8df210d478d4432259986464, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
