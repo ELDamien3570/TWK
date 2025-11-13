@@ -22,6 +22,9 @@ namespace TWK.Economy
         // In real implementation, this would be populated from ScriptableObjects
         private Dictionary<int, BuildingDefinition> definitionLookup = new Dictionary<int, BuildingDefinition>();
 
+        // Legacy BuildingData lookup (building ID -> BuildingData) for backward compatibility
+        private Dictionary<int, BuildingData> legacyDataLookup = new Dictionary<int, BuildingData>();
+
         private WorldTimeManager worldTimeManager;
 
         private void Awake()
@@ -83,6 +86,9 @@ namespace TWK.Economy
                 instanceData.HasPaidConstructionCost = true;
                 buildings.Add(instanceData);
                 buildingLookup[instanceData.ID] = instanceData;
+
+                // Store legacy BuildingData for retrieval by UI
+                legacyDataLookup[instanceData.ID] = data;
 
                 if (instanceData.IsUnderConstruction)
                 {
@@ -254,6 +260,11 @@ namespace TWK.Economy
         {
             // TODO: Implement when definitions are loaded
             return null;
+        }
+
+        public BuildingData GetLegacyBuildingData(int buildingID)
+        {
+            return legacyDataLookup.GetValueOrDefault(buildingID, null);
         }
 
         // ========== WORKER MANAGEMENT ==========
