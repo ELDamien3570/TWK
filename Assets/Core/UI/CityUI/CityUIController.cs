@@ -69,9 +69,13 @@ namespace TWK.UI
         [SerializeField] private Button buildFarmButton;
         [SerializeField] private TextMeshProUGUI buildFarmCostText;
 
+        [Header("Settings")]
+        [SerializeField] private float refreshInterval = 1f; // Refresh UI every second
+
         private CityViewModel viewModel;
         private List<GameObject> currentPopGroupItems = new List<GameObject>();
         private List<GameObject> currentBuildingItems = new List<GameObject>();
+        private float timeSinceLastRefresh = 0f;
 
         private void Start()
         {
@@ -96,6 +100,17 @@ namespace TWK.UI
 
         private void SetupTabButtons()
         {
+            // Remove all existing listeners to prevent double-registration
+            populationTabButton?.onClick.RemoveAllListeners();
+            popGroupsTabButton?.onClick.RemoveAllListeners();
+            militaryTabButton?.onClick.RemoveAllListeners();
+            economicTabButton?.onClick.RemoveAllListeners();
+            buildingTabButton?.onClick.RemoveAllListeners();
+            cultureTabButton?.onClick.RemoveAllListeners();
+            religionTabButton?.onClick.RemoveAllListeners();
+            buildFarmButton?.onClick.RemoveAllListeners();
+
+            // Add listeners
             populationTabButton?.onClick.AddListener(() => ShowTab(populationTab));
             popGroupsTabButton?.onClick.AddListener(() => ShowTab(popGroupsTab));
             militaryTabButton?.onClick.AddListener(() => ShowTab(militaryTab));
@@ -106,6 +121,30 @@ namespace TWK.UI
 
             // Setup build button
             buildFarmButton?.onClick.AddListener(OnBuildFarmClicked);
+        }
+
+        private void Update()
+        {
+            // Periodic refresh
+            timeSinceLastRefresh += Time.deltaTime;
+            if (timeSinceLastRefresh >= refreshInterval)
+            {
+                timeSinceLastRefresh = 0f;
+                RefreshUI();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Clean up listeners
+            populationTabButton?.onClick.RemoveAllListeners();
+            popGroupsTabButton?.onClick.RemoveAllListeners();
+            militaryTabButton?.onClick.RemoveAllListeners();
+            economicTabButton?.onClick.RemoveAllListeners();
+            buildingTabButton?.onClick.RemoveAllListeners();
+            cultureTabButton?.onClick.RemoveAllListeners();
+            religionTabButton?.onClick.RemoveAllListeners();
+            buildFarmButton?.onClick.RemoveAllListeners();
         }
 
         private void ShowTab(GameObject tab)
