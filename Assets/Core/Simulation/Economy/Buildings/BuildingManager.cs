@@ -68,7 +68,9 @@ namespace TWK.Economy
 
         /// <summary>
         /// Construct a new building (backward compatible with old BuildingData).
+        /// DEPRECATED: Use ConstructBuildingNew() with BuildingDefinition instead.
         /// </summary>
+        [System.Obsolete("Use ConstructBuildingNew() with BuildingDefinition instead of BuildingData")]
         public BuildingInstance ConstructBuilding(int cityID, BuildingData data, Vector3 position)
         {
             // Create instance data

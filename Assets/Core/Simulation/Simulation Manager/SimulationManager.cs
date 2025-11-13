@@ -21,7 +21,6 @@ namespace TWK.Core
         [SerializeField] private Realm[] testRealms;
         [SerializeField] private Agent[] testAgents;
         [SerializeField] private City[] testCities;
-        public FarmBuildingData testFarmData;
 
 
         private void Start()

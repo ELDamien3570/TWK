@@ -409,13 +409,12 @@ namespace TWK.UI
                 return;
             }
 
-            // TODO: Replace with BuildingDefinition when loading is implemented
-            // For now, use the old BuildingData system
-            var farmData = Resources.Load<BuildingData>("Buildings/FarmBuildingData");
+            // Load farm BuildingDefinition from Resources
+            var farmDefinition = Resources.Load<BuildingDefinition>("Buildings/FarmDefinition");
 
-            if (farmData == null)
+            if (farmDefinition == null)
             {
-                Debug.LogError("[CityUIController] Could not find FarmBuildingData in Resources/Buildings/");
+                Debug.LogError("[CityUIController] Could not find FarmDefinition in Resources/Buildings/. Please create a BuildingDefinition asset for Farm.");
                 return;
             }
 
@@ -426,29 +425,13 @@ namespace TWK.UI
                 Random.Range(-5f, 5f)
             );
 
-            var buildingInstance = BuildingManager.Instance.ConstructBuilding(
-                targetCity.CityID,
-                farmData,
-                buildPosition
-            );
+            // Use new building system
+            targetCity.BuildBuilding(farmDefinition, buildPosition);
 
-            if (buildingInstance.ID > 0)
-            {
-                Debug.Log($"[CityUIController] Farm construction started at {buildPosition}");
+            Debug.Log($"[CityUIController] Farm construction requested at {buildPosition}");
 
-                // Add building to city
-                if (!targetCity.Data.BuildingIDs.Contains(buildingInstance.ID))
-                {
-                    targetCity.Data.BuildingIDs.Add(buildingInstance.ID);
-                }
-
-                // Refresh UI
-                RefreshUI();
-            }
-            else
-            {
-                Debug.LogWarning("[CityUIController] Farm construction failed (insufficient resources?)");
-            }
+            // Refresh UI
+            RefreshUI();
         }
 
         // ========== PUBLIC API ==========
