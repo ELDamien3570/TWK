@@ -56,6 +56,22 @@ namespace TWK.Realms.Demographics
             return cityLookup.TryGetValue(cityId, out var city) ? city : null;
         }
 
+        /// <summary>
+        /// Get city by ID (public accessor for managers).
+        /// </summary>
+        public City GetCityByID(int cityId)
+        {
+            return cityLookup.TryGetValue(cityId, out var city) ? city : null;
+        }
+
+        /// <summary>
+        /// Get all registered cities.
+        /// </summary>
+        public List<City> GetAllCities()
+        {
+            return new List<City>(cityLookup.Values);
+        }
+
         #region Simulation Ticks
         public void AdvanceDay()
         {

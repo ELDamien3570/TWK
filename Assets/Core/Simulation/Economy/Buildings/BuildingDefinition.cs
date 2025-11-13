@@ -40,6 +40,13 @@ namespace TWK.Economy
         [Tooltip("Max production when fully staffed")]
         public Dictionary<ResourceType, int> MaxProduction = new Dictionary<ResourceType, int>();
 
+        [Header("Culture Tech XP")]
+        [Tooltip("Base culture tech XP generated per month (varies with worker count like production)")]
+        public float BaseMonthlyXP = 0f;
+
+        [Tooltip("Max XP generated per month when fully staffed")]
+        public float MaxMonthlyXP = 0f;
+
         [Header("Worker Requirements")]
         [Tooltip("Does this building require workers to operate?")]
         public bool RequiresWorkers = true;
@@ -177,5 +184,37 @@ namespace TWK.Economy
 
             return costs;
         }
+
+        /// <summary>
+        /// Calculate monthly culture tech XP based on worker count and efficiency.
+        /// XP is generated for the building's TreeType (category).
+        /// </summary>
+        public float CalculateMonthlyXP(int workerCount, float averageWorkerEfficiency)
+        {
+            if (BaseMonthlyXP <= 0f)
+                return 0f;
+
+            if (!RequiresWorkers)
+            {
+                // Buildings that don't require workers produce at base rate
+                return BaseMonthlyXP;
+            }
+
+            if (workerCount < MinWorkers)
+            {
+                // Not enough workers = no XP
+                return 0f;
+            }
+
+            // Calculate XP scaling (same logic as production)
+            float workerRatio = OptimalWorkers > 0 ? (workerCount / (float)OptimalWorkers) : 1f;
+            workerRatio = Mathf.Clamp01(workerRatio); // Cap at 100%
+
+            // Scale between base and max based on workers
+            float xp = Mathf.Lerp(BaseMonthlyXP, MaxMonthlyXP, workerRatio) * averageWorkerEfficiency * BaseEfficiency;
+
+            return xp;
+        }
     }
 }
+
