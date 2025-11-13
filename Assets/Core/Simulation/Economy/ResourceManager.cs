@@ -23,6 +23,10 @@ namespace TWK.Economy
 
         public void Initialize(WorldTimeManager worldTimeManager) { }
 
+        public void AdvanceDay() { }
+        public void AdvanceSeason() { } 
+        public void AdvanceYear() { }
+
         public void RegisterCity(int cityId)
         {
             if (cityResources.ContainsKey(cityId)) return;
