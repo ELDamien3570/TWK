@@ -3,6 +3,7 @@ using UnityEngine;
 using TWK.Core;
 using TWK.Simulation;
 using TWK.Realms;
+using TWK.Culture;
 
 namespace TWK.Economy
 {
@@ -114,6 +115,13 @@ namespace TWK.Economy
         /// </summary>
         public BuildingInstanceData ConstructBuildingNew(int cityID, BuildingDefinition definition, Vector3 position)
         {
+            // Check if city's culture has unlocked this building
+            if (!IsBuildingUnlockedForCity(cityID, definition))
+            {
+                Debug.LogWarning($"[BuildingManager] {definition.BuildingName} not unlocked for city {cityID}'s culture");
+                return null;
+            }
+
             var instanceData = new BuildingInstanceData(
                 nextBuildingID++,
                 cityID,
@@ -138,6 +146,33 @@ namespace TWK.Economy
                 Debug.LogWarning($"[BuildingManager] Insufficient resources to build {definition.BuildingName} in city {cityID}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Check if a building is unlocked for a city based on the city's culture.
+        /// </summary>
+        public bool IsBuildingUnlockedForCity(int cityID, BuildingDefinition definition)
+        {
+            // Get city's dominant culture
+            int cityCultureID = CultureManager.Instance.GetCityCulture(cityID);
+            if (cityCultureID == -1)
+            {
+                // City has no dominant culture, allow all buildings for now
+                // TODO: Decide default behavior
+                return true;
+            }
+
+            // Get culture
+            var culture = CultureManager.Instance.GetCulture(cityCultureID);
+            if (culture == null)
+            {
+                Debug.LogWarning($"[BuildingManager] Culture {cityCultureID} not found");
+                return false;
+            }
+
+            // Check if building is unlocked
+            int buildingDefID = definition.GetInstanceID();
+            return culture.IsBuildingUnlocked(buildingDefID);
         }
 
         private bool DeductConstructionCosts(int cityID, Dictionary<ResourceType, int> costs)
