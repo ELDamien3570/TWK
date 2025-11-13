@@ -8,17 +8,33 @@ using TWK.Economy;
 namespace TWK.UI.ViewModels
 {
     /// <summary>
-    /// ViewModel for displaying city data with aggregated population statistics.
+    /// ViewModel for displaying city data.
+    /// Exposes CityData in a UI-friendly format with aggregated population statistics.
     /// </summary>
     public class CityViewModel : BaseViewModel
     {
-        private City _source;
+        private City _citySource;
+        private CityData _data;
 
         // ========== CITY INFO ==========
         public string CityName { get; private set; }
         public int CityID { get; private set; }
         public float GrowthRate { get; private set; }
         public Vector3 Location { get; private set; }
+        public float TerritoryRadius { get; private set; }
+
+        // ========== BUILDINGS ==========
+        public int BuildingCount { get; private set; }
+        public List<int> BuildingIDs { get; private set; }
+
+        // ========== ECONOMY ==========
+        public Dictionary<ResourceType, int> CurrentResources { get; private set; }
+        public int FoodStockpile { get; private set; }
+        public int GoldStockpile { get; private set; }
+        public int DailyFoodProduction { get; private set; }
+        public int DailyFoodConsumption { get; private set; }
+        public int DailyFoodNet { get; private set; }
+        public string FoodStatus { get; private set; }
 
         // ========== POPULATION SUMMARY ==========
         public int TotalPopulation { get; private set; }
@@ -60,51 +76,72 @@ namespace TWK.UI.ViewModels
         public float AverageLoyalty { get; private set; }
         public float AverageHappiness { get; private set; }
 
-        // ========== ECONOMY ==========
-        public Dictionary<ResourceType, int> CurrentResources { get; private set; }
-        public int FoodStockpile { get; private set; }
-        public int GoldStockpile { get; private set; }
-        public int DailyFoodProduction { get; private set; }
-        public int DailyFoodConsumption { get; private set; }
-        public int DailyFoodNet { get; private set; }
-        public int BuildingCount { get; private set; }
-
         // ========== POPULATION GROUPS ==========
         public List<PopulationGroupViewModel> PopulationGroups { get; private set; }
 
         // ========== CONSTRUCTOR ==========
-        public CityViewModel(City source)
+        public CityViewModel(City citySource)
         {
-            _source = source;
+            _citySource = citySource;
+            _data = citySource.Data;
             PopulationGroups = new List<PopulationGroupViewModel>();
             PopulationByArchetype = new Dictionary<PopulationArchetypes, int>();
             CurrentResources = new Dictionary<ResourceType, int>();
+            BuildingIDs = new List<int>();
             Refresh();
         }
 
         // ========== REFRESH ==========
         public override void Refresh()
         {
-            if (_source == null) return;
+            if (_citySource == null || _data == null) return;
+
+            // Update data reference (in case it changed)
+            _data = _citySource.Data;
 
             // City info
-            CityName = _source.Name;
-            CityID = _source.CityID;
-            GrowthRate = _source.GrowthRate;
-            Location = _source.Location;
+            CityName = _data.Name;
+            CityID = _data.CityID;
+            GrowthRate = _data.GrowthRate;
+            Location = _data.Location;
+            TerritoryRadius = _data.TerritoryRadius;
 
-            // Refresh population groups
-            RefreshPopulationGroups();
-
-            // Calculate aggregates
-            CalculatePopulationSummary();
-            CalculateDemographics();
-            CalculateAggregateStats();
+            // Buildings
+            BuildingCount = _data.BuildingIDs.Count;
+            BuildingIDs = new List<int>(_data.BuildingIDs);
 
             // Economy
             RefreshEconomy();
 
+            // Population
+            RefreshPopulationGroups();
+            CalculatePopulationSummary();
+            CalculateDemographics();
+            CalculateAggregateStats();
+
             NotifyPropertyChanged();
+        }
+
+        private void RefreshEconomy()
+        {
+            CurrentResources.Clear();
+
+            // Get current resources
+            foreach (ResourceType resourceType in System.Enum.GetValues(typeof(ResourceType)))
+            {
+                int amount = ResourceManager.Instance.GetResource(CityID, resourceType);
+                CurrentResources[resourceType] = amount;
+            }
+
+            FoodStockpile = CurrentResources.GetValueOrDefault(ResourceType.Food, 0);
+            GoldStockpile = CurrentResources.GetValueOrDefault(ResourceType.Gold, 0);
+
+            // Get daily economy snapshot
+            var snapshot = _data.EconomySnapshot;
+            DailyFoodProduction = snapshot.Production.GetValueOrDefault(ResourceType.Food, 0);
+            DailyFoodConsumption = snapshot.Consumption.GetValueOrDefault(ResourceType.Food, 0);
+            DailyFoodNet = snapshot.Net.GetValueOrDefault(ResourceType.Food, 0);
+            FoodStatus = DailyFoodNet >= 0 ? "SURPLUS" : "DEFICIT";
         }
 
         private void RefreshPopulationGroups()
@@ -147,7 +184,7 @@ namespace TWK.UI.ViewModels
                     PopulationByArchetype[popVM.Archetype] = 0;
                 PopulationByArchetype[popVM.Archetype] += popVM.TotalPopulation;
 
-                // Individual counts for easy access
+                // Individual counts
                 switch (popVM.Archetype)
                 {
                     case PopulationArchetypes.Slave: SlaveCount += popVM.TotalPopulation; break;
@@ -233,29 +270,6 @@ namespace TWK.UI.ViewModels
             }
         }
 
-        private void RefreshEconomy()
-        {
-            CurrentResources.Clear();
-
-            // Get current resources
-            foreach (ResourceType resourceType in System.Enum.GetValues(typeof(ResourceType)))
-            {
-                int amount = ResourceManager.Instance.GetResource(CityID, resourceType);
-                CurrentResources[resourceType] = amount;
-            }
-
-            FoodStockpile = CurrentResources.GetValueOrDefault(ResourceType.Food, 0);
-            GoldStockpile = CurrentResources.GetValueOrDefault(ResourceType.Gold, 0);
-
-            // Get daily economy snapshot
-            var snapshot = _source.EconomySnapshot;
-            DailyFoodProduction = snapshot.Production.GetValueOrDefault(ResourceType.Food, 0);
-            DailyFoodConsumption = snapshot.Consumption.GetValueOrDefault(ResourceType.Food, 0);
-            DailyFoodNet = snapshot.Net.GetValueOrDefault(ResourceType.Food, 0);
-
-            BuildingCount = _source.Buildings.Count;
-        }
-
         // ========== HELPER METHODS ==========
         public string GetPopulationBreakdownSummary()
         {
@@ -263,69 +277,15 @@ namespace TWK.UI.ViewModels
                    $"Merchants: {MerchantCount} | Nobles: {NobleCount} | Clergy: {ClergyCount}";
         }
 
-        public string GetDemographicSummary()
+        public string GetEconomySummary()
         {
-            return $"Youth: {TotalYouth} ({GetPercentage(TotalYouth)}%) | " +
-                   $"Adults: {TotalAdults} ({GetPercentage(TotalAdults)}%) | " +
-                   $"Middle: {TotalMiddleAge} ({GetPercentage(TotalMiddleAge)}%) | " +
-                   $"Elderly: {TotalElderly} ({GetPercentage(TotalElderly)}%)";
-        }
-
-        public string GetGenderSummary()
-        {
-            return $"Males: {TotalMales} ({MalePercentage:F1}%) | Females: {TotalFemales} ({FemalePercentage:F1}%)";
+            return $"Food: {FoodStockpile} ({DailyFoodNet:+#;-#;0}/day) | Gold: {GoldStockpile} | Buildings: {BuildingCount}";
         }
 
         public string GetLaborSummary()
         {
             return $"Available: {TotalAvailableWorkers} | Employed: {TotalEmployed} | " +
                    $"Unemployed: {TotalUnemployed} ({UnemploymentRateFormatted})";
-        }
-
-        public string GetMilitarySummary()
-        {
-            return $"Eligible: {TotalMilitaryEligible} ({MilitaryEligiblePercentage:F1}% of total pop)";
-        }
-
-        public string GetEconomySummary()
-        {
-            return $"Food: {FoodStockpile} ({DailyFoodNet:+#;-#;0}/day) | Gold: {GoldStockpile} | Buildings: {BuildingCount}";
-        }
-
-        public string GetSocialMobilitySummary()
-        {
-            int eligibleForPromotion = 0;
-            int atRiskOfDemotion = 0;
-
-            foreach (var popVM in PopulationGroups)
-            {
-                // Check promotion eligibility
-                bool canPromote = popVM.Archetype switch
-                {
-                    PopulationArchetypes.Laborer => popVM.Education >= 40f && popVM.Wealth >= 30f,
-                    PopulationArchetypes.Artisan => popVM.Education >= 60f && popVM.Wealth >= 50f,
-                    PopulationArchetypes.Merchant => popVM.Education >= 80f && popVM.Wealth >= 75f,
-                    _ => false
-                };
-                if (canPromote) eligibleForPromotion++;
-
-                // Check demotion risk
-                bool atRisk = popVM.Wealth < 20f ||
-                             (popVM.Archetype == PopulationArchetypes.Clergy && (popVM.Wealth < 15f || popVM.Fervor < 30f));
-                if (atRisk) atRiskOfDemotion++;
-            }
-
-            return $"Eligible for promotion: {eligibleForPromotion} groups | At risk of demotion: {atRiskOfDemotion} groups";
-        }
-
-        private float GetPercentage(int value)
-        {
-            return TotalPopulation > 0 ? (value / (float)TotalPopulation) * 100f : 0f;
-        }
-
-        public List<PopulationGroupViewModel> GetGroupsByArchetype(PopulationArchetypes archetype)
-        {
-            return PopulationGroups.Where(p => p.Archetype == archetype).ToList();
         }
 
         public float GetArchetypePercentage(PopulationArchetypes archetype)
