@@ -299,6 +299,111 @@ viewModel.Refresh();
 
 ---
 
+### **5. WorkerAllocationSystem.cs** (Pure Logic)
+
+Static functions for automatic worker allocation across all buildings in a city.
+
+**Allocation Strategy:**
+
+1. **First-Come-First-Serve:** Buildings are processed in construction order (lowest building ID first)
+2. **Three-Phase Allocation:**
+   - **Phase 1:** Assign required workers (RequiredWorkers_ByType)
+   - **Phase 2:** Fill buildings to MinWorkers
+   - **Phase 3:** Fill buildings to OptimalWorkers (prioritizes highest efficiency workers)
+3. **Reverse Deallocation:** When population is lost, remove workers in reverse order (last built = first to lose workers)
+
+**Key Methods:**
+
+```csharp
+// Automatic allocation
+AllocateWorkersForCity(cityId, buildings, definitions)
+
+// Deallocation when population lost
+DeallocateWorkersForCity(cityId, buildings, definitions, workersLost)
+
+// UI Placeholders (not yet implemented)
+AssignWorkerManual(buildingId, archetype, count, isManualOverride)
+RemoveWorkerManual(buildingId, archetype, count)
+SetWorkerDistribution(buildingId, workerDistribution)
+ResetToAutomaticAllocation(buildingId, cityId)
+GetWorkerSliderMax(buildingId, archetype) // For UI slider constraints
+```
+
+**Usage Example:**
+
+```csharp
+// After a building is completed
+BuildingManager.Instance.AllocateWorkersForCity(cityId);
+
+// After population change
+if (populationIncreased)
+    BuildingManager.Instance.AllocateWorkersForCity(cityId);
+else if (populationDecreased)
+    BuildingManager.Instance.DeallocateWorkersForCity(cityId, workersLost);
+
+// Manual UI control (placeholder)
+WorkerAllocationSystem.AssignWorkerManual(buildingId, PopulationArchetypes.Artisan, 5);
+int maxSliderValue = WorkerAllocationSystem.GetWorkerSliderMax(buildingId, PopulationArchetypes.Artisan);
+```
+
+**Allocation Priority Example:**
+
+```
+City has: 20 Laborers, 10 Artisans
+
+Building 1 (ID=0, Mine):
+  - RequiredWorkers: 5 Laborers, 2 Artisans
+  - MinWorkers: 7
+  - OptimalWorkers: 15
+
+Building 2 (ID=1, Workshop):
+  - RequiredWorkers: None
+  - MinWorkers: 3
+  - OptimalWorkers: 10
+
+Building 3 (ID=2, Farm):
+  - RequiredWorkers: None
+  - MinWorkers: 2
+  - OptimalWorkers: 8
+
+Phase 1 (Required Workers):
+  - Building 1: Gets 5 Laborers + 2 Artisans (required)
+  - Remaining: 15 Laborers, 8 Artisans
+
+Phase 2 (Minimum Workers):
+  - Building 1: Already has 7 (meets minimum)
+  - Building 2: Gets 3 Laborers
+  - Building 3: Gets 2 Laborers
+  - Remaining: 10 Laborers, 8 Artisans
+
+Phase 3 (Optimal Workers):
+  - Building 1: Gets 8 more workers (prioritizes Artisans if they have higher efficiency)
+  - Building 2: Gets remaining workers up to optimal
+  - Building 3: Gets any leftover workers
+```
+
+**UI Slider Design (Placeholder Methods):**
+
+When implemented, the UI will show:
+- One slider per allowed worker archetype
+- Each slider's max value adjusts based on other sliders
+- Total workers cannot exceed OptimalWorkers
+- Shows worker efficiency % next to each slider
+
+```csharp
+// Pseudocode for UI implementation
+foreach (var archetype in building.AllowedWorkerTypes)
+{
+    int maxValue = WorkerAllocationSystem.GetWorkerSliderMax(buildingId, archetype);
+    slider.maxValue = maxValue;
+    slider.onValueChanged += (value) => {
+        WorkerAllocationSystem.SetWorkerDistribution(buildingId, GetCurrentDistribution());
+    };
+}
+```
+
+---
+
 ## Usage Examples
 
 ### **Creating a Building Definition (Inspector)**
@@ -308,6 +413,7 @@ viewModel.Refresh();
 BuildingName: "Barracks"
 BuildingCategory: Warfare
 IsHub: true
+HubletSlots: 4  (NOTE: Placeholder - will be replaced with world-based validation)
 IsHublet: false
 RequiresWorkers: true
 MinWorkers: 3
@@ -350,6 +456,7 @@ MaxProduction:
 BuildingName: "Cathedral"
 BuildingCategory: Religion
 IsHub: true
+HubletSlots: 3  (NOTE: Placeholder for world-based validation)
 IsHublet: false
 RequiresWorkers: true
 MinWorkers: 1
@@ -375,6 +482,7 @@ PopulationGrowthBonus: 0.05  (Religious buildings encourage families)
 BuildingName: "Market Village"
 BuildingCategory: Economics
 IsHub: true
+HubletSlots: 6  (NOTE: Placeholder for world-based validation)
 IsHublet: false
 RequiresWorkers: false  (Passive building!)
 PopulationGrowthBonus: 0.20  (Markets attract people)
@@ -388,21 +496,28 @@ MaxProduction:
 
 ### **Building Placement Rules**
 
+**NOTE:** The current implementation uses slot-based hublet limits as a placeholder.
+In the future, this will be replaced with world-based spatial validation (checking actual distances and adjacency).
+
 **Hubs:**
 - Can be placed anywhere (within city territory)
-- Allow hublets to attach
+- Allow hublets to attach (limited by HubletSlots)
+- Each hub has a HubletSlots value (e.g., Barracks = 4 slots, Market = 6 slots)
 - Extend city control area
 
 **Hublets:**
-- Must be adjacent to a compatible hub
+- Must attach to a hub that has available slots
 - Check `RequiredHubTypes` matches hub's `BuildingCategory`
 - If `RequiredHubTypes` is empty, can attach to any hub
-- Use `BuildingSimulation.CanHubletAttachToHub()` to validate
+- Use `BuildingSimulation.CanHubletAttachToHub()` to validate type compatibility
+- Use `BuildingManager.CanHubAcceptHublet()` to check slot availability
+- Use `BuildingManager.GetAvailableHubletSlots()` to get remaining slots
 
 **City:**
 - Acts as universal hub (implicit)
 - All buildings can attach to city
 - No RequiredHubTypes check needed
+- City should have a high HubletSlots value (or unlimited) in CityData
 
 **Example Placement Code:**
 ```csharp
@@ -421,18 +536,31 @@ if (buildingDef.IsHublet)
         return false;
     }
 
-    if (!BuildingSimulation.IsAdjacentTo(position, nearestHub.Position))
+    // Check slot availability (PLACEHOLDER - will be replaced with world-based validation)
+    if (!BuildingManager.Instance.CanHubAcceptHublet(nearestHub.ID))
     {
-        Debug.LogError("Must be adjacent to hub!");
+        int available = BuildingManager.Instance.GetAvailableHubletSlots(nearestHub.ID);
+        Debug.LogError($"Hub has no available slots! ({available} remaining)");
         return false;
     }
 
+    // Check hub type compatibility
     var hubDef = definitionLookup[nearestHub.BuildingDefinitionID];
     if (!BuildingSimulation.CanHubletAttachToHub(buildingDef, hubDef))
     {
         Debug.LogError("Hublet cannot attach to this hub type!");
         return false;
     }
+
+    // Future: Check actual world position adjacency
+    // if (!BuildingSimulation.IsAdjacentTo(position, nearestHub.Position))
+    // {
+    //     Debug.LogError("Must be adjacent to hub!");
+    //     return false;
+    // }
+
+    // Attach hublet to hub
+    BuildingManager.Instance.AttachHubletToHub(newBuildingId, nearestHub.ID);
 }
 ```
 
@@ -440,43 +568,68 @@ if (buildingDef.IsHublet)
 
 ### **Worker Assignment**
 
-**Automatic (Recommended):**
+**Automatic Allocation (Implemented):**
+
+Worker allocation is now handled automatically by `WorkerAllocationSystem`. Call it after:
+- Building construction completes
+- Population changes (birth, death, migration)
+- Player requests reallocation
+
 ```csharp
-// In CitySimulation or BuildingManager
-public static void AssignWorkersToBuildings(int cityId)
+// After building completion
+void OnBuildingCompleted(int buildingId, int cityId)
 {
-    var buildings = GetBuildingsForCity(cityId);
-    var availableWorkers = GetAvailableWorkersByArchetype(cityId);
+    Debug.Log($"Building {buildingId} completed!");
+    BuildingManager.Instance.AllocateWorkersForCity(cityId);
+}
 
-    // Priority 1: Buildings with required workers not met
-    foreach (var building in buildings)
-    {
-        var deficit = BuildingSimulation.GetWorkerDeficit(building.Data, building.Definition);
+// After population increase
+void OnPopulationIncreased(int cityId, int increase)
+{
+    Debug.Log($"City {cityId} population grew by {increase}");
+    BuildingManager.Instance.AllocateWorkersForCity(cityId);
+}
 
-        foreach (var kvp in deficit)
-        {
-            int toAssign = Math.Min(kvp.Value, availableWorkers[kvp.Key]);
-            building.Data.AssignWorker(kvp.Key, toAssign);
-            availableWorkers[kvp.Key] -= toAssign;
-        }
-    }
+// After population decrease
+void OnPopulationDecreased(int cityId, int decrease)
+{
+    Debug.Log($"City {cityId} lost {decrease} workers");
 
-    // Priority 2: Fill buildings to optimal
-    foreach (var building in buildings)
-    {
-        foreach (var archetype in building.Definition.AllowedWorkerTypes)
-        {
-            int canAccept = building.Definition.OptimalWorkers - building.Data.TotalWorkers;
-            int available = availableWorkers[archetype];
-            int toAssign = Math.Min(canAccept, available);
+    // Option 1: Reallocate everyone (fair but slow)
+    BuildingManager.Instance.AllocateWorkersForCity(cityId);
 
-            if (toAssign > 0)
-            {
-                building.Data.AssignWorker(archetype, toAssign);
-                availableWorkers[archetype] -= toAssign;
-            }
-        }
-    }
+    // Option 2: Deallocate specific count (faster, targets newest buildings)
+    BuildingManager.Instance.DeallocateWorkersForCity(cityId, decrease);
+}
+
+// Manual reallocation button in UI
+void OnReallocateButtonPressed(int cityId)
+{
+    BuildingManager.Instance.AllocateWorkersForCity(cityId);
+}
+```
+
+**Manual Assignment (Placeholder for UI):**
+
+UI methods are available but not yet fully implemented. These will be used when players manually adjust worker sliders:
+
+```csharp
+// When player adjusts worker slider in building UI
+void OnWorkerSliderChanged(int buildingId, PopulationArchetypes archetype, int newValue)
+{
+    WorkerAllocationSystem.AssignWorkerManual(buildingId, archetype, newValue);
+}
+
+// Get max value for slider
+int GetSliderMaxValue(int buildingId, PopulationArchetypes archetype)
+{
+    return WorkerAllocationSystem.GetWorkerSliderMax(buildingId, archetype);
+}
+
+// Reset building to automatic allocation
+void OnResetToAutoButtonPressed(int buildingId, int cityId)
+{
+    WorkerAllocationSystem.ResetToAutomaticAllocation(buildingId, cityId);
 }
 ```
 
@@ -615,17 +768,28 @@ city.GrowthRate += growthBonus;
    - ✅ Fallback to legacy BuildingInstance for backward compatibility
    - ✅ Gets both BuildingInstanceData and BuildingDefinition from BuildingManager
 
+4. **Worker Allocation System:**
+   - ✅ Automatic assignment algorithm (WorkerAllocationSystem.cs)
+   - ✅ Priority system (Phase 1: Required workers, Phase 2: Minimum, Phase 3: Optimal)
+   - ✅ First-come-first-serve based on building construction order (building ID)
+   - ✅ Reverse deallocation (last built = first to lose workers)
+   - ✅ BuildingManager.AllocateWorkersForCity() and DeallocateWorkersForCity()
+   - ✅ Placeholder UI methods for manual worker control (AssignWorkerManual, SetWorkerDistribution, GetWorkerSliderMax)
+
+5. **Hub/Hublet Slot Validation:**
+   - ✅ Hublet slot limits on hubs (BuildingDefinition.HubletSlots)
+   - ✅ Slot tracking (BuildingInstanceData.OccupiedHubletSlots)
+   - ✅ AttachHubletToHub() validates available slots
+   - ✅ CanHubAcceptHublet() and GetAvailableHubletSlots() helper methods
+   - ✅ NOTE: Slot-based validation is a placeholder - will be replaced with world-based spatial validation
+
 **🔧 TODO (Future Enhancements):**
 
-1. **Worker Allocation System:**
-   - ⏳ Automatic assignment algorithm
-   - ⏳ Priority system (required workers first)
-   - ⏳ Player override capability
-
-2. **Hub/Hublet Placement Validation:**
-   - ⏳ UI for checking adjacency
+1. **Hub/Hublet World Placement:**
+   - ⏳ Replace slot-based validation with actual world position checks
+   - ⏳ Check physical adjacency between hublets and hubs
+   - ⏳ UI for checking adjacency visually
    - ⏳ Visual feedback for hub type compatibility
-   - ⏳ Automatic AttachedToHubID / AttachedHubletIDs updates on placement
 
 3. **Enhanced Population Integration:**
    - ⏳ Track employed workers in PopulationGroup.EmployedCount

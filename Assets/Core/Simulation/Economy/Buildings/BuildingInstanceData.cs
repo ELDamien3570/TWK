@@ -27,11 +27,19 @@ namespace TWK.Economy
         }
 
         // ========== HUB SYSTEM ==========
+        // NOTE: Hublet slot system is a placeholder. In the future, this will be replaced
+        // with world-based spatial validation (checking actual distances and adjacency).
+
         [Tooltip("If this is a hublet, what hub is it attached to?")]
         public int AttachedToHubID = -1;
 
         [Tooltip("If this is a hub, which hublets are attached?")]
         public List<int> AttachedHubletIDs = new List<int>();
+
+        /// <summary>
+        /// Number of hublet slots currently occupied (used hublet slots).
+        /// </summary>
+        public int OccupiedHubletSlots => AttachedHubletIDs.Count;
 
         // ========== STATE ==========
         public bool IsActive;

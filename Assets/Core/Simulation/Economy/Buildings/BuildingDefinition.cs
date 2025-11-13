@@ -21,6 +21,9 @@ namespace TWK.Economy
         [Tooltip("Is this a hub? Hubs allow hublets to be built around them")]
         public bool IsHub;
 
+        [Tooltip("Number of hublet slots this hub provides. NOTE: This is a placeholder - will be replaced with world-based spatial validation")]
+        public int HubletSlots = 0;
+
         [Tooltip("Is this a hublet? Hublets must be adjacent to a hub")]
         public bool IsHublet;
 

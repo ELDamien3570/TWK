@@ -258,6 +258,9 @@ namespace TWK.Economy
 
         // ========== WORKER MANAGEMENT ==========
 
+        /// <summary>
+        /// Manually assign workers to a specific building (called from code or UI).
+        /// </summary>
         public void AssignWorkerToBuilding(int buildingID, Realms.Demographics.PopulationArchetypes archetype, int count)
         {
             if (buildingLookup.TryGetValue(buildingID, out var building))
@@ -267,6 +270,9 @@ namespace TWK.Economy
             }
         }
 
+        /// <summary>
+        /// Manually remove workers from a specific building (called from code or UI).
+        /// </summary>
         public void RemoveWorkerFromBuilding(int buildingID, Realms.Demographics.PopulationArchetypes archetype, int count)
         {
             if (buildingLookup.TryGetValue(buildingID, out var building))
@@ -276,6 +282,9 @@ namespace TWK.Economy
             }
         }
 
+        /// <summary>
+        /// Clear all workers from a building.
+        /// </summary>
         public void ClearWorkersFromBuilding(int buildingID)
         {
             if (buildingLookup.TryGetValue(buildingID, out var building))
@@ -285,17 +294,114 @@ namespace TWK.Economy
             }
         }
 
+        // ========== AUTOMATIC WORKER ALLOCATION ==========
+
+        /// <summary>
+        /// Automatically allocate workers to all buildings in a city.
+        /// Uses first-come-first-serve based on construction order (building ID).
+        /// Call this after: building completion, population changes, or manual reallocation request.
+        /// </summary>
+        public void AllocateWorkersForCity(int cityId)
+        {
+            // Get buildings for this city
+            var cityBuildings = new List<BuildingInstanceData>();
+            foreach (var building in buildings)
+            {
+                if (building.CityID == cityId)
+                    cityBuildings.Add(building);
+            }
+
+            // Call allocation system
+            WorkerAllocationSystem.AllocateWorkersForCity(cityId, cityBuildings, definitionLookup);
+
+            Debug.Log($"[BuildingManager] Completed automatic worker allocation for city {cityId}");
+        }
+
+        /// <summary>
+        /// Deallocate workers when population is lost.
+        /// Removes workers in reverse construction order (last built = first to lose workers).
+        /// </summary>
+        public void DeallocateWorkersForCity(int cityId, int workersLost)
+        {
+            var cityBuildings = new List<BuildingInstanceData>();
+            foreach (var building in buildings)
+            {
+                if (building.CityID == cityId)
+                    cityBuildings.Add(building);
+            }
+
+            WorkerAllocationSystem.DeallocateWorkersForCity(cityId, cityBuildings, definitionLookup, workersLost);
+
+            Debug.Log($"[BuildingManager] Deallocated {workersLost} workers from city {cityId}");
+        }
+
         // ========== HUB/HUBLET SYSTEM ==========
 
-        public void AttachHubletToHub(int hubletID, int hubID)
+        /// <summary>
+        /// Attach a hublet to a hub.
+        /// Validates hublet slot limits (placeholder for world-based validation).
+        /// </summary>
+        public bool AttachHubletToHub(int hubletID, int hubID)
         {
-            if (buildingLookup.TryGetValue(hubletID, out var hublet) &&
-                buildingLookup.TryGetValue(hubID, out var hub))
+            if (!buildingLookup.TryGetValue(hubletID, out var hublet))
             {
-                hublet.AttachedToHubID = hubID;
-                hub.AttachedHubletIDs.Add(hubletID);
-                Debug.Log($"[BuildingManager] Attached hublet {hubletID} to hub {hubID}");
+                Debug.LogWarning($"[BuildingManager] Hublet {hubletID} not found");
+                return false;
             }
+
+            if (!buildingLookup.TryGetValue(hubID, out var hub))
+            {
+                Debug.LogWarning($"[BuildingManager] Hub {hubID} not found");
+                return false;
+            }
+
+            // Get definitions to validate
+            var hubletDef = GetDefinition(hublet.BuildingDefinitionID);
+            var hubDef = GetDefinition(hub.BuildingDefinitionID);
+
+            if (hubletDef == null || hubDef == null)
+            {
+                Debug.LogWarning($"[BuildingManager] Could not find definitions for hublet or hub");
+                return false;
+            }
+
+            // Validate this is actually a hublet and hub
+            if (!hubletDef.IsHublet)
+            {
+                Debug.LogWarning($"[BuildingManager] Building {hubletID} is not a hublet");
+                return false;
+            }
+
+            if (!hubDef.IsHub)
+            {
+                Debug.LogWarning($"[BuildingManager] Building {hubID} is not a hub");
+                return false;
+            }
+
+            // NOTE: Hublet slot validation is a placeholder.
+            // In the future, this will be replaced with world-based spatial validation.
+            // Check if hub has available hublet slots
+            if (hub.OccupiedHubletSlots >= hubDef.HubletSlots)
+            {
+                Debug.LogWarning($"[BuildingManager] Hub {hubID} has no available hublet slots " +
+                                $"({hub.OccupiedHubletSlots}/{hubDef.HubletSlots} occupied)");
+                return false;
+            }
+
+            // Validate hub type compatibility
+            if (!BuildingSimulation.CanHubletAttachToHub(hubletDef, hubDef))
+            {
+                Debug.LogWarning($"[BuildingManager] Hublet {hubletID} cannot attach to hub type {hubDef.BuildingCategory}");
+                return false;
+            }
+
+            // Perform attachment
+            hublet.AttachedToHubID = hubID;
+            hub.AttachedHubletIDs.Add(hubletID);
+
+            Debug.Log($"[BuildingManager] Attached hublet {hubletID} to hub {hubID} " +
+                     $"({hub.OccupiedHubletSlots}/{hubDef.HubletSlots} slots occupied)");
+            return true;
         }
 
         public void DetachHubletFromHub(int hubletID)
@@ -319,6 +425,39 @@ namespace TWK.Economy
                 return new List<int>(hub.AttachedHubletIDs);
             }
             return new List<int>();
+        }
+
+        /// <summary>
+        /// Check if a hub can accept more hublets.
+        /// NOTE: This uses slot-based validation (placeholder for world-based validation).
+        /// </summary>
+        public bool CanHubAcceptHublet(int hubID)
+        {
+            if (!buildingLookup.TryGetValue(hubID, out var hub))
+                return false;
+
+            var hubDef = GetDefinition(hub.BuildingDefinitionID);
+            if (hubDef == null || !hubDef.IsHub)
+                return false;
+
+            // NOTE: Placeholder slot-based check - will be replaced with world-based spatial validation
+            return hub.OccupiedHubletSlots < hubDef.HubletSlots;
+        }
+
+        /// <summary>
+        /// Get available hublet slots for a hub.
+        /// NOTE: Placeholder for world-based validation.
+        /// </summary>
+        public int GetAvailableHubletSlots(int hubID)
+        {
+            if (!buildingLookup.TryGetValue(hubID, out var hub))
+                return 0;
+
+            var hubDef = GetDefinition(hub.BuildingDefinitionID);
+            if (hubDef == null || !hubDef.IsHub)
+                return 0;
+
+            return Mathf.Max(0, hubDef.HubletSlots - hub.OccupiedHubletSlots);
         }
 
         // ========== BACKWARD COMPATIBILITY ==========
