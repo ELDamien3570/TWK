@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using TWK.Cultures;
 using TWK.Realms;
 using TWK.Realms.Demographics;
 using TWK.Economy;
+using TWK.Core;
 
-namespace TWK.Culture
+namespace TWK.Cultures
 {
     /// <summary>
     /// Manager for all culture systems: ownership, tech trees, XP accumulation, and assimilation.
@@ -75,25 +74,16 @@ namespace TWK.Culture
 
         // ========== CULTURE ACCESS ==========
 
-        /// <summary>
-        /// Get culture by ID.
-        /// </summary>
         public CultureData GetCulture(int cultureID)
         {
             return cultureLookup.GetValueOrDefault(cultureID, null);
         }
 
-        /// <summary>
-        /// Get all cultures.
-        /// </summary>
         public List<CultureData> GetAllCultures()
         {
             return new List<CultureData>(allCultures);
         }
 
-        /// <summary>
-        /// Add a new culture (for hybrid creation).
-        /// </summary>
         public void AddCulture(CultureData culture)
         {
             if (!allCultures.Contains(culture))
@@ -266,6 +256,9 @@ namespace TWK.Culture
             // Group buildings by city culture and tree type
             var xpByCultureAndTree = new Dictionary<int, Dictionary<TreeType, float>>();
 
+            //Test assigment
+
+
             foreach (var instanceData in BuildingManager.Instance.GetAllBuildings())
             {
                 if (!instanceData.IsActive || !instanceData.IsCompleted)
@@ -276,7 +269,10 @@ namespace TWK.Culture
                 if (definition == null) continue;
 
                 // Get city
-                var city = CityManager.Instance.GetCityByID(instanceData.CityID);
+                
+
+
+                var city = PopulationManager.Instance.GetCityByID(instanceData.CityID); //Using Population to query cities right now, this is TEST LOGIC
                 if (city == null) continue;
 
                 // Get city's culture

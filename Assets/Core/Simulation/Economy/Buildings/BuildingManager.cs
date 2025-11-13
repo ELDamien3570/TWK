@@ -3,7 +3,7 @@ using UnityEngine;
 using TWK.Core;
 using TWK.Simulation;
 using TWK.Realms;
-using TWK.Culture;
+using TWK.Cultures;
 
 namespace TWK.Economy
 {
@@ -302,6 +302,14 @@ namespace TWK.Economy
         public BuildingData GetLegacyBuildingData(int buildingID)
         {
             return legacyDataLookup.GetValueOrDefault(buildingID, null);
+        }
+
+        public IEnumerable<BuildingInstanceData> GetAllBuildings()
+        {
+            foreach (var building in buildings)
+            {
+                    yield return building;
+            }
         }
 
         // ========== WORKER MANAGEMENT ==========

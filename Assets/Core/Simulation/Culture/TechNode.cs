@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TWK.Cultures;
 
-namespace TWK.Culture
+namespace TWK.Cultures
 {
     /// <summary>
     /// Represents a node in a culture's tech tree.

@@ -1,5 +1,6 @@
 using UnityEngine;
 using TWK.Realms.Demographics;
+using TWK.Cultures;
 
 namespace TWK.UI.ViewModels
 {
@@ -15,6 +16,8 @@ namespace TWK.UI.ViewModels
         public int CityID { get; private set; }
         public PopulationArchetypes Archetype { get; private set; }
         public string ArchetypeName { get; private set; }
+
+        public CultureData Culture { get; private set; }
 
         // ========== POPULATION ==========
         public int TotalPopulation { get; private set; }
@@ -82,6 +85,7 @@ namespace TWK.UI.ViewModels
             CityID = _source.OwnerCityID;
             Archetype = _source.Archetype;
             ArchetypeName = _source.Archetype.ToString();
+            Culture = _source.Culture;
 
             // Population
             TotalPopulation = _source.PopulationCount;

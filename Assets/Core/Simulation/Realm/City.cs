@@ -15,6 +15,9 @@ namespace TWK.Realms
     public class City : MonoBehaviour, ISimulationAgent
     {
         // ========== DATA MODEL ==========
+        [SerializeField] private Realm parentRealm;
+        private int OwnerRealmID => parentRealm != null ? parentRealm.RealmID : -1; 
+
         [SerializeField] private CityData cityData = new CityData();
 
         // ========== INSPECTOR CONFIGURATION (for initialization) ==========
@@ -79,6 +82,7 @@ namespace TWK.Realms
                 cityData.Location = transform.position;
                 cityData.GrowthRate = growthRate;
                 cityData.TerritoryRadius = territoryRadius;
+                cityData.OwnerRealmID = OwnerRealmID;
             }
         }
 

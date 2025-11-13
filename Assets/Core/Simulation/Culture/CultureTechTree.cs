@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using TWK.Cultures;
 
-namespace TWK.Culture
+namespace TWK.Cultures
 {
     /// <summary>
     /// Represents a tech tree for a specific TreeType within a culture.

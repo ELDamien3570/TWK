@@ -15,6 +15,8 @@ namespace TWK.Realms
         // ========== IDENTITY ==========
         public string Name;
         public int CityID;
+        public int OwnerRealmID;    
+
 
         // ========== GEOGRAPHIC ==========
         public float LocationX, LocationY, LocationZ;
@@ -39,6 +41,8 @@ namespace TWK.Realms
         // ========== CONSTRUCTOR ==========
         public CityData()
         {
+            //OwnerRealmID = iOwnerRealmId;
+
             // Default constructor for serialization
             EconomySnapshot = new CityEconomySnapshot
             {
@@ -48,13 +52,14 @@ namespace TWK.Realms
             };
         }
 
-        public CityData(int cityId, string name, Vector3 location, float growthRate = 1f, float territoryRadius = 10f)
+        public CityData(int cityId, string name, Vector3 location, int ownerRealmID, float growthRate = 1f,  float territoryRadius = 10f)
         {
             this.CityID = cityId;
             this.Name = name;
             this.Location = location;
             this.GrowthRate = growthRate;
             this.TerritoryRadius = territoryRadius;
+            this.OwnerRealmID = ownerRealmID;   
 
             this.BuildingIDs = new List<int>();
             this.EconomySnapshot = new CityEconomySnapshot

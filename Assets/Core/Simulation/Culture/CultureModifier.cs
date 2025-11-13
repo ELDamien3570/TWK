@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TWK.Economy;
 using TWK.Cultures;
 
-namespace TWK.Culture
+namespace TWK.Cultures
 {
     /// <summary>
     /// Defines a modifier that can affect realms, cities, agents, or buildings.

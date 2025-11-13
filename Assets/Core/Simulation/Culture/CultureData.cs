@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using TWK.Cultures;
 
-namespace TWK.Culture
+namespace TWK.Cultures
 {
     /// <summary>
     /// Represents a culture with its own tech trees, pillars, and identity.

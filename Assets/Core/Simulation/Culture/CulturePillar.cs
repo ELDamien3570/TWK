@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace TWK.Culture
+namespace TWK.Cultures
 {
     /// <summary>
     /// Cultural Pillars are defining characteristics of a culture.

@@ -6,6 +6,7 @@ using TWK.Realms.Demographics;
 using TWK.Simulation;
 using TWK.Economy;
 using TWK.UI.ViewModels;
+using TWK.Cultures;
 
 
 namespace TWK.Core
@@ -22,6 +23,7 @@ namespace TWK.Core
         [SerializeField] private Agent[] testAgents;
         [SerializeField] private City[] testCities;
 
+        [SerializeField] private CultureData testCulture;
 
         private void Start()
         {
@@ -94,15 +96,15 @@ namespace TWK.Core
                 foreach (var city in testCities)
                 {
                     city.Initialize(worldTimeManager);
-                    city.BuildFarm(testFarmData, Vector3.zero);
+                    //city.BuildFarm(testFarmData, Vector3.zero);
 
                     // Register a few population groups per city
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Laborer, 14671);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Artisan, 142);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Noble, 68);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Merchant, 24);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 38);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 1483);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Laborer, 14671, testCulture, 25 );
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Artisan, 142, testCulture, 32);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Noble, 68, testCulture, 43);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Merchant, 24, testCulture, 38);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 38, testCulture, 29);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 1483, testCulture, 21);
 
                     // Register city with ViewModelService
                     if (ViewModelService.Instance != null)
