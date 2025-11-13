@@ -18,9 +18,9 @@ namespace TWK.Economy
         private List<BuildingInstanceData> buildings = new List<BuildingInstanceData>();
         private Dictionary<int, BuildingInstanceData> buildingLookup = new Dictionary<int, BuildingInstanceData>();
 
-        // Definition lookup (BuildingData.name -> BuildingDefinition)
+        // Definition lookup (BuildingDefinition.GetInstanceID() -> BuildingDefinition)
         // In real implementation, this would be populated from ScriptableObjects
-        private Dictionary<string, BuildingDefinition> definitionLookup = new Dictionary<string, BuildingDefinition>();
+        private Dictionary<int, BuildingDefinition> definitionLookup = new Dictionary<int, BuildingDefinition>();
 
         private WorldTimeManager worldTimeManager;
 
@@ -476,7 +476,7 @@ namespace TWK.Economy
             // var definitions = Resources.LoadAll<BuildingDefinition>("Buildings");
             // foreach (var def in definitions)
             // {
-            //     definitionLookup[def.BuildingName] = def;
+            //     definitionLookup[def.GetInstanceID()] = def;
             // }
         }
     }

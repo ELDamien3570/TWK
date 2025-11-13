@@ -270,7 +270,7 @@ namespace TWK.Economy
         // ========== HELPER METHODS ==========
 
         private static Dictionary<PopulationArchetypes, int> CalculateAvailableWorkers(
-            List<PopulationGroup> populationGroups)
+            IEnumerable<PopulationGroup> populationGroups)
         {
             var available = new Dictionary<PopulationArchetypes, int>();
 
@@ -295,7 +295,7 @@ namespace TWK.Economy
         }
 
         private static void UpdatePopulationEmployment(
-            List<PopulationGroup> populationGroups,
+            IEnumerable<PopulationGroup> populationGroups,
             List<BuildingInstanceData> buildings)
         {
             // Reset employment counts
@@ -337,7 +337,7 @@ namespace TWK.Economy
             }
         }
 
-        private static int GetTotalAvailableForArchetype(List<PopulationGroup> groups, PopulationArchetypes archetype)
+        private static int GetTotalAvailableForArchetype(IEnumerable<PopulationGroup> groups, PopulationArchetypes archetype)
         {
             return groups.Where(g => g.Archetype == archetype).Sum(g => g.AvailableWorkers);
         }
