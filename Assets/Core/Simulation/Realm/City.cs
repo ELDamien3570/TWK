@@ -126,7 +126,7 @@ namespace TWK.Realms
         {
             int total = 0;
             foreach (var pop in PopulationManager.Instance.GetPopulationsByCity(CityID))
-                total += pop.populationCount;
+                total += pop.PopulationCount;
             return total;
         }
 
@@ -135,7 +135,9 @@ namespace TWK.Realms
             var breakdown = new Dictionary<PopulationArchetypes, int>();
             foreach (var pop in PopulationManager.Instance.GetPopulationsByCity(CityID))
             {
-                if (!breakdown.ContainsKey(pop.archetype)) breakdown[pop.archetype] = 0; breakdown[pop.archetype] += pop.populationCount;
+                if (!breakdown.ContainsKey(pop.Archetype))
+                    breakdown[pop.Archetype] = 0;
+                breakdown[pop.Archetype] += pop.PopulationCount;
             }
             return breakdown;
         }
