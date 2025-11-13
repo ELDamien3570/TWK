@@ -45,12 +45,27 @@ namespace TWK.Realms
             // Get buildings from BuildingManager and simulate them
             foreach (int buildingId in city.BuildingIDs)
             {
-                var building = BuildingManager.Instance.GetBuildingByID(buildingId);
+                var instanceData = BuildingManager.Instance.GetInstanceData(buildingId);
 
-                if (building.HasValue && building.Value.ConstructionState == BuildingConstructionState.Completed)
+                if (instanceData != null && instanceData.IsCompleted && instanceData.IsActive)
                 {
-                    building.Value.Simulate(ledger);
-                    Debug.Log($"[CitySimulation] Simulating building: {building.Value.BuildingData.BuildingName} (ID: {buildingId})");
+                    // Get the building definition
+                    var definition = BuildingManager.Instance.GetDefinition(instanceData.BuildingDefinitionID);
+
+                    if (definition != null)
+                    {
+                        // Use BuildingSimulation for production/maintenance/population effects
+                        BuildingSimulation.SimulateDay(instanceData, definition, ledger, city.CityID);
+                    }
+                    else
+                    {
+                        // Fallback to old struct-based simulation if definition not found
+                        var legacyBuilding = BuildingManager.Instance.GetBuildingByID(buildingId);
+                        if (legacyBuilding.HasValue)
+                        {
+                            legacyBuilding.Value.Simulate(ledger);
+                        }
+                    }
                 }
             }
         }

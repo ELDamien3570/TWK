@@ -22,9 +22,12 @@ BuildingInstanceData (pure data)
     ↓
 BuildingSimulation (pure logic)
     ↓
-BuildingInstance (struct wrapper - for backward compatibility)
+BuildingManager (MonoBehaviour coordinator)
     ↓
 BuildingViewModel (UI binding)
+
+Legacy Support:
+BuildingInstance (struct wrapper - for backward compatibility)
 ```
 
 ---
@@ -200,6 +203,98 @@ FindNearestHub(position, buildings, definitions)
 #### Population Growth:
 ```csharp
 CalculatePopulationGrowthBonus(cityBuildings, definitions)
+```
+
+---
+
+### **4. BuildingViewModel.cs** (UI Layer)
+
+View model for exposing building data to UI in a friendly format.
+
+**Key Properties:**
+
+```csharp
+// Identity
+public string BuildingName;
+public int BuildingID;
+public TreeType BuildingCategory;
+
+// State
+public bool IsActive;
+public bool IsCompleted;
+public bool IsUnderConstruction;
+public float EfficiencyMultiplier;
+
+// Construction
+public int ConstructionDaysRemaining;
+public float ConstructionProgress;  // 0-1
+
+// Hub System
+public bool IsHub;
+public bool IsHublet;
+public bool IsAttachedToHub;
+public int AttachedHubletCount;
+
+// Workers
+public int TotalWorkers;
+public int OptimalWorkers;
+public float WorkerRatio;  // 0-1
+public bool IsSufficientlyStaffed;
+public bool IsOptimallyStaffed;
+public Dictionary<PopulationArchetypes, int> AssignedWorkers;
+
+// Production
+public Dictionary<ResourceType, int> CurrentProduction;
+public string ProductionSummary;
+
+// Population Effects
+public float EducationGrowthPerWorker;
+public float WealthGrowthPerWorker;
+public bool HasPopulationEffects;
+```
+
+**Helper Methods:**
+
+```csharp
+// Status summaries
+string GetStatusSummary()          // "Optimal (10/10)" or "Understaffed (5/10)"
+string GetWorkerBreakdown()        // "Artisan: 5 (120% eff) | Laborer: 3 (100% eff)"
+string GetHubStatus()              // "Hub with 3 attached hublet(s)"
+string GetConstructionStatus()     // "3 days remaining (40% complete) | Can cancel"
+string GetProductionEfficiency()   // "Workers: 10/10 (100%) | Avg Efficiency: 120%"
+string GetPopulationEffectsSummary()  // "+0.1 education/worker/day | +0.05 wealth/worker/day"
+
+// Worker queries
+bool CanAssignWorker(PopulationArchetypes archetype)
+float GetWorkerEfficiency(PopulationArchetypes archetype)
+int GetWorkerCount(PopulationArchetypes archetype)
+List<PopulationArchetypes> GetAllowedWorkerTypes()
+```
+
+**Usage Example:**
+
+```csharp
+// Create ViewModel
+var viewModel = new BuildingViewModel(buildingID);
+
+// Bind to UI
+nameLabel.text = viewModel.BuildingName;
+statusLabel.text = viewModel.GetStatusSummary();
+workerLabel.text = $"{viewModel.TotalWorkers}/{viewModel.OptimalWorkers}";
+productionLabel.text = viewModel.ProductionSummary;
+
+// Show worker breakdown
+foreach (var kvp in viewModel.AssignedWorkers)
+{
+    Debug.Log($"{kvp.Key}: {kvp.Value} workers");
+}
+
+// Check if building needs attention
+if (!viewModel.IsSufficientlyStaffed)
+    warningIcon.SetActive(true);
+
+// Refresh when data changes
+viewModel.Refresh();
 ```
 
 ---
@@ -494,35 +589,53 @@ city.GrowthRate += growthBonus;
 
 ---
 
-## Next Steps
+## Implementation Status
 
-**To Complete the Building System:**
+**✅ COMPLETED:**
 
-1. **Update BuildingManager:**
-   - Store BuildingInstanceData instead of BuildingInstance
-   - Maintain lookup for BuildingDefinition by ID
-   - Integrate with CitySimulation
+1. **BuildingManager Updated:**
+   - ✅ Stores BuildingInstanceData internally
+   - ✅ Maintains lookup for BuildingDefinition by ID
+   - ✅ Integrated with CitySimulation
+   - ✅ Worker management methods (AssignWorkerToBuilding, RemoveWorkerFromBuilding, ClearWorkersFromBuilding)
+   - ✅ Hub/Hublet attachment methods (AttachHubletToHub, DetachHubletFromHub, GetHubletsForHub)
+   - ✅ Query methods (GetInstanceData, GetDefinition)
+   - ✅ Backward compatible with old BuildingInstance struct
 
-2. **Create BuildingViewModel:**
-   - Expose building data for UI
-   - Show worker assignments
-   - Display production efficiency
-   - Show hub/hublet relationships
+2. **BuildingViewModel Created:**
+   - ✅ Exposes building data for UI
+   - ✅ Shows worker assignments and breakdown
+   - ✅ Displays production efficiency
+   - ✅ Shows hub/hublet relationships
+   - ✅ Helper methods: GetStatusSummary(), GetWorkerBreakdown(), GetHubStatus(), GetPopulationEffectsSummary()
+   - ✅ Follows MVVM pattern with Refresh() and property notifications
 
-3. **Worker Allocation System:**
-   - Automatic assignment algorithm
-   - Priority system (required workers first)
-   - Player override capability
+3. **CitySimulation Integration:**
+   - ✅ SimulateBuildings() calls BuildingSimulation.SimulateDay()
+   - ✅ Fallback to legacy BuildingInstance for backward compatibility
+   - ✅ Gets both BuildingInstanceData and BuildingDefinition from BuildingManager
 
-4. **Hub/Hublet Placement Validation:**
-   - Check adjacency
-   - Validate hub type compatibility
-   - Update AttachedToHubID / AttachedHubletIDs
+**🔧 TODO (Future Enhancements):**
 
-5. **Integration with Population:**
-   - Track employed workers
-   - Update PopulationGroup.EmployedCount
-   - Apply education/wealth effects
+1. **Worker Allocation System:**
+   - ⏳ Automatic assignment algorithm
+   - ⏳ Priority system (required workers first)
+   - ⏳ Player override capability
+
+2. **Hub/Hublet Placement Validation:**
+   - ⏳ UI for checking adjacency
+   - ⏳ Visual feedback for hub type compatibility
+   - ⏳ Automatic AttachedToHubID / AttachedHubletIDs updates on placement
+
+3. **Enhanced Population Integration:**
+   - ⏳ Track employed workers in PopulationGroup.EmployedCount
+   - ⏳ Sync between BuildingInstanceData.AssignedWorkers and PopulationManager
+   - ✅ Apply education/wealth effects (already implemented in BuildingSimulation)
+
+4. **BuildingDefinition Loading:**
+   - ⏳ LoadBuildingDefinitions() from Resources folder
+   - ⏳ Create example building ScriptableObjects (Barracks, Workshop, Market, etc.)
+   - ⏳ Populate definitionLookup on BuildingManager.Initialize()
 
 ---
 
