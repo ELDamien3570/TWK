@@ -5,6 +5,7 @@ using TWK.Realms;
 using TWK.Realms.Demographics;
 using TWK.Simulation;
 using TWK.Economy;
+using TWK.UI.ViewModels;
 
 
 namespace TWK.Core
@@ -33,18 +34,24 @@ namespace TWK.Core
             else
                 Debug.LogError("PopulationManager not found in scene!");
 
-            if (ResourceManager.Instance != null)
-                ResourceManager.Instance.Initialize(worldTimeManager);
-            else
-                Debug.LogError("ResourceManager not found in scene!");
+            //if (ResourceManager.Instance != null)
+            //    ResourceManager.Instance.Initialize(worldTimeManager);
+            //else
+            //    Debug.LogError("ResourceManager not found in scene!");
 
             if (BuildingManager.Instance != null)
                 BuildingManager.Instance.Initialize(worldTimeManager);
             else
                 Debug.LogError("BuildingManager not found in scene!");
 
+            // Initialize ViewModelService for UI
+            if (ViewModelService.Instance != null)
+                ViewModelService.Instance.Initialize(worldTimeManager);
+            else
+                Debug.LogWarning("ViewModelService not found in scene! UI will not be updated.");
+
             TestStart();
-            
+
 
             worldTimeManager.OnDayTick += AdvanceDayDebug; //Temporary debug hook to show population stats
 
@@ -91,12 +98,16 @@ namespace TWK.Core
                     city.BuildFarm(testFarmData, Vector3.zero);
 
                     // Register a few population groups per city
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Laborer, 100);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Artisan, 10);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Noble, 30);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Merchant, 5);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 10);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 15);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Laborer, 14671);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Artisan, 142);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Noble, 68);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Merchant, 24);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 38);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 1483);
+
+                    // Register city with ViewModelService
+                    if (ViewModelService.Instance != null)
+                        ViewModelService.Instance.RegisterCity(city);
                 }
             }
 

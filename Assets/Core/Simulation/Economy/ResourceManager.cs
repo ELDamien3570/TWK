@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace TWK.Economy
 {
-    public class ResourceManager : MonoBehaviour, ISimulationAgent
+    public class ResourceManager : MonoBehaviour
     {
         public static ResourceManager Instance { get; private set; }
 
@@ -21,19 +21,13 @@ namespace TWK.Economy
             Instance = this;
         }
 
-        public void Initialize(WorldTimeManager worldTimeManager) { }
-
-        public void AdvanceDay() { }
-        public void AdvanceSeason() { } 
-        public void AdvanceYear() { }
-
         public void RegisterCity(int cityId)
         {
             if (cityResources.ContainsKey(cityId)) return;
 
             cityResources[cityId] = new Dictionary<ResourceType, int>
             {
-                { ResourceType.Food, 1000 },
+                { ResourceType.Food, 500000 },
                 { ResourceType.Gold, 1000 }
             };
         }

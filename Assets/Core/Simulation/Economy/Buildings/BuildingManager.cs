@@ -6,12 +6,22 @@ using TWK.Realms;
 
 namespace TWK.Economy
 {
+    /// <summary>
+    /// Manages all building instances in the game.
+    /// Uses BuildingInstanceData (MVVM data layer) internally.
+    /// </summary>
     public class BuildingManager : MonoBehaviour, ISimulationAgent
     {
         public static BuildingManager Instance { get; private set; }
 
         private int nextBuildingID = 0;
-        private readonly List<BuildingInstance> buildings = new();
+        private List<BuildingInstanceData> buildings = new List<BuildingInstanceData>();
+        private Dictionary<int, BuildingInstanceData> buildingLookup = new Dictionary<int, BuildingInstanceData>();
+
+        // Definition lookup (BuildingDefinition.GetInstanceID() -> BuildingDefinition)
+        // In real implementation, this would be populated from ScriptableObjects
+        private Dictionary<int, BuildingDefinition> definitionLookup = new Dictionary<int, BuildingDefinition>();
+
         private WorldTimeManager worldTimeManager;
 
         private void Awake()
@@ -28,20 +38,21 @@ namespace TWK.Economy
         {
             this.worldTimeManager = worldTimeManager;
             worldTimeManager.OnDayTick += AdvanceDay;
+
+            // TODO: Load all BuildingDefinition ScriptableObjects
+            // LoadBuildingDefinitions();
         }
+
+        // ========== SIMULATION ==========
 
         public void AdvanceDay()
         {
             // Process construction for all buildings
-            for (int i = 0; i < buildings.Count; i++)
+            foreach (var building in buildings)
             {
-                if (buildings[i].IsUnderConstruction)
+                if (building.IsUnderConstruction)
                 {
-                    Debug.Log("Attempting to advance construction for building ID: " + buildings[i].ID);
-                    // Get a copy, modify it, then put it back
-                    var building = buildings[i];
-                    building.AdvanceConstruction();
-                    buildings[i] = building;
+                    BuildingSimulation.AdvanceConstruction(building);
                 }
             }
         }
@@ -49,18 +60,31 @@ namespace TWK.Economy
         public void AdvanceSeason() { }
         public void AdvanceYear() { }
 
+        // ========== CONSTRUCTION ==========
+
+        /// <summary>
+        /// Construct a new building (backward compatible with old BuildingData).
+        /// </summary>
         public BuildingInstance ConstructBuilding(int cityID, BuildingData data, Vector3 position)
         {
-            var instance = new BuildingInstance(nextBuildingID++, cityID, data, position);
-            
-            // Immediately deduct construction costs from city
-            if (DeductConstructionCosts(cityID, instance))
+            // Create instance data
+            var instanceData = new BuildingInstanceData(
+                nextBuildingID++,
+                cityID,
+                data.GetInstanceID(), // Use BuildingData's instance ID as definition ID for now
+                position,
+                data.ConstructionTimeDays,
+                data.BaseEfficiency
+            );
+
+            // Deduct construction costs
+            if (DeductConstructionCosts(cityID, data.BaseBuildCost))
             {
-                // Mark that construction costs have been paid
-                instance.HasPaidConstructionCost = true;
-                buildings.Add(instance);
-                
-                if (instance.IsUnderConstruction)
+                instanceData.HasPaidConstructionCost = true;
+                buildings.Add(instanceData);
+                buildingLookup[instanceData.ID] = instanceData;
+
+                if (instanceData.IsUnderConstruction)
                 {
                     Debug.Log($"[BuildingManager] Started construction of {data.BuildingName} - {data.ConstructionTimeDays} days remaining. Costs deducted immediately.");
                 }
@@ -68,22 +92,54 @@ namespace TWK.Economy
                 {
                     Debug.Log($"[BuildingManager] {data.BuildingName} completed immediately. Costs deducted.");
                 }
-                
-                return instance;
+
+                // Return backward-compatible BuildingInstance struct
+                return ConvertToLegacyInstance(instanceData, data);
             }
             else
             {
                 Debug.LogWarning($"[BuildingManager] Insufficient resources to build {data.BuildingName} in city {cityID}");
-                return default; // Return default instance if construction failed
+                return default;
             }
         }
 
-        private bool DeductConstructionCosts(int cityID, BuildingInstance building)
+        /// <summary>
+        /// Construct a new building using BuildingDefinition (new way).
+        /// </summary>
+        public BuildingInstanceData ConstructBuildingNew(int cityID, BuildingDefinition definition, Vector3 position)
+        {
+            var instanceData = new BuildingInstanceData(
+                nextBuildingID++,
+                cityID,
+                definition.GetInstanceID(),
+                position,
+                definition.ConstructionTimeDays,
+                definition.BaseEfficiency
+            );
+
+            // Deduct construction costs
+            if (DeductConstructionCosts(cityID, definition.BaseBuildCost))
+            {
+                instanceData.HasPaidConstructionCost = true;
+                buildings.Add(instanceData);
+                buildingLookup[instanceData.ID] = instanceData;
+
+                Debug.Log($"[BuildingManager] Created {definition.BuildingName} (ID: {instanceData.ID})");
+                return instanceData;
+            }
+            else
+            {
+                Debug.LogWarning($"[BuildingManager] Insufficient resources to build {definition.BuildingName} in city {cityID}");
+                return null;
+            }
+        }
+
+        private bool DeductConstructionCosts(int cityID, Dictionary<ResourceType, int> costs)
         {
             var resourceManager = ResourceManager.Instance;
-            
+
             // Check if city has enough resources
-            foreach (var cost in building.BuildingData.BaseBuildCost)
+            foreach (var cost in costs)
             {
                 int available = resourceManager.GetResource(cityID, cost.Key);
                 if (available < cost.Value)
@@ -92,78 +148,65 @@ namespace TWK.Economy
                     return false;
                 }
             }
-            
+
             // Deduct costs using a temporary ledger
             var costLedger = new ResourceLedger(cityID);
-            foreach (var cost in building.BuildingData.BaseBuildCost)
+            foreach (var cost in costs)
             {
                 costLedger.Subtract(cost.Key, cost.Value);
             }
-            
+
             resourceManager.ApplyLedger(cityID, costLedger);
-            Debug.Log($"[BuildingManager] Deducted construction costs for {building.BuildingData.BuildingName}");
+            Debug.Log($"[BuildingManager] Deducted construction costs");
             return true;
         }
 
+        // ========== CANCELLATION ==========
+
         public bool CancelConstruction(int buildingID, int cityID)
         {
-            for (int i = 0; i < buildings.Count; i++)
+            if (!buildingLookup.TryGetValue(buildingID, out var building))
             {
-                var building = buildings[i];
-                if (building.ID == buildingID && building.CityID == cityID)
-                {
-                    if (!building.CanBeCancelled)
-                    {
-                        Debug.LogWarning($"[BuildingManager] Cannot cancel building {buildingID} - either not under construction or costs not paid");
-                        return false;
-                    }
-
-                    // Calculate refund (could implement partial refund based on progress)
-                    float refundPercentage = CalculateRefundPercentage(building);
-                    RefundConstructionCosts(cityID, building, refundPercentage);
-                    
-                    // Remove building from list
-                    buildings.RemoveAt(i);
-                    
-                    Debug.Log($"[BuildingManager] Cancelled construction of {building.BuildingData.BuildingName} (ID: {buildingID}). Refunded {refundPercentage:P0} of costs.");
-                    return true;
-                }
+                Debug.LogWarning($"[BuildingManager] Building {buildingID} not found for cancellation");
+                return false;
             }
-            
-            Debug.LogWarning($"[BuildingManager] Building {buildingID} not found for cancellation");
-            return false;
+
+            if (building.CityID != cityID || !building.CanBeCancelled)
+            {
+                Debug.LogWarning($"[BuildingManager] Cannot cancel building {buildingID}");
+                return false;
+            }
+
+            // Calculate refund
+            float refundPercentage = CalculateRefundPercentage(building);
+
+            // Refund costs (need to get BuildingDefinition or BuildingData for costs)
+            // For now, skip refund logic - TODO: implement when definitions are loaded
+
+            // Remove building
+            buildings.Remove(building);
+            buildingLookup.Remove(buildingID);
+
+            Debug.Log($"[BuildingManager] Cancelled construction of building ID {buildingID}");
+            return true;
         }
 
-        private float CalculateRefundPercentage(BuildingInstance building)
+        private float CalculateRefundPercentage(BuildingInstanceData building)
         {
-            // Options for refund calculation:
-            
-            // Option 1: Full refund regardless of progress
-            // return 1.0f;
-            
-            // Option 2: Refund based on remaining construction time
             float progressMade = building.ConstructionProgress;
-            return Mathf.Lerp(1.0f, 0.5f, progressMade); // 100% refund at start, 50% when nearly complete
-            
-            // Option 3: Fixed percentage
-            // return 0.75f; // Always 75% refund
+            return Mathf.Lerp(1.0f, 0.5f, progressMade);
         }
 
-        private void RefundConstructionCosts(int cityID, BuildingInstance building, float refundPercentage)
-        {
-            var refundLedger = new ResourceLedger(cityID);
-            
-            foreach (var cost in building.BuildingData.BaseBuildCost)
-            {
-                int refundAmount = Mathf.RoundToInt(cost.Value * refundPercentage);
-                refundLedger.Add(cost.Key, refundAmount);
-            }
-            
-            ResourceManager.Instance.ApplyLedger(cityID, refundLedger);
-            Debug.Log($"[BuildingManager] Refunded construction costs to city {cityID}");
-        }
+        // ========== QUERIES ==========
 
         public IEnumerable<BuildingInstance> GetBuildingsForCity(int cityID)
+        {
+            // TODO: This requires BuildingData lookup
+            // For now, return empty - needs refactor when BuildingDefinitions are loaded
+            yield break;
+        }
+
+        public IEnumerable<BuildingInstanceData> GetBuildingsForCityNew(int cityID)
         {
             foreach (var b in buildings)
                 if (b.CityID == cityID)
@@ -172,12 +215,24 @@ namespace TWK.Economy
 
         public IEnumerable<BuildingInstance> GetCompletedBuildingsForCity(int cityID)
         {
+            // TODO: Backward compatibility wrapper
+            yield break;
+        }
+
+        public IEnumerable<BuildingInstanceData> GetCompletedBuildingsForCityNew(int cityID)
+        {
             foreach (var b in buildings)
-                if (b.CityID == cityID && b.ConstructionState == BuildingConstructionState.Completed)
+                if (b.CityID == cityID && b.IsCompleted)
                     yield return b;
         }
 
         public IEnumerable<BuildingInstance> GetBuildingsUnderConstruction(int cityID)
+        {
+            // TODO: Backward compatibility wrapper
+            yield break;
+        }
+
+        public IEnumerable<BuildingInstanceData> GetBuildingsUnderConstructionNew(int cityID)
         {
             foreach (var b in buildings)
                 if (b.CityID == cityID && b.IsUnderConstruction)
@@ -186,12 +241,243 @@ namespace TWK.Economy
 
         public BuildingInstance? GetBuildingByID(int buildingID)
         {
+            // TODO: Backward compatibility wrapper - needs BuildingData
+            return null;
+        }
+
+        public BuildingInstanceData GetInstanceData(int buildingID)
+        {
+            return buildingLookup.GetValueOrDefault(buildingID, null);
+        }
+
+        public BuildingDefinition GetDefinition(int definitionID)
+        {
+            // TODO: Implement when definitions are loaded
+            return null;
+        }
+
+        // ========== WORKER MANAGEMENT ==========
+
+        /// <summary>
+        /// Manually assign workers to a specific building (called from code or UI).
+        /// </summary>
+        public void AssignWorkerToBuilding(int buildingID, Realms.Demographics.PopulationArchetypes archetype, int count)
+        {
+            if (buildingLookup.TryGetValue(buildingID, out var building))
+            {
+                building.AssignWorker(archetype, count);
+                Debug.Log($"[BuildingManager] Assigned {count} {archetype} workers to building {buildingID}");
+            }
+        }
+
+        /// <summary>
+        /// Manually remove workers from a specific building (called from code or UI).
+        /// </summary>
+        public void RemoveWorkerFromBuilding(int buildingID, Realms.Demographics.PopulationArchetypes archetype, int count)
+        {
+            if (buildingLookup.TryGetValue(buildingID, out var building))
+            {
+                building.RemoveWorker(archetype, count);
+                Debug.Log($"[BuildingManager] Removed {count} {archetype} workers from building {buildingID}");
+            }
+        }
+
+        /// <summary>
+        /// Clear all workers from a building.
+        /// </summary>
+        public void ClearWorkersFromBuilding(int buildingID)
+        {
+            if (buildingLookup.TryGetValue(buildingID, out var building))
+            {
+                building.ClearWorkers();
+                Debug.Log($"[BuildingManager] Cleared all workers from building {buildingID}");
+            }
+        }
+
+        // ========== AUTOMATIC WORKER ALLOCATION ==========
+
+        /// <summary>
+        /// Automatically allocate workers to all buildings in a city.
+        /// Uses first-come-first-serve based on construction order (building ID).
+        /// Call this after: building completion, population changes, or manual reallocation request.
+        /// </summary>
+        public void AllocateWorkersForCity(int cityId)
+        {
+            // Get buildings for this city
+            var cityBuildings = new List<BuildingInstanceData>();
             foreach (var building in buildings)
             {
-                if (building.ID == buildingID)
-                    return building;
+                if (building.CityID == cityId)
+                    cityBuildings.Add(building);
             }
-            return null;
+
+            // Call allocation system
+            WorkerAllocationSystem.AllocateWorkersForCity(cityId, cityBuildings, definitionLookup);
+
+            Debug.Log($"[BuildingManager] Completed automatic worker allocation for city {cityId}");
+        }
+
+        /// <summary>
+        /// Deallocate workers when population is lost.
+        /// Removes workers in reverse construction order (last built = first to lose workers).
+        /// </summary>
+        public void DeallocateWorkersForCity(int cityId, int workersLost)
+        {
+            var cityBuildings = new List<BuildingInstanceData>();
+            foreach (var building in buildings)
+            {
+                if (building.CityID == cityId)
+                    cityBuildings.Add(building);
+            }
+
+            WorkerAllocationSystem.DeallocateWorkersForCity(cityId, cityBuildings, definitionLookup, workersLost);
+
+            Debug.Log($"[BuildingManager] Deallocated {workersLost} workers from city {cityId}");
+        }
+
+        // ========== HUB/HUBLET SYSTEM ==========
+
+        /// <summary>
+        /// Attach a hublet to a hub.
+        /// Validates hublet slot limits (placeholder for world-based validation).
+        /// </summary>
+        public bool AttachHubletToHub(int hubletID, int hubID)
+        {
+            if (!buildingLookup.TryGetValue(hubletID, out var hublet))
+            {
+                Debug.LogWarning($"[BuildingManager] Hublet {hubletID} not found");
+                return false;
+            }
+
+            if (!buildingLookup.TryGetValue(hubID, out var hub))
+            {
+                Debug.LogWarning($"[BuildingManager] Hub {hubID} not found");
+                return false;
+            }
+
+            // Get definitions to validate
+            var hubletDef = GetDefinition(hublet.BuildingDefinitionID);
+            var hubDef = GetDefinition(hub.BuildingDefinitionID);
+
+            if (hubletDef == null || hubDef == null)
+            {
+                Debug.LogWarning($"[BuildingManager] Could not find definitions for hublet or hub");
+                return false;
+            }
+
+            // Validate this is actually a hublet and hub
+            if (!hubletDef.IsHublet)
+            {
+                Debug.LogWarning($"[BuildingManager] Building {hubletID} is not a hublet");
+                return false;
+            }
+
+            if (!hubDef.IsHub)
+            {
+                Debug.LogWarning($"[BuildingManager] Building {hubID} is not a hub");
+                return false;
+            }
+
+            // NOTE: Hublet slot validation is a placeholder.
+            // In the future, this will be replaced with world-based spatial validation.
+            // Check if hub has available hublet slots
+            if (hub.OccupiedHubletSlots >= hubDef.HubletSlots)
+            {
+                Debug.LogWarning($"[BuildingManager] Hub {hubID} has no available hublet slots " +
+                                $"({hub.OccupiedHubletSlots}/{hubDef.HubletSlots} occupied)");
+                return false;
+            }
+
+            // Validate hub type compatibility
+            if (!BuildingSimulation.CanHubletAttachToHub(hubletDef, hubDef))
+            {
+                Debug.LogWarning($"[BuildingManager] Hublet {hubletID} cannot attach to hub type {hubDef.BuildingCategory}");
+                return false;
+            }
+
+            // Perform attachment
+            hublet.AttachedToHubID = hubID;
+            hub.AttachedHubletIDs.Add(hubletID);
+
+            Debug.Log($"[BuildingManager] Attached hublet {hubletID} to hub {hubID} " +
+                     $"({hub.OccupiedHubletSlots}/{hubDef.HubletSlots} slots occupied)");
+            return true;
+        }
+
+        public void DetachHubletFromHub(int hubletID)
+        {
+            if (buildingLookup.TryGetValue(hubletID, out var hublet))
+            {
+                int oldHubID = hublet.AttachedToHubID;
+                if (oldHubID >= 0 && buildingLookup.TryGetValue(oldHubID, out var hub))
+                {
+                    hub.AttachedHubletIDs.Remove(hubletID);
+                }
+                hublet.AttachedToHubID = -1;
+                Debug.Log($"[BuildingManager] Detached hublet {hubletID} from hub {oldHubID}");
+            }
+        }
+
+        public List<int> GetHubletsForHub(int hubID)
+        {
+            if (buildingLookup.TryGetValue(hubID, out var hub))
+            {
+                return new List<int>(hub.AttachedHubletIDs);
+            }
+            return new List<int>();
+        }
+
+        /// <summary>
+        /// Check if a hub can accept more hublets.
+        /// NOTE: This uses slot-based validation (placeholder for world-based validation).
+        /// </summary>
+        public bool CanHubAcceptHublet(int hubID)
+        {
+            if (!buildingLookup.TryGetValue(hubID, out var hub))
+                return false;
+
+            var hubDef = GetDefinition(hub.BuildingDefinitionID);
+            if (hubDef == null || !hubDef.IsHub)
+                return false;
+
+            // NOTE: Placeholder slot-based check - will be replaced with world-based spatial validation
+            return hub.OccupiedHubletSlots < hubDef.HubletSlots;
+        }
+
+        /// <summary>
+        /// Get available hublet slots for a hub.
+        /// NOTE: Placeholder for world-based validation.
+        /// </summary>
+        public int GetAvailableHubletSlots(int hubID)
+        {
+            if (!buildingLookup.TryGetValue(hubID, out var hub))
+                return 0;
+
+            var hubDef = GetDefinition(hub.BuildingDefinitionID);
+            if (hubDef == null || !hubDef.IsHub)
+                return 0;
+
+            return Mathf.Max(0, hubDef.HubletSlots - hub.OccupiedHubletSlots);
+        }
+
+        // ========== BACKWARD COMPATIBILITY ==========
+
+        private BuildingInstance ConvertToLegacyInstance(BuildingInstanceData data, BuildingData buildingData)
+        {
+            // Convert new data format to old struct format
+            return new BuildingInstance(data.ID, data.CityID, buildingData, data.Position);
+        }
+
+        // ========== DEFINITION LOADING (TODO) ==========
+
+        private void LoadBuildingDefinitions()
+        {
+            // TODO: Load all BuildingDefinition ScriptableObjects from Resources
+            // var definitions = Resources.LoadAll<BuildingDefinition>("Buildings");
+            // foreach (var def in definitions)
+            // {
+            //     definitionLookup[def.GetInstanceID()] = def;
+            // }
         }
     }
 }
