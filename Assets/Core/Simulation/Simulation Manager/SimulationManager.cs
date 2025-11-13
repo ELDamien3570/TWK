@@ -5,6 +5,7 @@ using TWK.Realms;
 using TWK.Realms.Demographics;
 using TWK.Simulation;
 using TWK.Economy;
+using TWK.UI.ViewModels;
 
 
 namespace TWK.Core
@@ -43,8 +44,14 @@ namespace TWK.Core
             else
                 Debug.LogError("BuildingManager not found in scene!");
 
+            // Initialize ViewModelService for UI
+            if (ViewModelService.Instance != null)
+                ViewModelService.Instance.Initialize(worldTimeManager);
+            else
+                Debug.LogWarning("ViewModelService not found in scene! UI will not be updated.");
+
             TestStart();
-            
+
 
             worldTimeManager.OnDayTick += AdvanceDayDebug; //Temporary debug hook to show population stats
 
@@ -97,6 +104,10 @@ namespace TWK.Core
                     PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Merchant, 5);
                     PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 10);
                     PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 15);
+
+                    // Register city with ViewModelService
+                    if (ViewModelService.Instance != null)
+                        ViewModelService.Instance.RegisterCity(city);
                 }
             }
 
