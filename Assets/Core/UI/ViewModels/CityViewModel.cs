@@ -294,5 +294,64 @@ namespace TWK.UI.ViewModels
             int count = PopulationByArchetype.GetValueOrDefault(archetype, 0);
             return (count / (float)TotalPopulation) * 100f;
         }
+
+        public string GetDemographicSummary()
+        {
+            float youthPct = TotalPopulation > 0 ? (TotalYouth / (float)TotalPopulation) * 100f : 0f;
+            float adultPct = TotalPopulation > 0 ? (TotalAdults / (float)TotalPopulation) * 100f : 0f;
+            float middlePct = TotalPopulation > 0 ? (TotalMiddleAge / (float)TotalPopulation) * 100f : 0f;
+            float elderlyPct = TotalPopulation > 0 ? (TotalElderly / (float)TotalPopulation) * 100f : 0f;
+
+            return $"Youth: {TotalYouth} ({youthPct:F1}%) | " +
+                   $"Adults: {TotalAdults} ({adultPct:F1}%) | " +
+                   $"Middle: {TotalMiddleAge} ({middlePct:F1}%) | " +
+                   $"Elderly: {TotalElderly} ({elderlyPct:F1}%)";
+        }
+
+        public string GetGenderSummary()
+        {
+            return $"Males: {TotalMales} ({MalePercentage:F1}%) | Females: {TotalFemales} ({FemalePercentage:F1}%)";
+        }
+
+        public string GetMilitarySummary()
+        {
+            return $"Eligible: {TotalMilitaryEligible} ({MilitaryEligiblePercentage:F1}% of total pop)";
+        }
+
+        public string GetSocialMobilitySummary()
+        {
+            int eligibleForPromotion = 0;
+            int atRiskOfDemotion = 0;
+
+            foreach (var popVM in PopulationGroups)
+            {
+                // Check promotion eligibility
+                bool canPromote = popVM.Archetype switch
+                {
+                    PopulationArchetypes.Laborer => popVM.Education >= 40f && popVM.Wealth >= 30f,
+                    PopulationArchetypes.Artisan => popVM.Education >= 60f && popVM.Wealth >= 50f,
+                    PopulationArchetypes.Merchant => popVM.Education >= 80f && popVM.Wealth >= 75f,
+                    _ => false
+                };
+                if (canPromote) eligibleForPromotion++;
+
+                // Check demotion risk
+                bool atRisk = popVM.Wealth < 20f ||
+                             (popVM.Archetype == PopulationArchetypes.Clergy && (popVM.Wealth < 15f || popVM.Fervor < 30f));
+                if (atRisk) atRiskOfDemotion++;
+            }
+
+            return $"Eligible for promotion: {eligibleForPromotion} groups | At risk of demotion: {atRiskOfDemotion} groups";
+        }
+
+        public List<PopulationGroupViewModel> GetGroupsByArchetype(PopulationArchetypes archetype)
+        {
+            return PopulationGroups.Where(p => p.Archetype == archetype).ToList();
+        }
+
+        private float GetPercentage(int value)
+        {
+            return TotalPopulation > 0 ? (value / (float)TotalPopulation) * 100f : 0f;
+        }
     }
 }
