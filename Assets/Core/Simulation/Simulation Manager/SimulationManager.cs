@@ -34,10 +34,10 @@ namespace TWK.Core
             else
                 Debug.LogError("PopulationManager not found in scene!");
 
-            if (ResourceManager.Instance != null)
-                ResourceManager.Instance.Initialize(worldTimeManager);
-            else
-                Debug.LogError("ResourceManager not found in scene!");
+            //if (ResourceManager.Instance != null)
+            //    ResourceManager.Instance.Initialize(worldTimeManager);
+            //else
+            //    Debug.LogError("ResourceManager not found in scene!");
 
             if (BuildingManager.Instance != null)
                 BuildingManager.Instance.Initialize(worldTimeManager);
@@ -98,12 +98,12 @@ namespace TWK.Core
                     city.BuildFarm(testFarmData, Vector3.zero);
 
                     // Register a few population groups per city
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Laborer, 100);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Artisan, 10);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Noble, 30);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Merchant, 5);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 10);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 15);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Laborer, 14671);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Artisan, 142);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Noble, 68);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Merchant, 24);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 38);
+                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 1483);
 
                     // Register city with ViewModelService
                     if (ViewModelService.Instance != null)

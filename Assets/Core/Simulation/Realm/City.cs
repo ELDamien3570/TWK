@@ -147,7 +147,7 @@ namespace TWK.Realms
         {
             var instance = BuildingManager.Instance.ConstructBuilding(CityID, farmData, position);
             cityData.BuildingIDs.Add(instance.ID);
-            Debug.Log($"[City] {Name} started construction on a Farm at {position}");
+           // Debug.Log($"[City] {Name} started construction on a Farm at {position}");
         }
 
         /// <summary>
@@ -195,21 +195,21 @@ namespace TWK.Realms
         // ========== DEBUG & DIAGNOSTICS ==========
         private void PrintDailyEconomyReport()
         {
-            Debug.Log($"--- [City: {Name}] Daily Economy Report ---");
+            //Debug.Log($"--- [City: {Name}] Daily Economy Report ---");
 
-            foreach (var kvp in EconomySnapshot.Net)
-            {
-                var resource = kvp.Key;
-                var net = kvp.Value;
+            //foreach (var kvp in EconomySnapshot.Net)
+            //{
+            //    var resource = kvp.Key;
+            //    var net = kvp.Value;
 
-                EconomySnapshot.Production.TryGetValue(resource, out var produced);
-                EconomySnapshot.Consumption.TryGetValue(resource, out var consumed);
+            //    EconomySnapshot.Production.TryGetValue(resource, out var produced);
+            //    EconomySnapshot.Consumption.TryGetValue(resource, out var consumed);
 
-                string status = net < 0 ? "! DEFICIT" : "^ SURPLUS";
-                Debug.Log($"{status} | {resource}: Net {net}, Produced {produced}, Consumed {consumed}");
-            }
+            //    string status = net < 0 ? "! DEFICIT" : "^ SURPLUS";
+            //    Debug.Log($"{status} | {resource}: Net {net}, Produced {produced}, Consumed {consumed}");
+            //}
 
-            Debug.Log($"--------------------------------------------");
+            //Debug.Log($"--------------------------------------------");
         }
     }
 }

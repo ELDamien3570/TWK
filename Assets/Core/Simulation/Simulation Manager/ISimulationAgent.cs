@@ -6,8 +6,8 @@ namespace TWK.Core
     {
         void Initialize(WorldTimeManager worldTimeManager);
         void AdvanceDay();   
-        public virtual void AdvanceSeason();
-        public virtual void AdvanceYear();
+        void AdvanceSeason();
+        void AdvanceYear();
 
     }
 }
