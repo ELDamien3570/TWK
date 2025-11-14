@@ -15,10 +15,6 @@ namespace TWK.Realms
         // ========== IDENTITY ==========
         public string Name;
         public int CityID;
-        public int OwnerRealmID;    
-
-
-        // ========== OWNERSHIP ==========
         public int OwnerRealmID = -1;
 
         // ========== GEOGRAPHIC ==========
