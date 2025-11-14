@@ -23,9 +23,6 @@ namespace TWK.Economy
         // In real implementation, this would be populated from ScriptableObjects
         private Dictionary<int, BuildingDefinition> definitionLookup = new Dictionary<int, BuildingDefinition>();
 
-        // Legacy BuildingData lookup (building ID -> BuildingData) for backward compatibility
-        private Dictionary<int, BuildingData> legacyDataLookup = new Dictionary<int, BuildingData>();
-
         private WorldTimeManager worldTimeManager;
 
         private void Awake()
@@ -67,55 +64,9 @@ namespace TWK.Economy
         // ========== CONSTRUCTION ==========
 
         /// <summary>
-        /// Construct a new building (backward compatible with old BuildingData).
-        /// DEPRECATED: Use ConstructBuildingNew() with BuildingDefinition instead.
+        /// Construct a new building using BuildingDefinition.
         /// </summary>
-        [System.Obsolete("Use ConstructBuildingNew() with BuildingDefinition instead of BuildingData")]
-        public BuildingInstance ConstructBuilding(int cityID, BuildingData data, Vector3 position)
-        {
-            // Create instance data
-            var instanceData = new BuildingInstanceData(
-                nextBuildingID++,
-                cityID,
-                data.GetInstanceID(), // Use BuildingData's instance ID as definition ID for now
-                position,
-                data.ConstructionTimeDays,
-                data.BaseEfficiency
-            );
-
-            // Deduct construction costs
-            if (DeductConstructionCosts(cityID, data.BaseBuildCost))
-            {
-                instanceData.HasPaidConstructionCost = true;
-                buildings.Add(instanceData);
-                buildingLookup[instanceData.ID] = instanceData;
-
-                // Store legacy BuildingData for retrieval by UI
-                legacyDataLookup[instanceData.ID] = data;
-
-                if (instanceData.IsUnderConstruction)
-                {
-                    Debug.Log($"[BuildingManager] Started construction of {data.BuildingName} - {data.ConstructionTimeDays} days remaining. Costs deducted immediately.");
-                }
-                else
-                {
-                    Debug.Log($"[BuildingManager] {data.BuildingName} completed immediately. Costs deducted.");
-                }
-
-                // Return backward-compatible BuildingInstance struct
-                return ConvertToLegacyInstance(instanceData, data);
-            }
-            else
-            {
-                Debug.LogWarning($"[BuildingManager] Insufficient resources to build {data.BuildingName} in city {cityID}");
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Construct a new building using BuildingDefinition (new way).
-        /// </summary>
-        public BuildingInstanceData ConstructBuildingNew(int cityID, BuildingDefinition definition, Vector3 position)
+        public BuildingInstanceData ConstructBuilding(int cityID, BuildingDefinition definition, Vector3 position)
         {
             // Check if city's culture has unlocked this building
             if (!IsBuildingUnlockedForCity(cityID, definition))
@@ -241,50 +192,25 @@ namespace TWK.Economy
 
         // ========== QUERIES ==========
 
-        public IEnumerable<BuildingInstance> GetBuildingsForCity(int cityID)
-        {
-            // TODO: This requires BuildingData lookup
-            // For now, return empty - needs refactor when BuildingDefinitions are loaded
-            yield break;
-        }
-
-        public IEnumerable<BuildingInstanceData> GetBuildingsForCityNew(int cityID)
+        public IEnumerable<BuildingInstanceData> GetBuildingsForCity(int cityID)
         {
             foreach (var b in buildings)
                 if (b.CityID == cityID)
                     yield return b;
         }
 
-        public IEnumerable<BuildingInstance> GetCompletedBuildingsForCity(int cityID)
-        {
-            // TODO: Backward compatibility wrapper
-            yield break;
-        }
-
-        public IEnumerable<BuildingInstanceData> GetCompletedBuildingsForCityNew(int cityID)
+        public IEnumerable<BuildingInstanceData> GetCompletedBuildingsForCity(int cityID)
         {
             foreach (var b in buildings)
                 if (b.CityID == cityID && b.IsCompleted)
                     yield return b;
         }
 
-        public IEnumerable<BuildingInstance> GetBuildingsUnderConstruction(int cityID)
-        {
-            // TODO: Backward compatibility wrapper
-            yield break;
-        }
-
-        public IEnumerable<BuildingInstanceData> GetBuildingsUnderConstructionNew(int cityID)
+        public IEnumerable<BuildingInstanceData> GetBuildingsUnderConstruction(int cityID)
         {
             foreach (var b in buildings)
                 if (b.CityID == cityID && b.IsUnderConstruction)
                     yield return b;
-        }
-
-        public BuildingInstance? GetBuildingByID(int buildingID)
-        {
-            // TODO: Backward compatibility wrapper - needs BuildingData
-            return null;
         }
 
         public BuildingInstanceData GetInstanceData(int buildingID)
@@ -294,13 +220,7 @@ namespace TWK.Economy
 
         public BuildingDefinition GetDefinition(int definitionID)
         {
-            // TODO: Implement when definitions are loaded
-            return null;
-        }
-
-        public BuildingData GetLegacyBuildingData(int buildingID)
-        {
-            return legacyDataLookup.GetValueOrDefault(buildingID, null);
+            return definitionLookup.GetValueOrDefault(definitionID, null);
         }
 
         public IEnumerable<BuildingInstanceData> GetAllBuildings()

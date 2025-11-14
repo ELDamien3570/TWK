@@ -15,7 +15,6 @@ namespace TWK.UI.ViewModels
     {
         private BuildingInstanceData _instanceData;
         private BuildingDefinition _definition;
-        private BuildingData _legacyData; // For backward compatibility
         private int _buildingID;
 
         // ========== IDENTITY ==========
@@ -114,12 +113,6 @@ namespace TWK.UI.ViewModels
 
             _definition = BuildingManager.Instance.GetDefinition(_instanceData.BuildingDefinitionID);
 
-            // Try to get legacy data if definition not available (backward compatibility)
-            if (_definition == null)
-            {
-                _legacyData = BuildingManager.Instance.GetLegacyBuildingData(_buildingID);
-            }
-
             RefreshIdentity();
             RefreshState();
             RefreshConstruction();
@@ -137,24 +130,19 @@ namespace TWK.UI.ViewModels
             BuildingID = _instanceData.ID;
             CityID = _instanceData.CityID;
 
-            // Use definition if available, otherwise try legacy data, then fallback
+            // Use definition if available, otherwise use fallback
             if (_definition != null)
             {
                 BuildingName = _definition.BuildingName;
                 BuildingCategory = _definition.BuildingCategory;
                 CategoryName = _definition.BuildingCategory.ToString();
             }
-            else if (_legacyData != null)
-            {
-                BuildingName = _legacyData.BuildingName;
-                BuildingCategory = _legacyData.buildingCategory;
-                CategoryName = _legacyData.buildingCategory.ToString();
-            }
             else
             {
                 BuildingName = $"Building #{_instanceData.ID}";
                 BuildingCategory = TreeType.Economics; // Default
                 CategoryName = "Unknown";
+                Debug.LogWarning($"[BuildingViewModel] Building definition not found for building {_instanceData.ID}");
             }
 
             Position = _instanceData.Position;
@@ -254,12 +242,6 @@ namespace TWK.UI.ViewModels
                 BuildCost = _definition.BaseBuildCost.ToDictionary();
                 MaintenanceCost = _definition.CalculateMaintenanceCost(TotalWorkers);
             }
-            else if (_legacyData != null)
-            {
-                // Use legacy BuildingData for costs
-                BuildCost = new Dictionary<ResourceType, int>(_legacyData.BaseBuildCost);
-                MaintenanceCost = new Dictionary<ResourceType, int>(_legacyData.BaseMaintenanceCost);
-            }
             else
             {
                 BuildCost = new Dictionary<ResourceType, int>();
@@ -277,24 +259,6 @@ namespace TWK.UI.ViewModels
                 BaseProduction = _definition.BaseProduction.ToDictionary();
                 MaxProduction = _definition.MaxProduction.ToDictionary();
                 CurrentProduction = BuildingSimulation.CalculateProduction(_instanceData, _definition);
-            }
-            else if (_legacyData != null)
-            {
-                // Use legacy BuildingData for production
-                BaseProduction = new Dictionary<ResourceType, int>(_legacyData.BaseProduction);
-                MaxProduction = new Dictionary<ResourceType, int>(_legacyData.BaseProduction);
-
-                // Calculate current production based on legacy data and building state
-                CurrentProduction = new Dictionary<ResourceType, int>();
-                if (_instanceData.IsCompleted && _instanceData.IsActive)
-                {
-                    foreach (var kvp in _legacyData.BaseProduction)
-                    {
-                        // Apply efficiency multiplier to base production
-                        int production = Mathf.RoundToInt(kvp.Value * _instanceData.EfficiencyMultiplier);
-                        CurrentProduction[kvp.Key] = production;
-                    }
-                }
             }
             else
             {

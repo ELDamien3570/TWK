@@ -14,6 +14,19 @@ namespace TWK.Cultures
     {
         public static CultureManager Instance { get; private set; }
 
+        // ========== EVENTS ==========
+        /// <summary>
+        /// Fired when a city's main culture changes.
+        /// Args: cityID, oldCultureID, newCultureID
+        /// </summary>
+        public event Action<int, int, int> OnCityCultureChanged;
+
+        /// <summary>
+        /// Fired when a culture unlocks new buildings (via tech tree or pillars).
+        /// Args: cultureID
+        /// </summary>
+        public event Action<int> OnCultureBuildingsChanged;
+
         // ========== CULTURE DATA ==========
         [Header("Cultures")]
         [SerializeField] private List<CultureData> allCultures = new List<CultureData>();
@@ -58,6 +71,30 @@ namespace TWK.Cultures
         private void Start()
         {
             InitializeCultures();
+
+            // Subscribe to population changes
+            if (PopulationManager.Instance != null)
+            {
+                PopulationManager.Instance.OnCityPopulationChanged += HandleCityPopulationChanged;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from population changes
+            if (PopulationManager.Instance != null)
+            {
+                PopulationManager.Instance.OnCityPopulationChanged -= HandleCityPopulationChanged;
+            }
+        }
+
+        /// <summary>
+        /// Handle population changes in cities - recalculate culture if needed.
+        /// </summary>
+        private void HandleCityPopulationChanged(int cityID)
+        {
+            // Recalculate city culture (this will fire OnCityCultureChanged if culture changed)
+            CalculateCityCulture(cityID);
         }
 
         private void InitializeCultures()
@@ -226,7 +263,7 @@ namespace TWK.Cultures
                     if (oldCulture != newCulture)
                     {
                         cityCultures[cityID] = newCulture;
-                        OnCityCultureChanged(cityID, oldCulture, newCulture);
+                        FireCityCultureChangedEvent(cityID, oldCulture, newCulture);
                     }
 
                     return kvp.Key;
@@ -238,7 +275,7 @@ namespace TWK.Cultures
             if (previousCulture != -1)
             {
                 cityCultures.Remove(cityID);
-                OnCityCultureChanged(cityID, previousCulture, -1);
+                FireCityCultureChangedEvent(cityID, previousCulture, -1);
             }
 
             return -1;
@@ -254,13 +291,14 @@ namespace TWK.Cultures
 
         /// <summary>
         /// Called when a city's dominant culture changes.
+        /// Fires the OnCityCultureChanged event for listeners.
         /// </summary>
-        private void OnCityCultureChanged(int cityID, int oldCultureID, int newCultureID)
+        private void FireCityCultureChangedEvent(int cityID, int oldCultureID, int newCultureID)
         {
             Debug.Log($"[CultureManager] City {cityID} culture changed from {oldCultureID} to {newCultureID}");
 
-            // TODO: Trigger modifier recalculation for this city
-            // This will be implemented in the modifier application system
+            // Fire event for cities and other systems to react
+            OnCityCultureChanged?.Invoke(cityID, oldCultureID, newCultureID);
         }
 
         // ========== XP ACCUMULATION ==========
@@ -514,6 +552,13 @@ namespace TWK.Cultures
         private void OnTechNodeUnlocked(CultureData culture, TechNode node)
         {
             Debug.Log($"[CultureManager] {culture.CultureName} unlocked tech node: {node.NodeName}");
+
+            // Check if this node unlocks any buildings
+            if (node.UnlockedBuildings != null && node.UnlockedBuildings.Count > 0)
+            {
+                // Fire event so cities with this culture can refresh their available buildings
+                OnCultureBuildingsChanged?.Invoke(culture.GetCultureID());
+            }
 
             // TODO: Apply modifiers to all realms/cities/agents of this culture
             // This will be implemented in the modifier application system

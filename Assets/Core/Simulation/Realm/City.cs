@@ -4,6 +4,7 @@ using TWK.Core;
 using TWK.Simulation;
 using TWK.Realms.Demographics;
 using TWK.Economy;
+using TWK.Cultures;
 
 namespace TWK.Realms
 {
@@ -71,6 +72,10 @@ namespace TWK.Realms
         private ResourceManager resourceManager;
         private WorldTimeManager worldTimeManager;
 
+        // ========== CULTURE CACHING ==========
+        private int _cachedMainCultureID = -1;
+        private HashSet<BuildingDefinition> _cachedAvailableBuildings = new HashSet<BuildingDefinition>();
+
         // ========== LIFECYCLE ==========
         private void Awake()
         {
@@ -96,6 +101,16 @@ namespace TWK.Realms
             worldTimeManager.OnSeasonTick += AdvanceSeason;
             worldTimeManager.OnYearTick += AdvanceYear;
 
+            // Subscribe to culture events
+            if (CultureManager.Instance != null)
+            {
+                CultureManager.Instance.OnCityCultureChanged += HandleCityCultureChanged;
+                CultureManager.Instance.OnCultureBuildingsChanged += HandleCultureBuildingsChanged;
+
+                // Initialize culture cache
+                RefreshCultureAndBuildings();
+            }
+
             // Initialize ledger
             dailyLedger = new ResourceLedger(CityID);
             resourceManager.RegisterCity(CityID);
@@ -114,6 +129,13 @@ namespace TWK.Realms
                 worldTimeManager.OnDayTick -= AdvanceDay;
                 worldTimeManager.OnSeasonTick -= AdvanceSeason;
                 worldTimeManager.OnYearTick -= AdvanceYear;
+            }
+
+            // Unsubscribe from culture events
+            if (CultureManager.Instance != null)
+            {
+                CultureManager.Instance.OnCityCultureChanged -= HandleCityCultureChanged;
+                CultureManager.Instance.OnCultureBuildingsChanged -= HandleCultureBuildingsChanged;
             }
         }
 
@@ -149,7 +171,7 @@ namespace TWK.Realms
         /// </summary>
         public void BuildBuilding(BuildingDefinition definition, Vector3 position)
         {
-            var instanceData = BuildingManager.Instance.ConstructBuildingNew(CityID, definition, position);
+            var instanceData = BuildingManager.Instance.ConstructBuilding(CityID, definition, position);
             if (instanceData != null)
             {
                 cityData.BuildingIDs.Add(instanceData.ID);
@@ -180,23 +202,124 @@ namespace TWK.Realms
             return breakdown;
         }
 
-        // ========== DEPRECATED (for backward compatibility) ==========
         /// <summary>
-        /// Deprecated: Use cityData.BuildingIDs instead.
+        /// Get population breakdown by culture with counts and percentages.
         /// </summary>
-        public List<BuildingInstance> Buildings
+        public Dictionary<CultureData, (int count, float percentage)> GetCultureBreakdown()
         {
-            get
+            var culturePopulations = new Dictionary<CultureData, int>();
+            int totalPopulation = 0;
+
+            foreach (var pop in PopulationManager.Instance.GetPopulationsByCity(CityID))
             {
-                var buildings = new List<BuildingInstance>();
-                foreach (int id in cityData.BuildingIDs)
-                {
-                    var building = BuildingManager.Instance.GetBuildingByID(id);
-                    if (building.HasValue)
-                        buildings.Add(building.Value);
-                }
-                return buildings;
+                if (pop.Culture == null) continue;
+
+                if (!culturePopulations.ContainsKey(pop.Culture))
+                    culturePopulations[pop.Culture] = 0;
+
+                culturePopulations[pop.Culture] += pop.PopulationCount;
+                totalPopulation += pop.PopulationCount;
             }
+
+            var breakdown = new Dictionary<CultureData, (int count, float percentage)>();
+            foreach (var kvp in culturePopulations)
+            {
+                float percentage = totalPopulation > 0 ? (kvp.Value / (float)totalPopulation) * 100f : 0f;
+                breakdown[kvp.Key] = (kvp.Value, percentage);
+            }
+
+            return breakdown;
+        }
+
+        /// <summary>
+        /// Get the city's main (dominant) culture.
+        /// Returns null if no culture has >50% population.
+        /// </summary>
+        public CultureData GetMainCulture()
+        {
+            if (_cachedMainCultureID == -1)
+                return null;
+
+            return CultureManager.Instance.GetCulture(_cachedMainCultureID);
+        }
+
+        /// <summary>
+        /// Get all buildings available to construct in this city based on its culture.
+        /// </summary>
+        public HashSet<BuildingDefinition> GetAvailableBuildings()
+        {
+            return new HashSet<BuildingDefinition>(_cachedAvailableBuildings);
+        }
+
+        // ========== CULTURE EVENT HANDLERS ==========
+
+        /// <summary>
+        /// Handle culture change events from CultureManager.
+        /// </summary>
+        private void HandleCityCultureChanged(int cityID, int oldCultureID, int newCultureID)
+        {
+            // Only respond to events for this city
+            if (cityID != this.CityID) return;
+
+            Debug.Log($"[City] {Name} culture changed from {oldCultureID} to {newCultureID}");
+
+            // Refresh culture and buildings cache
+            RefreshCultureAndBuildings();
+        }
+
+        /// <summary>
+        /// Handle culture buildings changed events from CultureManager.
+        /// </summary>
+        private void HandleCultureBuildingsChanged(int cultureID)
+        {
+            // Only respond if this culture affects our city
+            if (cultureID != _cachedMainCultureID) return;
+
+            Debug.Log($"[City] {Name} refreshing buildings due to culture {cultureID} unlocking new buildings");
+
+            // Refresh available buildings
+            RefreshAvailableBuildings();
+        }
+
+        /// <summary>
+        /// Refresh the cached main culture and available buildings.
+        /// Called when city culture changes or population shifts.
+        /// </summary>
+        private void RefreshCultureAndBuildings()
+        {
+            if (CultureManager.Instance == null) return;
+
+            // Recalculate main culture
+            int newCultureID = CultureManager.Instance.CalculateCityCulture(CityID);
+            _cachedMainCultureID = newCultureID;
+
+            // Refresh available buildings
+            RefreshAvailableBuildings();
+        }
+
+        /// <summary>
+        /// Refresh the cached available buildings from the city's main culture.
+        /// Called when culture changes or when culture unlocks new buildings.
+        /// </summary>
+        private void RefreshAvailableBuildings()
+        {
+            _cachedAvailableBuildings.Clear();
+
+            if (_cachedMainCultureID == -1)
+            {
+                Debug.Log($"[City] {Name} has no main culture (no >50% threshold)");
+                return;
+            }
+
+            var culture = CultureManager.Instance.GetCulture(_cachedMainCultureID);
+            if (culture == null)
+            {
+                Debug.LogWarning($"[City] {Name} culture ID {_cachedMainCultureID} not found");
+                return;
+            }
+
+            _cachedAvailableBuildings = culture.GetAllUnlockedBuildings();
+            Debug.Log($"[City] {Name} has {_cachedAvailableBuildings.Count} buildings available from culture {culture.CultureName}");
         }
 
         // ========== DEBUG & DIAGNOSTICS ==========

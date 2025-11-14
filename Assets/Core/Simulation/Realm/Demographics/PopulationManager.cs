@@ -12,6 +12,13 @@ namespace TWK.Realms.Demographics
     {
         public static PopulationManager Instance { get; private set; }
 
+        // ========== EVENTS ==========
+        /// <summary>
+        /// Fired when a city's population changes (new groups added or modified).
+        /// Args: cityID
+        /// </summary>
+        public event Action<int> OnCityPopulationChanged;
+
         [SerializeField] private WorldTimeManager worldTimeManager;
         
         // Add this dictionary to track cities
@@ -132,6 +139,9 @@ namespace TWK.Realms.Demographics
                 populationsByCity[cityId] = new List<int>();
             populationsByCity[cityId].Add(pop.ID);
 
+            // Fire event for population change
+            OnCityPopulationChanged?.Invoke(cityId);
+
             return pop.ID;
         }
 
@@ -153,6 +163,9 @@ namespace TWK.Realms.Demographics
             if (!populationsByCity.ContainsKey(cityId))
                 populationsByCity[cityId] = new List<int>();
             populationsByCity[cityId].Add(pop.ID);
+
+            // Fire event for population change
+            OnCityPopulationChanged?.Invoke(cityId);
 
             return pop;
         }

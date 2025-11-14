@@ -6,6 +6,7 @@ using TWK.Realms;
 using TWK.UI.ViewModels;
 using TWK.Economy;
 using TWK.Realms.Demographics;
+using TWK.Cultures;
 
 namespace TWK.UI
 {
@@ -68,6 +69,10 @@ namespace TWK.UI
         [SerializeField] private GameObject buildingItemPrefab;
         [SerializeField] private Button buildFarmButton;
         [SerializeField] private TextMeshProUGUI buildFarmCostText;
+
+        [Header("Culture Tab")]
+        [SerializeField] private TextMeshProUGUI cultureBreakdownText;
+        [SerializeField] private TextMeshProUGUI mainCultureInfoText;
 
         [Header("Settings")]
         [SerializeField] private float refreshInterval = 1f; // Refresh UI every second
@@ -214,7 +219,9 @@ namespace TWK.UI
                 RefreshEconomicTab();
             else if (activeTab == buildingTab)
                 RefreshBuildingTab();
-            // Culture and Religion tabs are blank for now
+            else if (activeTab == cultureTab)
+                RefreshCultureTab();
+            // Religion tab is blank for now
         }
 
         private GameObject GetActiveTab()
@@ -432,6 +439,74 @@ namespace TWK.UI
 
             // Refresh UI
             RefreshUI();
+        }
+
+        // ========== CULTURE TAB ==========
+
+        private void RefreshCultureTab()
+        {
+            if (targetCity == null) return;
+
+            // Get culture breakdown from city
+            var cultureBreakdown = targetCity.GetCultureBreakdown();
+            var mainCulture = targetCity.GetMainCulture();
+
+            // Display culture breakdown
+            if (cultureBreakdownText != null)
+            {
+                if (cultureBreakdown.Count == 0)
+                {
+                    cultureBreakdownText.text = "<b>Population by Culture:</b>\n<i>No population data available</i>";
+                }
+                else
+                {
+                    string breakdown = "<b>Population by Culture:</b>\n\n";
+
+                    // Sort by population count (descending)
+                    var sortedCultures = cultureBreakdown.OrderByDescending(kvp => kvp.Value.count);
+
+                    foreach (var kvp in sortedCultures)
+                    {
+                        var culture = kvp.Key;
+                        var (count, percentage) = kvp.Value;
+
+                        // Highlight main culture
+                        string prefix = (mainCulture != null && culture == mainCulture) ? "<b>★ " : "  ";
+                        string suffix = (mainCulture != null && culture == mainCulture) ? " (Main Culture)</b>" : "";
+
+                        breakdown += $"{prefix}{culture.CultureName}: {count:N0} ({percentage:F1}%){suffix}\n";
+                    }
+
+                    cultureBreakdownText.text = breakdown;
+                }
+            }
+
+            // Display main culture info
+            if (mainCultureInfoText != null)
+            {
+                if (mainCulture == null)
+                {
+                    mainCultureInfoText.text = "<b>Main Culture:</b>\n<i>No dominant culture (requires >50% of population)</i>";
+                }
+                else
+                {
+                    string info = $"<b>Main Culture:</b> {mainCulture.CultureName}\n\n";
+                    info += "<b>Cultural Progress (XP Applied):</b>\n";
+
+                    // Display XP for each tree type
+                    foreach (TreeType treeType in System.Enum.GetValues(typeof(TreeType)))
+                    {
+                        var techTree = mainCulture.GetTechTree(treeType);
+                        if (techTree != null)
+                        {
+                            int xpApplied = Mathf.FloorToInt(techTree.TotalXPEarned);
+                            info += $"  {treeType}: {xpApplied} XP\n";
+                        }
+                    }
+
+                    mainCultureInfoText.text = info;
+                }
+            }
         }
 
         // ========== PUBLIC API ==========
