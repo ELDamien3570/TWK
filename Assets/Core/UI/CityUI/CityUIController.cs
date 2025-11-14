@@ -527,7 +527,10 @@ namespace TWK.UI
                 info += "<b>Production:</b>\n";
                 foreach (var prod in def.MaxProduction)
                 {
-                    int baseAmount = def.BaseProduction.FirstOrDefault(p => p.ResourceType == prod.ResourceType)?.Amount ?? 0;
+                    int baseAmount = def.BaseProduction
+                    .Where(p => p.ResourceType == prod.ResourceType)
+                    .Select(p => (int?)p.Amount)
+                    .FirstOrDefault() ?? 0;
                     info += $"  {prod.ResourceType}: {baseAmount} - {prod.Amount} per day\n";
                 }
                 info += "\n";

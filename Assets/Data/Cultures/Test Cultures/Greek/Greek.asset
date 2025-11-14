@@ -52,6 +52,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 1f4a10e148ad96943aaf52b6eaec97b2, type: 2}
     UnlockedNodeIDs: 
     OwnerRealmID: 0
-  DefaultBuildingUnlocks: []
+  DefaultBuildingUnlocks:
+  - {fileID: 11400000, guid: d22ae95c547d1da4f8931f5987222059, type: 2}
   IsHybrid: 0
   ParentCultures: []
