@@ -134,7 +134,7 @@ namespace TWK.Economy
             );
 
             // Deduct construction costs
-            if (DeductConstructionCosts(cityID, definition.BaseBuildCost))
+            if (DeductConstructionCosts(cityID, definition.BaseBuildCost.ToDictionary()))
             {
                 instanceData.HasPaidConstructionCost = true;
                 buildings.Add(instanceData);

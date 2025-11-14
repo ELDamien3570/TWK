@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using TWK.Cultures;
 using TWK.Realms.Demographics;
-using TWK.Utils;
 
 namespace TWK.Economy
 {
@@ -32,14 +31,14 @@ namespace TWK.Economy
         public List<TreeType> RequiredHubTypes = new List<TreeType>();
 
         [Header("Costs")]
-        public ResourceIntDictionary BaseBuildCost = new ResourceIntDictionary();
-        public ResourceIntDictionary BaseMaintenanceCost = new ResourceIntDictionary();
+        public List<ResourceAmount> BaseBuildCost = new List<ResourceAmount>();
+        public List<ResourceAmount> BaseMaintenanceCost = new List<ResourceAmount>();
 
         [Header("Production")]
-        public ResourceIntDictionary BaseProduction = new ResourceIntDictionary();
+        public List<ResourceAmount> BaseProduction = new List<ResourceAmount>();
 
         [Tooltip("Max production when fully staffed")]
-        public ResourceIntDictionary MaxProduction = new ResourceIntDictionary();
+        public List<ResourceAmount> MaxProduction = new List<ResourceAmount>();
 
         [Header("Culture Tech XP")]
         [Tooltip("Base culture tech XP generated per month (varies with worker count like production)")]
@@ -62,13 +61,13 @@ namespace TWK.Economy
         public List<PopulationArchetypes> AllowedWorkerTypes = new List<PopulationArchetypes>();
 
         [Tooltip("Required worker types (must have at least one)")]
-        public PopulationIntDictionary RequiredWorkers_ByType = new PopulationIntDictionary();
+        public List<WorkerRequirement> RequiredWorkers_ByType = new List<WorkerRequirement>();
 
         [Tooltip("Worker efficiency multipliers by archetype (1.0 = normal)")]
-        public PopulationFloatDictionary WorkerEfficiency = new PopulationFloatDictionary();
+        public List<WorkerEfficiencyModifier> WorkerEfficiency = new List<WorkerEfficiencyModifier>();
 
         [Tooltip("Penalties for certain worker types (negative multiplier)")]
-        public PopulationFloatDictionary WorkerPenalties = new PopulationFloatDictionary();
+        public List<WorkerEfficiencyModifier> WorkerPenalties = new List<WorkerEfficiencyModifier>();
 
         [Header("Population Effects")]
         [Tooltip("Education increase per day per worker")]
@@ -112,12 +111,12 @@ namespace TWK.Economy
             float efficiency = 1f;
 
             // Apply efficiency multiplier
-            if (WorkerEfficiency.ContainsKey(archetype))
-                efficiency *= WorkerEfficiency[archetype];
+            float efficiencyBonus = WorkerEfficiency.GetMultiplier(archetype, 1f);
+            efficiency *= efficiencyBonus;
 
             // Apply penalties (negative effects)
-            if (WorkerPenalties.ContainsKey(archetype))
-                efficiency *= (1f - WorkerPenalties[archetype]);
+            float penalty = WorkerPenalties.GetMultiplier(archetype, 0f);
+            efficiency *= (1f - penalty);
 
             return efficiency;
         }
@@ -132,8 +131,8 @@ namespace TWK.Economy
             if (!RequiresWorkers)
             {
                 // Buildings that don't require workers produce at base rate
-                foreach (var kvp in BaseProduction)
-                    production[kvp.Key] = kvp.Value;
+                foreach (var item in BaseProduction)
+                    production[item.ResourceType] = item.Amount;
                 return production;
             }
 
@@ -147,24 +146,24 @@ namespace TWK.Economy
             float workerRatio = OptimalWorkers > 0 ? (workerCount / (float)OptimalWorkers) : 1f;
             workerRatio = Mathf.Clamp01(workerRatio); // Cap at 100%
 
-            foreach (var kvp in MaxProduction)
+            foreach (var item in MaxProduction)
             {
-                int maxProd = kvp.Value;
-                int baseProd = BaseProduction.GetValueOrDefault(kvp.Key, 0);
+                int maxProd = item.Amount;
+                int baseProd = BaseProduction.GetAmount(item.ResourceType);
 
                 // Scale between base and max based on workers
                 int scaledProd = Mathf.RoundToInt(
                     Mathf.Lerp(baseProd, maxProd, workerRatio) * averageWorkerEfficiency * BaseEfficiency
                 );
 
-                production[kvp.Key] = scaledProd;
+                production[item.ResourceType] = scaledProd;
             }
 
             // Add any base production that isn't in max production
-            foreach (var kvp in BaseProduction)
+            foreach (var item in BaseProduction)
             {
-                if (!production.ContainsKey(kvp.Key))
-                    production[kvp.Key] = Mathf.RoundToInt(kvp.Value * averageWorkerEfficiency * BaseEfficiency);
+                if (!production.ContainsKey(item.ResourceType))
+                    production[item.ResourceType] = Mathf.RoundToInt(item.Amount * averageWorkerEfficiency * BaseEfficiency);
             }
 
             return production;
@@ -177,10 +176,10 @@ namespace TWK.Economy
         {
             var costs = new Dictionary<ResourceType, int>();
 
-            foreach (var kvp in BaseMaintenanceCost)
+            foreach (var item in BaseMaintenanceCost)
             {
                 // For now, maintenance is flat. Could scale with workers if desired.
-                costs[kvp.Key] = kvp.Value;
+                costs[item.ResourceType] = item.Amount;
             }
 
             return costs;
