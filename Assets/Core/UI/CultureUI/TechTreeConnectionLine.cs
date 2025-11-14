@@ -72,10 +72,10 @@ namespace TWK.UI
                 return;
 
             // Adjust start position to right edge of source node
-            startPos.x += 100f; // Half of NODE_WIDTH (200/2)
+            startPos.x += 32f; // Half of NODE_WIDTH (64/2)
 
             // Adjust end position to left edge of target node
-            endPos.x -= 100f; // Half of NODE_WIDTH (200/2)
+            endPos.x -= 32f; // Half of NODE_WIDTH (64/2)
 
             // Calculate line center, length, and angle
             Vector2 direction = endPos - startPos;
