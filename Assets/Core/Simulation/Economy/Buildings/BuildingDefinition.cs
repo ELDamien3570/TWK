@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TWK.Cultures;
 using TWK.Realms.Demographics;
+using TWK.Utils;
 
 namespace TWK.Economy
 {
@@ -31,14 +32,14 @@ namespace TWK.Economy
         public List<TreeType> RequiredHubTypes = new List<TreeType>();
 
         [Header("Costs")]
-        public Dictionary<ResourceType, int> BaseBuildCost = new Dictionary<ResourceType, int>();
-        public Dictionary<ResourceType, int> BaseMaintenanceCost = new Dictionary<ResourceType, int>();
+        public ResourceIntDictionary BaseBuildCost = new ResourceIntDictionary();
+        public ResourceIntDictionary BaseMaintenanceCost = new ResourceIntDictionary();
 
         [Header("Production")]
-        public Dictionary<ResourceType, int> BaseProduction = new Dictionary<ResourceType, int>();
+        public ResourceIntDictionary BaseProduction = new ResourceIntDictionary();
 
         [Tooltip("Max production when fully staffed")]
-        public Dictionary<ResourceType, int> MaxProduction = new Dictionary<ResourceType, int>();
+        public ResourceIntDictionary MaxProduction = new ResourceIntDictionary();
 
         [Header("Culture Tech XP")]
         [Tooltip("Base culture tech XP generated per month (varies with worker count like production)")]
@@ -61,13 +62,13 @@ namespace TWK.Economy
         public List<PopulationArchetypes> AllowedWorkerTypes = new List<PopulationArchetypes>();
 
         [Tooltip("Required worker types (must have at least one)")]
-        public Dictionary<PopulationArchetypes, int> RequiredWorkers_ByType = new Dictionary<PopulationArchetypes, int>();
+        public PopulationIntDictionary RequiredWorkers_ByType = new PopulationIntDictionary();
 
         [Tooltip("Worker efficiency multipliers by archetype (1.0 = normal)")]
-        public Dictionary<PopulationArchetypes, float> WorkerEfficiency = new Dictionary<PopulationArchetypes, float>();
+        public PopulationFloatDictionary WorkerEfficiency = new PopulationFloatDictionary();
 
         [Tooltip("Penalties for certain worker types (negative multiplier)")]
-        public Dictionary<PopulationArchetypes, float> WorkerPenalties = new Dictionary<PopulationArchetypes, float>();
+        public PopulationFloatDictionary WorkerPenalties = new PopulationFloatDictionary();
 
         [Header("Population Effects")]
         [Tooltip("Education increase per day per worker")]

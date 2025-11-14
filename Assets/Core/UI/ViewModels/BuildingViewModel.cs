@@ -251,7 +251,7 @@ namespace TWK.UI.ViewModels
         {
             if (_definition != null)
             {
-                BuildCost = new Dictionary<ResourceType, int>(_definition.BaseBuildCost);
+                BuildCost = new Dictionary<ResourceType, int>(_definition.BaseBuildCost.Dictionary);
                 MaintenanceCost = _definition.CalculateMaintenanceCost(TotalWorkers);
             }
             else if (_legacyData != null)
