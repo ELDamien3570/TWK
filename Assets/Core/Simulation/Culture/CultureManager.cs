@@ -35,7 +35,7 @@ namespace TWK.Cultures
         private Dictionary<int, CultureData> cultureLookup = new Dictionary<int, CultureData>();
 
         // ========== CITY CULTURES ==========
-        // Maps city ID -> culture ID (based on >50% population threshold)
+        // Maps city ID -> culture ID (based on most prevalent culture)
         private Dictionary<int, int> cityCultures = new Dictionary<int, int>();
 
         // ========== REALM LEADER CULTURES ==========
@@ -228,8 +228,8 @@ namespace TWK.Cultures
         // ========== CITY CULTURE CALCULATION ==========
 
         /// <summary>
-        /// Calculate and update the dominant culture for a city (>50% population threshold).
-        /// Returns the culture ID, or -1 if no culture has >50%.
+        /// Calculate and update the dominant culture for a city (most prevalent culture).
+        /// Returns the culture ID, or -1 if the city has no population.
         /// </summary>
         public int CalculateCityCulture(int cityID)
         {
@@ -252,33 +252,35 @@ namespace TWK.Cultures
             if (totalPop == 0)
                 return -1;
 
-            // Find culture with >50% population
+            // Find culture with highest population (most prevalent)
+            int dominantCultureID = -1;
+            int highestPopulation = 0;
+
             foreach (var kvp in culturePops)
             {
-                float percentage = kvp.Value / (float)totalPop;
-                if (percentage > 0.5f)
+                if (kvp.Value > highestPopulation)
                 {
-                    int oldCulture = cityCultures.GetValueOrDefault(cityID, -1);
-                    int newCulture = kvp.Key;
-
-                    if (oldCulture != newCulture)
-                    {
-                        cityCultures[cityID] = newCulture;
-                        FireCityCultureChangedEvent(cityID, oldCulture, newCulture);
-                    }
-
-                    return kvp.Key;
+                    highestPopulation = kvp.Value;
+                    dominantCultureID = kvp.Key;
                 }
             }
 
-            // No culture has >50%
-            int previousCulture = cityCultures.GetValueOrDefault(cityID, -1);
-            if (previousCulture != -1)
+            // Update city culture if it changed
+            if (dominantCultureID != -1)
             {
-                cityCultures.Remove(cityID);
-                FireCityCultureChangedEvent(cityID, previousCulture, -1);
+                int oldCulture = cityCultures.GetValueOrDefault(cityID, -1);
+                int newCulture = dominantCultureID;
+
+                if (oldCulture != newCulture)
+                {
+                    cityCultures[cityID] = newCulture;
+                    FireCityCultureChangedEvent(cityID, oldCulture, newCulture);
+                }
+
+                return dominantCultureID;
             }
 
+            // Should not reach here if totalPop > 0, but handle edge case
             return -1;
         }
 
