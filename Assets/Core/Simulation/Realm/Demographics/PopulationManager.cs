@@ -143,7 +143,7 @@ namespace TWK.Realms.Demographics
             int cityId,
             PopulationArchetypes archetype,
             int count,
-            TWK.Culture.CultureData culture,
+            CultureData culture,
             float averageAge = 30f)
         {
             var pop = new PopulationGroup(nextID++, cityId, archetype, count, culture, averageAge);

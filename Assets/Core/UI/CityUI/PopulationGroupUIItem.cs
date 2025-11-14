@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using TWK.UI.ViewModels;
+using System.Linq;
 
 namespace TWK.UI
 {
@@ -32,7 +33,8 @@ namespace TWK.UI
             // Archetype Name
             if (archetypeNameText != null)
             {
-                archetypeNameText.text = $"<b>{viewModel.Culture} {viewModel.ArchetypeName}</b> (ID: {viewModel.ID})";
+                string cultureName = viewModel.Culture.ToString().Split("(").First();
+                archetypeNameText.text = $"<b><color=green>{cultureName}</color> {viewModel.ArchetypeName}</b> (ID: {viewModel.ID})";
             }
 
             // Population

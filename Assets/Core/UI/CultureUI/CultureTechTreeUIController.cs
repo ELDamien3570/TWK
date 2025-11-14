@@ -21,10 +21,10 @@ namespace TWK.UI
 
         [Header("Tree Type Tabs")]
         [SerializeField] private Button economicsTabButton;
-        [SerializeField] private Button militaryTabButton;
+        [SerializeField] private Button warfareTabButton;
         [SerializeField] private Button religionTabButton;
-        [SerializeField] private Button administrationTabButton;
-        [SerializeField] private Button cultureTabButton;
+        [SerializeField] private Button politicsTabButton;
+        [SerializeField] private Button scienceTabButton;
 
         [Header("Tree Info")]
         [SerializeField] private TextMeshProUGUI treeNameText;
@@ -86,10 +86,10 @@ namespace TWK.UI
         private void SetupTabButtons()
         {
             economicsTabButton?.onClick.AddListener(() => ShowTreeType(TreeType.Economics));
-            militaryTabButton?.onClick.AddListener(() => ShowTreeType(TreeType.Military));
+            warfareTabButton?.onClick.AddListener(() => ShowTreeType(TreeType.Warfare));
             religionTabButton?.onClick.AddListener(() => ShowTreeType(TreeType.Religion));
-            administrationTabButton?.onClick.AddListener(() => ShowTreeType(TreeType.Administration));
-            cultureTabButton?.onClick.AddListener(() => ShowTreeType(TreeType.Culture));
+            politicsTabButton?.onClick.AddListener(() => ShowTreeType(TreeType.Politics));
+            scienceTabButton?.onClick.AddListener(() => ShowTreeType(TreeType.Science));
         }
 
         private void SetupUnlockButton()
@@ -372,10 +372,10 @@ namespace TWK.UI
         {
             cultureDropdown?.onValueChanged.RemoveAllListeners();
             economicsTabButton?.onClick.RemoveAllListeners();
-            militaryTabButton?.onClick.RemoveAllListeners();
+            warfareTabButton?.onClick.RemoveAllListeners();
             religionTabButton?.onClick.RemoveAllListeners();
-            administrationTabButton?.onClick.RemoveAllListeners();
-            cultureTabButton?.onClick.RemoveAllListeners();
+            politicsTabButton?.onClick.RemoveAllListeners();
+            scienceTabButton?.onClick.RemoveAllListeners();
             unlockNodeButton?.onClick.RemoveAllListeners();
         }
     }

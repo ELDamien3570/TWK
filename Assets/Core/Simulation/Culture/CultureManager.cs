@@ -3,7 +3,7 @@ using UnityEngine;
 using TWK.Realms;
 using TWK.Realms.Demographics;
 using TWK.Economy;
-using TWK.Core;
+using System.Linq;
 
 namespace TWK.Cultures
 {
