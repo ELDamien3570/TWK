@@ -8,7 +8,6 @@ using TWK.UI.ViewModels;
 using TWK.Economy;
 using TWK.Realms.Demographics;
 using TWK.Cultures;
-using System.Linq;
 
 namespace TWK.UI
 {
