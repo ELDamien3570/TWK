@@ -15,8 +15,7 @@ namespace TWK.Realms
         // ========== IDENTITY ==========
         public string Name;
         public int CityID;
-        public int OwnerRealmID;    
-
+        public int OwnerRealmID = -1;
 
         // ========== GEOGRAPHIC ==========
         public float LocationX, LocationY, LocationZ;

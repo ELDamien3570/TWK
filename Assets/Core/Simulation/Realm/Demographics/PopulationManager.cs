@@ -135,6 +135,28 @@ namespace TWK.Realms.Demographics
             return pop.ID;
         }
 
+        /// <summary>
+        /// Create a new population group with a specific culture.
+        /// Used for culture conversions and splitting population groups.
+        /// </summary>
+        public PopulationGroup CreatePopulationGroup(
+            int cityId,
+            PopulationArchetypes archetype,
+            int count,
+            CultureData culture,
+            float averageAge = 30f)
+        {
+            var pop = new PopulationGroup(nextID++, cityId, archetype, count, culture, averageAge);
+            populationGroups.Add(pop);
+            populationIndexById[pop.ID] = populationGroups.Count - 1;
+
+            if (!populationsByCity.ContainsKey(cityId))
+                populationsByCity[cityId] = new List<int>();
+            populationsByCity[cityId].Add(pop.ID);
+
+            return pop;
+        }
+
         public PopulationGroup GetPopulationData(int id)
         {
             if (populationIndexById.TryGetValue(id, out int index))

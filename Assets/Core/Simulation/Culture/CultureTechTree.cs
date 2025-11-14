@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using TWK.Cultures;
+using TWK.Economy;
 
 namespace TWK.Cultures
 {
@@ -137,19 +138,20 @@ namespace TWK.Cultures
         }
 
         /// <summary>
-        /// Get all building definition IDs unlocked by this tree.
+        /// Get all building definitions unlocked by this tree.
         /// </summary>
-        public HashSet<int> GetUnlockedBuildingIDs()
+        public HashSet<BuildingDefinition> GetUnlockedBuildings()
         {
-            var buildingIDs = new HashSet<int>();
+            var buildings = new HashSet<BuildingDefinition>();
             foreach (var node in GetUnlockedNodes())
             {
-                foreach (var buildingID in node.UnlockedBuildingDefinitionIDs)
+                foreach (var building in node.UnlockedBuildings)
                 {
-                    buildingIDs.Add(buildingID);
+                    if (building != null)
+                        buildings.Add(building);
                 }
             }
-            return buildingIDs;
+            return buildings;
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using TWK.Cultures;
+using TWK.Economy;
 
 namespace TWK.Cultures
 {
@@ -32,8 +33,8 @@ namespace TWK.Cultures
 
         // ========== DEFAULT UNLOCKS ==========
         [Header("Starting Unlocks")]
-        [Tooltip("Building definition IDs unlocked by default (starting buildings)")]
-        public List<int> DefaultBuildingUnlocks = new List<int>();
+        [Tooltip("Building definitions unlocked by default (starting buildings)")]
+        public List<BuildingDefinition> DefaultBuildingUnlocks = new List<BuildingDefinition>();
 
         // ========== HYBRID CULTURE DATA ==========
         [Header("Hybrid Culture (Optional)")]
@@ -97,31 +98,42 @@ namespace TWK.Cultures
         }
 
         /// <summary>
-        /// Get all unlocked building definition IDs from all sources.
+        /// Get all unlocked building definitions from all sources.
         /// </summary>
-        public HashSet<int> GetAllUnlockedBuildings()
+        public HashSet<BuildingDefinition> GetAllUnlockedBuildings()
         {
-            var buildingIDs = new HashSet<int>();
+            var buildings = new HashSet<BuildingDefinition>();
 
             // Add default unlocks
-            foreach (var id in DefaultBuildingUnlocks)
-                buildingIDs.Add(id);
+            foreach (var building in DefaultBuildingUnlocks)
+            {
+                if (building != null)
+                    buildings.Add(building);
+            }
 
             // Add buildings from cultural pillars
             foreach (var pillar in Pillars)
             {
-                foreach (var id in pillar.UnlockedBuildingDefinitionIDs)
-                    buildingIDs.Add(id);
+                if (pillar == null) continue;
+                foreach (var building in pillar.UnlockedBuildings)
+                {
+                    if (building != null)
+                        buildings.Add(building);
+                }
             }
 
             // Add buildings from tech trees
             foreach (var tree in TechTrees)
             {
-                foreach (var id in tree.GetUnlockedBuildingIDs())
-                    buildingIDs.Add(id);
+                if (tree == null) continue;
+                foreach (var building in tree.GetUnlockedBuildings())
+                {
+                    if (building != null)
+                        buildings.Add(building);
+                }
             }
 
-            return buildingIDs;
+            return buildings;
         }
 
         /// <summary>
@@ -149,9 +161,12 @@ namespace TWK.Cultures
         /// <summary>
         /// Check if a building is unlocked by this culture.
         /// </summary>
-        public bool IsBuildingUnlocked(int buildingDefinitionID)
+        public bool IsBuildingUnlocked(BuildingDefinition building)
         {
-            return GetAllUnlockedBuildings().Contains(buildingDefinitionID);
+            if (building == null)
+                return false;
+
+            return GetAllUnlockedBuildings().Contains(building);
         }
 
         // ========== HYBRID CULTURE CREATION ==========

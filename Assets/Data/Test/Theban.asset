@@ -13,11 +13,41 @@ MonoBehaviour:
   m_Name: Theban
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Cultures.CultureData
   CultureName: Theban
-  Description: From Greece
+  Description: From Thebes
   CultureColor: {r: 1, g: 0, b: 0, a: 1}
   Icon: {fileID: 0}
   Pillars: []
-  TechTrees: []
+  TechTrees:
+  - TreeType: 3
+    AccumulatedXP: 0
+    TotalXPEarned: 0
+    AllNodes: []
+    UnlockedNodeIDs: 
+    OwnerRealmID: -1
+  - TreeType: 1
+    AccumulatedXP: 0
+    TotalXPEarned: 0
+    AllNodes: []
+    UnlockedNodeIDs: 
+    OwnerRealmID: -1
+  - TreeType: 2
+    AccumulatedXP: 0
+    TotalXPEarned: 0
+    AllNodes: []
+    UnlockedNodeIDs: 
+    OwnerRealmID: -1
+  - TreeType: 3
+    AccumulatedXP: 0
+    TotalXPEarned: 0
+    AllNodes: []
+    UnlockedNodeIDs: 
+    OwnerRealmID: -1
+  - TreeType: 4
+    AccumulatedXP: 0
+    TotalXPEarned: 0
+    AllNodes: []
+    UnlockedNodeIDs: 
+    OwnerRealmID: -1
   DefaultBuildingUnlocks: 
   IsHybrid: 1
   ParentCultures:
