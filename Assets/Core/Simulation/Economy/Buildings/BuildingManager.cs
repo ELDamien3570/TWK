@@ -435,14 +435,6 @@ namespace TWK.Economy
             return Mathf.Max(0, hubDef.HubletSlots - hub.OccupiedHubletSlots);
         }
 
-        // ========== BACKWARD COMPATIBILITY ==========
-
-        private BuildingInstance ConvertToLegacyInstance(BuildingInstanceData data, BuildingData buildingData)
-        {
-            // Convert new data format to old struct format
-            return new BuildingInstance(data.ID, data.CityID, buildingData, data.Position);
-        }
-
         // ========== DEFINITION LOADING (TODO) ==========
 
         private void LoadBuildingDefinitions()
