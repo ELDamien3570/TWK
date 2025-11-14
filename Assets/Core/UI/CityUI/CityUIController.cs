@@ -68,8 +68,12 @@ namespace TWK.UI
         [Header("Building Tab")]
         [SerializeField] private Transform buildingListContainer;
         [SerializeField] private GameObject buildingItemPrefab;
-        [SerializeField] private Button buildFarmButton;
-        [SerializeField] private TextMeshProUGUI buildFarmCostText;
+
+        [Header("Building Tab - Build Menu")]
+        [SerializeField] private TMP_Dropdown buildingSelectionDropdown;
+        [SerializeField] private TextMeshProUGUI selectedBuildingInfoText;
+        [SerializeField] private Button constructBuildingButton;
+        [SerializeField] private TextMeshProUGUI constructButtonText;
 
         [Header("Culture Tab")]
         [SerializeField] private TextMeshProUGUI cultureBreakdownText;
@@ -82,6 +86,10 @@ namespace TWK.UI
         private List<GameObject> currentPopGroupItems = new List<GameObject>();
         private List<GameObject> currentBuildingItems = new List<GameObject>();
         private float timeSinceLastRefresh = 0f;
+
+        // Build menu state
+        private List<BuildingDefinition> availableBuildings = new List<BuildingDefinition>();
+        private BuildingDefinition selectedBuildingDefinition = null;
 
         private void Start()
         {
@@ -114,7 +122,7 @@ namespace TWK.UI
             buildingTabButton?.onClick.RemoveAllListeners();
             cultureTabButton?.onClick.RemoveAllListeners();
             religionTabButton?.onClick.RemoveAllListeners();
-            buildFarmButton?.onClick.RemoveAllListeners();
+            constructBuildingButton?.onClick.RemoveAllListeners();
 
             // Add listeners
             populationTabButton?.onClick.AddListener(() => ShowTab(populationTab));
@@ -125,8 +133,10 @@ namespace TWK.UI
             cultureTabButton?.onClick.AddListener(() => ShowTab(cultureTab));
             religionTabButton?.onClick.AddListener(() => ShowTab(religionTab));
 
-            // Setup build button
-            buildFarmButton?.onClick.AddListener(OnBuildFarmClicked);
+            // Setup build menu
+            if (buildingSelectionDropdown != null)
+                buildingSelectionDropdown.onValueChanged.AddListener(OnBuildingSelectionChanged);
+            constructBuildingButton?.onClick.AddListener(OnConstructBuildingClicked);
         }
 
         private void Update()
@@ -150,7 +160,10 @@ namespace TWK.UI
             buildingTabButton?.onClick.RemoveAllListeners();
             cultureTabButton?.onClick.RemoveAllListeners();
             religionTabButton?.onClick.RemoveAllListeners();
-            buildFarmButton?.onClick.RemoveAllListeners();
+            constructBuildingButton?.onClick.RemoveAllListeners();
+
+            if (buildingSelectionDropdown != null)
+                buildingSelectionDropdown.onValueChanged.RemoveAllListeners();
         }
 
         private void ShowTab(GameObject tab)
@@ -396,49 +409,220 @@ namespace TWK.UI
                 currentBuildingItems.Add(item);
             }
 
-            // Update build farm button
-            RefreshBuildFarmButton();
+            // Refresh build menu
+            RefreshBuildMenu();
         }
 
-        private void RefreshBuildFarmButton()
+        private void RefreshBuildMenu()
         {
-            if (buildFarmCostText != null)
+            if (targetCity == null) return;
+
+            // Get available buildings from city's culture
+            availableBuildings = new List<BuildingDefinition>(targetCity.GetAvailableBuildings());
+
+            // Populate dropdown
+            if (buildingSelectionDropdown != null)
             {
-                // TODO: Get actual farm costs from BuildingDefinition when implemented
-                buildFarmCostText.text = "Cost: 50 Gold";
+                buildingSelectionDropdown.ClearOptions();
+
+                var options = new List<string>();
+                options.Add("-- Select Building to Construct --"); // Default option
+
+                foreach (var building in availableBuildings)
+                {
+                    if (building != null)
+                        options.Add(building.BuildingName);
+                }
+
+                buildingSelectionDropdown.AddOptions(options);
+                buildingSelectionDropdown.value = 0;
             }
+
+            // Clear selection
+            selectedBuildingDefinition = null;
+            UpdateBuildingInfoDisplay();
         }
 
-        private void OnBuildFarmClicked()
+        private void OnBuildingSelectionChanged(int index)
         {
-            if (targetCity == null)
+            // Index 0 is the placeholder "Select Building" option
+            if (index == 0 || index > availableBuildings.Count)
             {
-                Debug.LogWarning("[CityUIController] Cannot build - no target city");
+                selectedBuildingDefinition = null;
+            }
+            else
+            {
+                selectedBuildingDefinition = availableBuildings[index - 1];
+            }
+
+            UpdateBuildingInfoDisplay();
+        }
+
+        private void UpdateBuildingInfoDisplay()
+        {
+            if (selectedBuildingInfoText == null) return;
+
+            if (selectedBuildingDefinition == null)
+            {
+                selectedBuildingInfoText.text = "<i>Select a building from the dropdown to see details</i>";
+
+                if (constructBuildingButton != null)
+                    constructBuildingButton.interactable = false;
+                if (constructButtonText != null)
+                    constructButtonText.text = "Select Building";
+
                 return;
             }
 
-            // Load farm BuildingDefinition from Resources
-            var farmDefinition = Resources.Load<BuildingDefinition>("Buildings/FarmDefinition");
+            var def = selectedBuildingDefinition;
 
-            if (farmDefinition == null)
+            // Build the info display
+            string info = $"<b><size=16>{def.BuildingName}</size></b>\n";
+            info += $"<i>{def.BuildingCategory}</i>\n\n";
+
+            // Construction info
+            info += $"<b>Construction Time:</b> {def.ConstructionTimeDays} days\n";
+            info += $"<b>Base Efficiency:</b> {def.BaseEfficiency * 100f:F0}%\n\n";
+
+            // Build costs
+            info += "<b>Build Cost:</b>\n";
+            if (def.BaseBuildCost.Count > 0)
             {
-                Debug.LogError("[CityUIController] Could not find FarmDefinition in Resources/Buildings/. Please create a BuildingDefinition asset for Farm.");
+                foreach (var cost in def.BaseBuildCost)
+                {
+                    int currentAmount = ResourceManager.Instance.GetResource(targetCity.CityID, cost.ResourceType);
+                    string colorTag = currentAmount >= cost.Amount ? "<color=green>" : "<color=red>";
+                    info += $"  {colorTag}{cost.ResourceType}: {cost.Amount} (have: {currentAmount})</color>\n";
+                }
+            }
+            else
+            {
+                info += "  <i>Free</i>\n";
+            }
+            info += "\n";
+
+            // Worker requirements
+            if (def.RequiresWorkers)
+            {
+                info += $"<b>Worker Requirements:</b>\n";
+                info += $"  Min Workers: {def.MinWorkers}\n";
+                info += $"  Optimal Workers: {def.OptimalWorkers}\n";
+
+                if (def.AllowedWorkerTypes != null && def.AllowedWorkerTypes.Count > 0)
+                {
+                    info += "  Allowed Types: ";
+                    info += string.Join(", ", def.AllowedWorkerTypes);
+                    info += "\n";
+                }
+                info += "\n";
+            }
+            else
+            {
+                info += "<b>Workers:</b> Not required\n\n";
+            }
+
+            // Production
+            if (def.BaseProduction.Count > 0 || def.MaxProduction.Count > 0)
+            {
+                info += "<b>Production:</b>\n";
+                foreach (var prod in def.MaxProduction)
+                {
+                    int baseAmount = def.BaseProduction.FirstOrDefault(p => p.ResourceType == prod.ResourceType)?.Amount ?? 0;
+                    info += $"  {prod.ResourceType}: {baseAmount} - {prod.Amount} per day\n";
+                }
+                info += "\n";
+            }
+
+            // Maintenance
+            if (def.BaseMaintenanceCost.Count > 0)
+            {
+                info += "<b>Maintenance Cost:</b>\n";
+                foreach (var cost in def.BaseMaintenanceCost)
+                {
+                    info += $"  {cost.ResourceType}: {cost.Amount} per day\n";
+                }
+                info += "\n";
+            }
+
+            // Hub/Hublet info
+            if (def.IsHub)
+            {
+                info += $"<b>Hub Building:</b> Can support {def.HubletSlots} hublets\n\n";
+            }
+            if (def.IsHublet)
+            {
+                info += "<b>Hublet:</b> Requires attachment to hub (";
+                info += string.Join(", ", def.RequiredHubTypes);
+                info += ")\n\n";
+            }
+
+            // Population effects
+            if (def.EducationGrowthPerWorker > 0 || def.WealthGrowthPerWorker > 0 || def.PopulationGrowthBonus > 0)
+            {
+                info += "<b>Population Effects:</b>\n";
+                if (def.EducationGrowthPerWorker > 0)
+                    info += $"  Education: +{def.EducationGrowthPerWorker:F2} per worker/day\n";
+                if (def.WealthGrowthPerWorker > 0)
+                    info += $"  Wealth: +{def.WealthGrowthPerWorker:F2} per worker/day\n";
+                if (def.PopulationGrowthBonus > 0)
+                    info += $"  Growth Bonus: +{def.PopulationGrowthBonus:F1}%\n";
+            }
+
+            selectedBuildingInfoText.text = info;
+
+            // Update construct button
+            bool canAfford = CanAffordBuilding(def);
+            if (constructBuildingButton != null)
+                constructBuildingButton.interactable = canAfford;
+
+            if (constructButtonText != null)
+            {
+                if (canAfford)
+                    constructButtonText.text = $"Construct {def.BuildingName}";
+                else
+                    constructButtonText.text = "Insufficient Resources";
+            }
+        }
+
+        private bool CanAffordBuilding(BuildingDefinition def)
+        {
+            if (def == null) return false;
+
+            foreach (var cost in def.BaseBuildCost)
+            {
+                int currentAmount = ResourceManager.Instance.GetResource(targetCity.CityID, cost.ResourceType);
+                if (currentAmount < cost.Amount)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private void OnConstructBuildingClicked()
+        {
+            if (targetCity == null || selectedBuildingDefinition == null)
+            {
+                Debug.LogWarning("[CityUIController] Cannot construct - no target city or building selected");
                 return;
             }
 
-            // Build at city center (placeholder position)
+            // Build at random position near city center
             Vector3 buildPosition = targetCity.Data.Location + new Vector3(
-                Random.Range(-5f, 5f),
+                UnityEngine.Random.Range(-5f, 5f),
                 0f,
-                Random.Range(-5f, 5f)
+                UnityEngine.Random.Range(-5f, 5f)
             );
 
-            // Use new building system
-            targetCity.BuildBuilding(farmDefinition, buildPosition);
+            // Construct the building
+            targetCity.BuildBuilding(selectedBuildingDefinition, buildPosition);
 
-            Debug.Log($"[CityUIController] Farm construction requested at {buildPosition}");
+            Debug.Log($"[CityUIController] {selectedBuildingDefinition.BuildingName} construction requested at {buildPosition}");
 
-            // Refresh UI
+            // Reset dropdown and refresh
+            if (buildingSelectionDropdown != null)
+                buildingSelectionDropdown.value = 0;
+
+            selectedBuildingDefinition = null;
             RefreshUI();
         }
 
