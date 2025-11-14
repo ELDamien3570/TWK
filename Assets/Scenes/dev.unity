@@ -290,9 +290,9 @@ RectTransform:
   m_Father: {fileID: 181999016}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: 0}
+  m_SizeDelta: {x: 20, y: -17}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &11406642
 MonoBehaviour:
@@ -806,7 +806,7 @@ MonoBehaviour:
   m_Content: {fileID: 1064340239}
   m_Horizontal: 1
   m_Vertical: 1
-  m_MovementType: 1
+  m_MovementType: 2
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
@@ -814,8 +814,8 @@ MonoBehaviour:
   m_Viewport: {fileID: 1894238866}
   m_HorizontalScrollbar: {fileID: 1338493005}
   m_VerticalScrollbar: {fileID: 11406642}
-  m_HorizontalScrollbarVisibility: 2
-  m_VerticalScrollbarVisibility: 2
+  m_HorizontalScrollbarVisibility: 0
+  m_VerticalScrollbarVisibility: 0
   m_HorizontalScrollbarSpacing: -3
   m_VerticalScrollbarSpacing: -3
   m_OnValueChanged:
@@ -2137,6 +2137,8 @@ MonoBehaviour:
   ownerRealmText: {fileID: 1265989547}
   nodeListContainer: {fileID: 1064340239}
   nodeItemPrefab: {fileID: 7121636054174875998, guid: 8a9ad551884205a48a4e682b14e79dc1, type: 3}
+  connectionLineContainer: {fileID: 512744659}
+  connectionLinePrefab: {fileID: 6791812928141311588, guid: 7a1f6eaeb1999444b9a1631f1dc4cce2, type: 3}
   nodeDetailsPanel: {fileID: 430140271}
   nodeNameText: {fileID: 2127561842}
   nodeDescriptionText: {fileID: 1598224563}
@@ -2940,7 +2942,7 @@ PrefabInstance:
     - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
       propertyPath: RealmCulture
       value: 
-      objectReference: {fileID: 1972394888}
+      objectReference: {fileID: 11400000, guid: eb5d54655effc004784bfa80ca820175, type: 2}
     - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
       propertyPath: 'Cities.Array.data[0]'
       value: 
@@ -3478,6 +3480,41 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 500079691}
   m_CullTransparentMesh: 1
+--- !u!1 &512744658
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 512744659}
+  m_Layer: 5
+  m_Name: ConnectionLineContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &512744659
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 512744658}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1894238866}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &569499576
 GameObject:
   m_ObjectHideFlags: 0
@@ -5413,10 +5450,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1064340239}
-  - component: {fileID: 1064340241}
   - component: {fileID: 1064340240}
   m_Layer: 5
-  m_Name: Content
+  m_Name: NodeListContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5429,7 +5465,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1064340238}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5437,10 +5473,10 @@ RectTransform:
   m_Father: {fileID: 1894238866}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 430.36, y: -273.62}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1064340240
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5454,33 +5490,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 0
-  m_VerticalFit: 2
---- !u!114 &1064340241
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1064340238}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
-  m_Padding:
-    m_Left: 15
-    m_Right: 15
-    m_Top: 15
-    m_Bottom: 15
-  m_ChildAlignment: 0
-  m_Spacing: 5
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_VerticalFit: 0
 --- !u!1 &1086250423
 GameObject:
   m_ObjectHideFlags: 0
@@ -6242,13 +6252,17 @@ PrefabInstance:
     m_TransformParent: {fileID: 1309599665}
     m_Modifications:
     - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
+      propertyPath: RealmID
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
       propertyPath: RealmName
       value: Thebans
       objectReference: {fileID: 0}
     - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
       propertyPath: RealmCulture
       value: 
-      objectReference: {fileID: 221743203}
+      objectReference: {fileID: 11400000, guid: 5069477ee04b2dc4ebced844d2b4bef4, type: 2}
     - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
       propertyPath: 'Cities.Array.data[0]'
       value: 
@@ -6900,9 +6914,9 @@ RectTransform:
   m_Father: {fileID: 181999016}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 20}
+  m_SizeDelta: {x: -17, y: 20}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &1338493005
 MonoBehaviour:
@@ -6947,7 +6961,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 821028593}
   m_HandleRect: {fileID: 821028592}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -8806,13 +8820,14 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 512744659}
   - {fileID: 1064340239}
   m_Father: {fileID: 181999016}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -17, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1894238867
 MonoBehaviour:

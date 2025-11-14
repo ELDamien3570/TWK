@@ -12,21 +12,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94752516ec062e24794575afafbdff50, type: 3}
   m_Name: Greek Farm
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Economy.BuildingDefinition
-  BuildingName: Greek Farm
+  BuildingName: Early Greek Farm
   BuildingCategory: 3
   Icon: {fileID: 21300000, guid: 51857a42e5544c54caccaca7b1b743ac, type: 3}
   IsHub: 0
   HubletSlots: 0
   IsHublet: 1
-  RequiredHubTypes: 
+  RequiredHubTypes: 03000000
+  BaseBuildCost:
+  - ResourceType: 1
+    Amount: 1
+  BaseMaintenanceCost:
+  - ResourceType: 1
+    Amount: 1
+  BaseProduction:
+  - ResourceType: 0
+    Amount: 150
+  MaxProduction:
+  - ResourceType: 0
+    Amount: 1500
   BaseMonthlyXP: 1
   MaxMonthlyXP: 3
   RequiresWorkers: 1
   MinWorkers: 0
   OptimalWorkers: 10
   AllowedWorkerTypes: 0000000004000000
+  RequiredWorkers_ByType:
+  - Archetype: 0
+    Count: 1
+  WorkerEfficiency:
+  - Archetype: 0
+    Multiplier: 1
+  - Archetype: 4
+    Multiplier: 0.8
+  WorkerPenalties: []
   EducationGrowthPerWorker: 0
-  WealthGrowthPerWorker: 0
-  PopulationGrowthBonus: 0
+  WealthGrowthPerWorker: 0.01
+  PopulationGrowthBonus: 0.01
   BaseEfficiency: 1
   ConstructionTimeDays: 3

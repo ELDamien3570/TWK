@@ -10,45 +10,48 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94d637fbc9598ed46a5e1f984d378c76, type: 3}
-  m_Name: Theban
+  m_Name: Greek
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Cultures.CultureData
-  CultureName: Theban
-  Description: From Thebes
-  CultureColor: {r: 1, g: 0, b: 0, a: 1}
+  CultureName: Greek
+  Description: From Greece
+  CultureColor: {r: 0, g: 1, b: 0.9348867, a: 1}
   Icon: {fileID: 0}
   Pillars: []
   TechTrees:
-  - TreeType: 3
+  - TreeType: 0
     AccumulatedXP: 0
     TotalXPEarned: 0
     AllNodes: []
     UnlockedNodeIDs: 
-    OwnerRealmID: -1
+    OwnerRealmID: 0
   - TreeType: 1
     AccumulatedXP: 0
     TotalXPEarned: 0
     AllNodes: []
     UnlockedNodeIDs: 
-    OwnerRealmID: -1
+    OwnerRealmID: 0
   - TreeType: 2
     AccumulatedXP: 0
     TotalXPEarned: 0
     AllNodes: []
     UnlockedNodeIDs: 
-    OwnerRealmID: -1
-  - TreeType: 3
-    AccumulatedXP: 0
-    TotalXPEarned: 0
-    AllNodes: []
-    UnlockedNodeIDs: 
-    OwnerRealmID: -1
+    OwnerRealmID: 0
   - TreeType: 4
     AccumulatedXP: 0
     TotalXPEarned: 0
     AllNodes: []
     UnlockedNodeIDs: 
-    OwnerRealmID: -1
-  DefaultBuildingUnlocks: 
-  IsHybrid: 1
-  ParentCultures:
-  - {fileID: 11400000, guid: eb5d54655effc004784bfa80ca820175, type: 2}
+    OwnerRealmID: 0
+  - TreeType: 3
+    AccumulatedXP: 0
+    TotalXPEarned: 0
+    AllNodes:
+    - {fileID: 11400000, guid: 43dadef9a74ef84408ff690cdcaa0c63, type: 2}
+    - {fileID: 11400000, guid: 2ebd0144710994d47be46b3a73e4d448, type: 2}
+    - {fileID: 11400000, guid: cfd7e34476dbe164ab640f32fcf40331, type: 2}
+    - {fileID: 11400000, guid: 1f4a10e148ad96943aaf52b6eaec97b2, type: 2}
+    UnlockedNodeIDs: 
+    OwnerRealmID: 0
+  DefaultBuildingUnlocks: []
+  IsHybrid: 0
+  ParentCultures: []

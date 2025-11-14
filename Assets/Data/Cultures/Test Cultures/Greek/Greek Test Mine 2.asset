@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aec45fe3034b2e141b45e08af15d41e4, type: 3}
+  m_Name: Greek Test Mine 2
+  m_EditorClassIdentifier: Assembly-CSharp::TWK.Cultures.TechNode
+  NodeName: Normal Mines
+  Description: Mines that can only be run by slaves
+  Icon: {fileID: 0}
+  TreeType: 3
+  Cost: 1
+  Prerequisites:
+  - {fileID: 11400000, guid: 2ebd0144710994d47be46b3a73e4d448, type: 2}
+  UnlockedBuildings: []
+  Modifiers: []

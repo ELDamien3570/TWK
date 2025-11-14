@@ -27,8 +27,8 @@ namespace TWK.UI
         // Adjust these values to change the tree appearance and spacing
 
         // Node dimensions (should match your prefab size)
-        private const float NODE_WIDTH = 200f;
-        private const float NODE_HEIGHT = 100f;
+        private const float NODE_WIDTH = 64f;
+        private const float NODE_HEIGHT = 64f;
 
         // Spacing between elements
         private const float HORIZONTAL_SPACING = 150f;  // Space between tier columns
