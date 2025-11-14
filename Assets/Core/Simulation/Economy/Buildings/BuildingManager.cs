@@ -173,8 +173,7 @@ namespace TWK.Economy
             }
 
             // Check if building is unlocked
-            int buildingDefID = definition.GetInstanceID();
-            return culture.IsBuildingUnlocked(buildingDefID);
+            return culture.IsBuildingUnlocked(definition);
         }
 
         private bool DeductConstructionCosts(int cityID, Dictionary<ResourceType, int> costs)

@@ -223,10 +223,21 @@ namespace TWK.UI
             }
 
             // Building unlocks
-            if (selectedNode.UnlockedBuildingDefinitionIDs.Count > 0)
+            if (selectedNode.UnlockedBuildings.Count > 0)
             {
-                nodeUnlocksText.text = $"Unlocks {selectedNode.UnlockedBuildingDefinitionIDs.Count} building(s)";
-                // TODO: Show building names when we have BuildingManager lookup
+                var buildingNames = selectedNode.UnlockedBuildings
+                    .Where(b => b != null)
+                    .Select(b => b.BuildingName)
+                    .ToList();
+
+                if (buildingNames.Count > 0)
+                {
+                    nodeUnlocksText.text = $"Unlocks:\n• {string.Join("\n• ", buildingNames)}";
+                }
+                else
+                {
+                    nodeUnlocksText.text = "No Building Unlocks";
+                }
             }
             else
             {

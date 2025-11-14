@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using TWK.Economy;
 
 namespace TWK.Cultures
 {
@@ -25,7 +26,7 @@ namespace TWK.Cultures
         // ========== BUILDING UNLOCKS ==========
         [Header("Building Unlocks")]
         [Tooltip("Buildings unlocked by this pillar (usually unique cultural buildings)")]
-        public List<int> UnlockedBuildingDefinitionIDs = new List<int>();
+        public List<BuildingDefinition> UnlockedBuildings = new List<BuildingDefinition>();
 
         // ========== HELPER METHODS ==========
 

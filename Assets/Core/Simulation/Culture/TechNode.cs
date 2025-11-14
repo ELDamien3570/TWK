@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TWK.Cultures;
+using TWK.Economy;
 
 namespace TWK.Cultures
 {
@@ -36,7 +37,7 @@ namespace TWK.Cultures
         // ========== UNLOCKS ==========
         [Header("Building Unlocks")]
         [Tooltip("Building definitions unlocked by this node")]
-        public List<int> UnlockedBuildingDefinitionIDs = new List<int>();
+        public List<BuildingDefinition> UnlockedBuildings = new List<BuildingDefinition>();
 
         [Header("Modifiers")]
         [Tooltip("Modifiers granted when this node is unlocked")]
