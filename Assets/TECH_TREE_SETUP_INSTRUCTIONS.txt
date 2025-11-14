@@ -1,0 +1,156 @@
+================================================================================
+TECH TREE UI SETUP INSTRUCTIONS
+================================================================================
+
+Follow these steps to set up the tiered tech tree layout with connection lines:
+
+================================================================================
+1. CONNECTION LINE PREFAB SETUP
+================================================================================
+
+A. Create Connection Line Prefab:
+   1. In Unity, create a new UI > Image GameObject
+   2. Name it "TechTreeConnectionLine"
+   3. Set RectTransform properties:
+      - Width: 100 (will be stretched dynamically)
+      - Height: 3 (line thickness - adjust as desired)
+      - Anchor: Middle-Center
+      - Pivot: 0.5, 0.5
+   4. Set Image component:
+      - Color: Gray (0.4, 0.4, 0.4, 0.5) - will be overridden at runtime
+      - Image Type: Sliced or Simple
+      - Raycast Target: UNCHECKED (so clicks go through to nodes)
+   5. Add the "TechTreeConnectionLine" component to this GameObject
+   6. Save as prefab in Assets/Prefabs/UI/CultureUI/
+
+B. Connection Line Component Settings (Inspector):
+   - Line Thickness: 3 (or your preferred thickness)
+   - Unlocked Color: Green (0.2, 0.8, 0.2, 1.0)
+   - Available Color: Yellow (0.8, 0.8, 0.2, 0.7)
+   - Locked Color: Gray (0.4, 0.4, 0.4, 0.5)
+
+================================================================================
+2. NODE PREFAB VERIFICATION
+================================================================================
+
+Check your existing node prefab (Assets/Prefabs/UI/CultureUI):
+   - Ensure RectTransform width: 200, height: 100
+   - If different, update NODE_WIDTH and NODE_HEIGHT constants in
+     TechTreeLayoutCalculator.cs to match your prefab size
+
+================================================================================
+3. HIERARCHY SETUP IN YOUR CULTURE UI SCENE
+================================================================================
+
+In your CultureTechTreeUI Canvas hierarchy:
+
+A. Create Connection Line Container:
+   1. Right-click on your ScrollView's Content object (nodeListContainer)
+   2. Create a sibling object: Create Empty
+   3. Name it "ConnectionLineContainer"
+   4. Move it BEFORE the nodeListContainer in the hierarchy (so lines render behind nodes)
+   5. Set as child of the same parent as nodeListContainer
+   6. RectTransform settings:
+      - Anchors: Stretch-Stretch (0,0,1,1)
+      - Offsets: All zeros
+      - Pivot: 0.5, 0.5
+
+B. Alternative (Simpler):
+   - You can skip creating ConnectionLineContainer
+   - Lines will be created under nodeListContainer
+   - They may render in front of nodes (depends on hierarchy order)
+
+================================================================================
+4. INSPECTOR REFERENCES (CultureTechTreeUIController)
+================================================================================
+
+Select your CultureTechTreeUIController GameObject and assign:
+
+REQUIRED:
+   - Node List Container: The ScrollView's Content RectTransform (should already be assigned)
+   - Node Item Prefab: Your existing tech node prefab (should already be assigned)
+   - Connection Line Prefab: The new TechTreeConnectionLine prefab you created
+
+OPTIONAL:
+   - Connection Line Container: The ConnectionLineContainer you created in step 3
+     (If not assigned, lines will be parented under nodeListContainer)
+
+================================================================================
+5. SCROLL VIEW CONFIGURATION
+================================================================================
+
+Update your ScrollView component settings:
+   - Horizontal: UNCHECKED (disabled)
+   - Vertical: CHECKED (enabled)
+   - Movement Type: Clamped or Elastic
+   - Scrollbar: Vertical scrollbar only
+
+This ensures the view scrolls up/down to see nodes in long tiers.
+
+================================================================================
+6. ADJUSTING LAYOUT SPACING (Optional)
+================================================================================
+
+If you want to adjust node spacing or tree dimensions:
+
+Edit: Assets/Core/UI/CultureUI/TechTreeLayoutCalculator.cs
+
+Lines 20-29 contain these constants:
+   - NODE_WIDTH = 200f (must match your prefab width)
+   - NODE_HEIGHT = 100f (must match your prefab height)
+   - HORIZONTAL_SPACING = 150f (space between tier columns - increase for wider spread)
+   - VERTICAL_SPACING = 50f (space between nodes in same tier - increase for taller trees)
+   - EXPECTED_MAX_TIER = 5 (for initial scroll view sizing during testing)
+   - EXPECTED_NODES_PER_TIER = 10 (for initial scroll view sizing during testing)
+
+IMPORTANT: NODE_WIDTH and NODE_HEIGHT must match your prefab's RectTransform size!
+
+================================================================================
+7. TESTING
+================================================================================
+
+1. Open your Culture UI scene
+2. Play the game
+3. Select a culture with tech nodes
+4. Verify:
+   - Nodes appear in left-to-right columns (tiers)
+   - Root nodes (no prerequisites) appear in the leftmost column
+   - Connection lines draw from prerequisites to dependent nodes
+   - Lines change color based on unlock status:
+     * Gray: Both nodes locked
+     * Yellow: Source unlocked, target available but locked
+     * Green: Target unlocked
+5. Test scrolling up/down if you have many nodes per tier
+
+================================================================================
+8. TROUBLESHOOTING
+================================================================================
+
+NODES APPEAR IN WRONG POSITIONS:
+   - Check that NODE_WIDTH and NODE_HEIGHT match your prefab size
+   - Verify nodeListContainer has Anchor preset: Top-Left
+
+LINES NOT APPEARING:
+   - Ensure Connection Line Prefab is assigned in inspector
+   - Check that ConnectionLine prefab has an Image component
+   - Verify Raycast Target is disabled on the line Image
+
+LINES APPEAR IN FRONT OF NODES:
+   - Move ConnectionLineContainer BEFORE nodeListContainer in hierarchy
+   - Or set connection lines' Canvas sort order lower
+
+SCROLL VIEW TOO SMALL:
+   - Increase EXPECTED_MAX_TIER and EXPECTED_NODES_PER_TIER in TechTreeLayoutCalculator.cs
+   - These are initial estimates for testing
+
+CIRCULAR DEPENDENCY WARNING:
+   - Check your TechNode prerequisites
+   - Make sure nodes don't form circular reference loops (A requires B, B requires A)
+
+================================================================================
+COMPLETE!
+================================================================================
+
+Your tech tree should now display in a tiered, branching layout!
+
+For questions or issues, check the Debug.Log messages in the console.

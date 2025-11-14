@@ -33,8 +33,12 @@ namespace TWK.UI
         [SerializeField] private TextMeshProUGUI ownerRealmText;
 
         [Header("Node Display")]
-        [SerializeField] private Transform nodeListContainer;
+        [SerializeField] private RectTransform nodeListContainer;
         [SerializeField] private GameObject nodeItemPrefab;
+
+        [Header("Connection Lines")]
+        [SerializeField] private Transform connectionLineContainer;
+        [SerializeField] private GameObject connectionLinePrefab;
 
         [Header("Selected Node Details")]
         [SerializeField] private GameObject nodeDetailsPanel;
@@ -55,6 +59,8 @@ namespace TWK.UI
         private TreeType currentTreeType = TreeType.Economics;
         private TechNode selectedNode;
         private List<TechNodeUIItem> nodeUIItems = new List<TechNodeUIItem>();
+        private List<TechTreeConnectionLine> connectionLines = new List<TechTreeConnectionLine>();
+        private Dictionary<TechNode, TechNodeLayoutInfo> currentLayout = new Dictionary<TechNode, TechNodeLayoutInfo>();
 
         // ========== INITIALIZATION ==========
 
@@ -166,6 +172,16 @@ namespace TWK.UI
             }
             nodeUIItems.Clear();
 
+            // Clear existing connection lines
+            foreach (var line in connectionLines)
+            {
+                if (line != null)
+                    Destroy(line.gameObject);
+            }
+            connectionLines.Clear();
+
+            currentLayout.Clear();
+
             if (currentCulture == null)
                 return;
 
@@ -176,10 +192,23 @@ namespace TWK.UI
                 return;
             }
 
-            // Create UI item for each node
-            foreach (var node in tree.AllNodes)
+            // Calculate layout for all nodes
+            currentLayout = TechTreeLayoutCalculator.CalculateLayout(tree.AllNodes);
+
+            // Set ScrollView content size based on layout
+            if (nodeListContainer != null)
             {
-                if (node == null || nodeItemPrefab == null || nodeListContainer == null)
+                Vector2 contentSize = TechTreeLayoutCalculator.CalculateContentSize(currentLayout);
+                nodeListContainer.sizeDelta = contentSize;
+            }
+
+            // Create connection lines first (so they appear behind nodes)
+            CreateConnectionLines(tree);
+
+            // Create and position node UI items
+            foreach (var layoutInfo in currentLayout.Values)
+            {
+                if (layoutInfo.Node == null || nodeItemPrefab == null || nodeListContainer == null)
                     continue;
 
                 var nodeObj = Instantiate(nodeItemPrefab, nodeListContainer);
@@ -187,8 +216,66 @@ namespace TWK.UI
 
                 if (nodeItem != null)
                 {
-                    nodeItem.Initialize(node, tree, OnNodeSelected);
+                    nodeItem.Initialize(layoutInfo.Node, tree, OnNodeSelected);
                     nodeUIItems.Add(nodeItem);
+
+                    // Position the node
+                    var rectTransform = nodeObj.GetComponent<RectTransform>();
+                    if (rectTransform != null)
+                    {
+                        rectTransform.anchoredPosition = layoutInfo.Position;
+                        rectTransform.anchorMin = new Vector2(0, 1); // Top-left anchor
+                        rectTransform.anchorMax = new Vector2(0, 1);
+                        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                    }
+
+                    // Store references for connection line positioning
+                    layoutInfo.UIObject = nodeObj;
+                    layoutInfo.RectTransform = rectTransform;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Create connection lines between nodes based on prerequisites.
+        /// </summary>
+        private void CreateConnectionLines(CultureTechTree tree)
+        {
+            if (connectionLinePrefab == null)
+            {
+                Debug.LogWarning("[CultureTechTreeUI] Connection line prefab not assigned. Skipping line creation.");
+                return;
+            }
+
+            Transform lineParent = connectionLineContainer != null ? connectionLineContainer : nodeListContainer;
+
+            foreach (var layoutInfo in currentLayout.Values)
+            {
+                var targetNode = layoutInfo.Node;
+                var targetPos = layoutInfo.Position;
+
+                // Get all prerequisite nodes (sources for connection lines)
+                var prerequisites = TechTreeLayoutCalculator.GetConnectionSources(targetNode);
+
+                foreach (var sourceNode in prerequisites)
+                {
+                    if (!currentLayout.ContainsKey(sourceNode))
+                        continue;
+
+                    var sourcePos = currentLayout[sourceNode].Position;
+
+                    // Create line GameObject
+                    var lineObj = Instantiate(connectionLinePrefab, lineParent);
+                    var line = lineObj.GetComponent<TechTreeConnectionLine>();
+
+                    if (line == null)
+                    {
+                        line = lineObj.AddComponent<TechTreeConnectionLine>();
+                    }
+
+                    // Initialize the line
+                    line.Initialize(sourcePos, targetPos, sourceNode, targetNode, tree);
+                    connectionLines.Add(line);
                 }
             }
         }
