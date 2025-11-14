@@ -44,7 +44,7 @@ namespace TWK.Economy
             if (!definition.RequiresWorkers)
             {
                 // Buildings that don't require workers produce at base rate
-                return new Dictionary<ResourceType, int>(definition.BaseProduction);
+                return definition.BaseProduction.ToDictionary();
             }
 
             // Calculate average worker efficiency

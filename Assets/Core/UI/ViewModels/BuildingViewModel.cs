@@ -274,8 +274,8 @@ namespace TWK.UI.ViewModels
         {
             if (_definition != null)
             {
-                BaseProduction = new Dictionary<ResourceType, int>(_definition.BaseProduction);
-                MaxProduction = new Dictionary<ResourceType, int>(_definition.MaxProduction);
+                BaseProduction = _definition.BaseProduction.ToDictionary();
+                MaxProduction = _definition.MaxProduction.ToDictionary();
                 CurrentProduction = BuildingSimulation.CalculateProduction(_instanceData, _definition);
             }
             else if (_legacyData != null)

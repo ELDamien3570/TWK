@@ -111,10 +111,10 @@ namespace TWK.Economy
                     continue;
 
                 // Assign each required worker type
-                foreach (var kvp in definition.RequiredWorkers_ByType)
+                foreach (var requirement in definition.RequiredWorkers_ByType)
                 {
-                    PopulationArchetypes archetype = kvp.Key;
-                    int required = kvp.Value;
+                    PopulationArchetypes archetype = requirement.Archetype;
+                    int required = requirement.Count;
 
                     if (!availableWorkers.ContainsKey(archetype))
                         continue;
