@@ -134,7 +134,7 @@ namespace TWK.Economy
             );
 
             // Deduct construction costs
-            if (DeductConstructionCosts(cityID, definition.BaseBuildCost.ToDictionary()))
+            if (DeductConstructionCosts(cityID, definition.BaseBuildCost))
             {
                 instanceData.HasPaidConstructionCost = true;
                 buildings.Add(instanceData);
@@ -176,7 +176,7 @@ namespace TWK.Economy
             return culture.IsBuildingUnlocked(definition);
         }
 
-        private bool DeductConstructionCosts(int cityID, Dictionary<ResourceType, int> costs)
+        private bool DeductConstructionCosts(int cityID, List<ResourceAmount> costs)
         {
             var resourceManager = ResourceManager.Instance;
 
