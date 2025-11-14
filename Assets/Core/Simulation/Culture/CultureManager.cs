@@ -67,17 +67,24 @@ namespace TWK.Cultures
                 Destroy(gameObject);
                 return;
             }
-        }
 
-        private void Start()
-        {
             InitializeCultures();
 
-            // Subscribe to population changes
+            // Subscribe to population changes in Awake to ensure we catch all events
+            // even if populations are created in other managers' Start() methods
             if (PopulationManager.Instance != null)
             {
                 PopulationManager.Instance.OnCityPopulationChanged += HandleCityPopulationChanged;
             }
+            else
+            {
+                Debug.LogWarning("[CultureManager] PopulationManager not found during Awake. Culture updates may not work.");
+            }
+        }
+
+        private void Start()
+        {
+            // Event subscription moved to Awake to ensure proper initialization order
         }
 
         private void OnDestroy()

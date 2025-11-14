@@ -106,6 +106,13 @@ namespace TWK.Core
                     PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 38, testCulture, 29);
                     PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 1483, testCulture, 21);
 
+                    // Explicitly recalculate city culture after populations are registered
+                    // This ensures culture is calculated even if event subscription timing is off
+                    if (CultureManager.Instance != null)
+                    {
+                        CultureManager.Instance.CalculateCityCulture(city.CityID);
+                    }
+
                     // Register city with ViewModelService
                     if (ViewModelService.Instance != null)
                         ViewModelService.Instance.RegisterCity(city);

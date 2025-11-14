@@ -233,7 +233,7 @@ namespace TWK.Realms
 
         /// <summary>
         /// Get the city's main (dominant) culture.
-        /// Returns null if no culture has >50% population.
+        /// Returns the culture with the highest population, or null if the city has no population.
         /// </summary>
         public CultureData GetMainCulture()
         {
@@ -307,7 +307,7 @@ namespace TWK.Realms
 
             if (_cachedMainCultureID == -1)
             {
-                Debug.Log($"[City] {Name} has no main culture (no >50% threshold)");
+                Debug.Log($"[City] {Name} has no main culture (no population)");
                 return;
             }
 
