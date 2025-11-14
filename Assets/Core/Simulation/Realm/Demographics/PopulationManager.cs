@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TWK.Core;
+using TWK.Cultures;
 using TWK.Economy;
 using TWK.Simulation;
 using UnityEngine;
@@ -56,6 +57,22 @@ namespace TWK.Realms.Demographics
             return cityLookup.TryGetValue(cityId, out var city) ? city : null;
         }
 
+        /// <summary>
+        /// Get city by ID (public accessor for managers).
+        /// </summary>
+        public City GetCityByID(int cityId)
+        {
+            return cityLookup.TryGetValue(cityId, out var city) ? city : null;
+        }
+
+        /// <summary>
+        /// Get all registered cities.
+        /// </summary>
+        public List<City> GetAllCities()
+        {
+            return new List<City>(cityLookup.Values);
+        }
+
         #region Simulation Ticks
         public void AdvanceDay()
         {
@@ -105,9 +122,9 @@ namespace TWK.Realms.Demographics
         #endregion
 
         #region Population Management
-        public int RegisterPopulation(int cityId, PopulationArchetypes archetype, int count, float averageAge = 30f)
+        public int RegisterPopulation(int cityId, PopulationArchetypes archetype, int count,  CultureData inCulture, float averageAge = 30f)
         {
-            var pop = new PopulationGroup(nextID++, cityId, archetype, count, averageAge);
+            var pop = new PopulationGroup(nextID++, cityId, archetype, count, inCulture, averageAge);
             populationGroups.Add(pop);
             populationIndexById[pop.ID] = populationGroups.Count - 1;
 
@@ -354,7 +371,7 @@ namespace TWK.Realms.Demographics
             // Create new group if needed
             if (targetGroup == null)
             {
-                int newId = RegisterPopulation(sourcePop.OwnerCityID, newArchetype, 0, sourcePop.AverageAge);
+                int newId = RegisterPopulation(sourcePop.OwnerCityID, newArchetype, 0, sourcePop.Culture, sourcePop.AverageAge);
                 targetGroup = GetPopulationData(newId);
 
                 // Initialize with source properties
@@ -383,6 +400,22 @@ namespace TWK.Realms.Demographics
             targetGroup.Demographics.ElderlyFemales += transferDemographics.ElderlyFemales;
 
             Debug.Log($"Split {countToSplit} people from {sourcePop.Archetype} to {newArchetype}");
+        }
+
+        /// <summary>
+        /// Get all population groups across all cities.
+        /// </summary>
+        public List<PopulationGroup> GetAllPopulationGroups()
+        {
+            var allGroups = new List<PopulationGroup>();
+
+            foreach (var city in GetAllCities())
+            {
+                var cityGroups = GetPopulationsByCity(city.CityID);
+                allGroups.AddRange(cityGroups);
+            }
+
+            return allGroups;
         }
         #endregion
 

@@ -32,7 +32,7 @@ namespace TWK.UI
             // Archetype Name
             if (archetypeNameText != null)
             {
-                archetypeNameText.text = $"<b>{viewModel.ArchetypeName}</b> (ID: {viewModel.ID})";
+                archetypeNameText.text = $"<b>{viewModel.Culture} {viewModel.ArchetypeName}</b> (ID: {viewModel.ID})";
             }
 
             // Population

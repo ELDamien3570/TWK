@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using NUnit.Framework;
 using UnityEngine;
 
 using TWK.Cultures;
@@ -14,9 +13,10 @@ namespace TWK.Realms
     public class Realm : MonoBehaviour, ISimulationAgent
     {
         public string RealmName;
+        public int RealmID;
         public List<City> Cities;
         public List<Agent> Leaders;
-        public Culture RealmCulture;
+        public CultureData RealmCulture;
 
         public void Initialize(WorldTimeManager worldTimeManager)
         {

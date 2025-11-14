@@ -59,14 +59,33 @@ namespace TWK.Realms
                     }
                     else
                     {
-                        // Fallback to old struct-based simulation if definition not found
-                        var legacyBuilding = BuildingManager.Instance.GetBuildingByID(buildingId);
-                        if (legacyBuilding.HasValue)
+                        // Fallback to legacy BuildingData simulation if definition not found
+                        var legacyData = BuildingManager.Instance.GetLegacyBuildingData(buildingId);
+                        if (legacyData != null)
                         {
-                            legacyBuilding.Value.Simulate(ledger);
+                            SimulateLegacyBuilding(instanceData, legacyData, ledger);
                         }
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Simulate a building using legacy BuildingData (backward compatibility).
+        /// </summary>
+        private static void SimulateLegacyBuilding(BuildingInstanceData instance, BuildingData legacyData, ResourceLedger ledger)
+        {
+            // Production (apply efficiency multiplier)
+            foreach (var prod in legacyData.BaseProduction)
+            {
+                int production = Mathf.RoundToInt(prod.Value * instance.EfficiencyMultiplier);
+                ledger.Add(prod.Key, production);
+            }
+
+            // Maintenance costs
+            foreach (var cost in legacyData.BaseMaintenanceCost)
+            {
+                ledger.Subtract(cost.Key, cost.Value);
             }
         }
 

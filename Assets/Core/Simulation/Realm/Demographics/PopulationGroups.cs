@@ -1,4 +1,5 @@
 using UnityEngine;
+using TWK.Cultures;
 
 namespace TWK.Realms.Demographics
 {
@@ -76,6 +77,13 @@ namespace TWK.Realms.Demographics
 
         // ========== CULTURAL ==========
         /// <summary>
+        /// Culture of this population group
+        /// NOTE: PopulationGroups can only belong to one culture at a time.
+        /// Culture conversions create new PopulationGroups.
+        /// </summary>
+        public CultureData Culture { get; set; }
+
+        /// <summary>
         /// Religious fervor - resistance to religious conversion (0-100)
         /// </summary>
         public float Fervor { get; set; }
@@ -103,7 +111,7 @@ namespace TWK.Realms.Demographics
         public float GrowthModifier { get; set; }
 
         // ========== CONSTRUCTOR ==========
-        public PopulationGroup(int id, int ownerCityId, PopulationArchetypes archetype, int initialPopulation, float averageAge = 30f)
+        public PopulationGroup(int id, int ownerCityId, PopulationArchetypes archetype, int initialPopulation, CultureData culture = null, float averageAge = 30f)
         {
             this.ID = id;
             this.OwnerCityID = ownerCityId;
@@ -118,6 +126,7 @@ namespace TWK.Realms.Demographics
             this.EmployedCount = 0;
 
             // Initialize cultural properties
+            this.Culture = culture; // Can be set later if not provided
             this.Fervor = 50f; // Medium fervor by default
             this.CurrentReligion = null; // Set by city/realm
             this.Loyalty = GetDefaultLoyaltyForArchetype(archetype);

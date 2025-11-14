@@ -15,6 +15,7 @@ namespace TWK.UI.ViewModels
     {
         private BuildingInstanceData _instanceData;
         private BuildingDefinition _definition;
+        private BuildingData _legacyData; // For backward compatibility
         private int _buildingID;
 
         // ========== IDENTITY ==========
@@ -112,10 +113,11 @@ namespace TWK.UI.ViewModels
             }
 
             _definition = BuildingManager.Instance.GetDefinition(_instanceData.BuildingDefinitionID);
+
+            // Try to get legacy data if definition not available (backward compatibility)
             if (_definition == null)
             {
-                Debug.LogWarning($"[BuildingViewModel] Building definition {_instanceData.BuildingDefinitionID} not found");
-                return;
+                _legacyData = BuildingManager.Instance.GetLegacyBuildingData(_buildingID);
             }
 
             RefreshIdentity();
@@ -134,9 +136,26 @@ namespace TWK.UI.ViewModels
         {
             BuildingID = _instanceData.ID;
             CityID = _instanceData.CityID;
-            BuildingName = _definition.BuildingName;
-            BuildingCategory = _definition.BuildingCategory;
-            CategoryName = _definition.BuildingCategory.ToString();
+
+            // Use definition if available, otherwise try legacy data, then fallback
+            if (_definition != null)
+            {
+                BuildingName = _definition.BuildingName;
+                BuildingCategory = _definition.BuildingCategory;
+                CategoryName = _definition.BuildingCategory.ToString();
+            }
+            else if (_legacyData != null)
+            {
+                BuildingName = _legacyData.BuildingName;
+                BuildingCategory = _legacyData.buildingCategory;
+                CategoryName = _legacyData.buildingCategory.ToString();
+            }
+            else
+            {
+                BuildingName = $"Building #{_instanceData.ID}";
+                BuildingCategory = TreeType.Economics; // Default
+                CategoryName = "Unknown";
+            }
 
             Position = _instanceData.Position;
             PositionFormatted = $"({Position.x:F1}, {Position.y:F1}, {Position.z:F1})";
@@ -165,24 +184,43 @@ namespace TWK.UI.ViewModels
 
         private void RefreshHubSystem()
         {
-            IsHub = _definition.IsHub;
-            IsHublet = _definition.IsHublet;
+            // Use definition if available, otherwise use defaults
+            if (_definition != null)
+            {
+                IsHub = _definition.IsHub;
+                IsHublet = _definition.IsHublet;
+                RequiredHubTypes = new List<TreeType>(_definition.RequiredHubTypes);
+            }
+            else
+            {
+                IsHub = false;
+                IsHublet = false;
+                RequiredHubTypes = new List<TreeType>();
+            }
+
             AttachedToHubID = _instanceData.AttachedToHubID;
             IsAttachedToHub = AttachedToHubID >= 0;
-
             AttachedHubletIDs = new List<int>(_instanceData.AttachedHubletIDs);
             AttachedHubletCount = AttachedHubletIDs.Count;
-
-            RequiredHubTypes = new List<TreeType>(_definition.RequiredHubTypes);
         }
 
         private void RefreshWorkers()
         {
-            RequiresWorkers = _definition.RequiresWorkers;
-            MinWorkers = _definition.MinWorkers;
-            OptimalWorkers = _definition.OptimalWorkers;
-            TotalWorkers = _instanceData.TotalWorkers;
+            // Use definition if available, otherwise use defaults
+            if (_definition != null)
+            {
+                RequiresWorkers = _definition.RequiresWorkers;
+                MinWorkers = _definition.MinWorkers;
+                OptimalWorkers = _definition.OptimalWorkers;
+            }
+            else
+            {
+                RequiresWorkers = false;
+                MinWorkers = 0;
+                OptimalWorkers = 0;
+            }
 
+            TotalWorkers = _instanceData.TotalWorkers;
             AssignedWorkers = new Dictionary<PopulationArchetypes, int>(_instanceData.AssignedWorkers);
 
             // Calculate worker ratio
@@ -193,7 +231,7 @@ namespace TWK.UI.ViewModels
             IsOptimallyStaffed = TotalWorkers >= OptimalWorkers;
 
             // Calculate average worker efficiency
-            if (TotalWorkers > 0)
+            if (TotalWorkers > 0 && _definition != null)
             {
                 float totalEfficiency = 0f;
                 foreach (var kvp in AssignedWorkers)
@@ -205,14 +243,28 @@ namespace TWK.UI.ViewModels
             }
             else
             {
-                AverageWorkerEfficiency = 0f;
+                AverageWorkerEfficiency = 1f; // Default efficiency if no definition
             }
         }
 
         private void RefreshCosts()
         {
-            BuildCost = new Dictionary<ResourceType, int>(_definition.BaseBuildCost);
-            MaintenanceCost = _definition.CalculateMaintenanceCost(TotalWorkers);
+            if (_definition != null)
+            {
+                BuildCost = new Dictionary<ResourceType, int>(_definition.BaseBuildCost);
+                MaintenanceCost = _definition.CalculateMaintenanceCost(TotalWorkers);
+            }
+            else if (_legacyData != null)
+            {
+                // Use legacy BuildingData for costs
+                BuildCost = new Dictionary<ResourceType, int>(_legacyData.BaseBuildCost);
+                MaintenanceCost = new Dictionary<ResourceType, int>(_legacyData.BaseMaintenanceCost);
+            }
+            else
+            {
+                BuildCost = new Dictionary<ResourceType, int>();
+                MaintenanceCost = new Dictionary<ResourceType, int>();
+            }
 
             BuildCostSummary = FormatResourceDictionary(BuildCost);
             MaintenanceCostSummary = FormatResourceDictionary(MaintenanceCost);
@@ -220,20 +272,58 @@ namespace TWK.UI.ViewModels
 
         private void RefreshProduction()
         {
-            BaseProduction = new Dictionary<ResourceType, int>(_definition.BaseProduction);
-            MaxProduction = new Dictionary<ResourceType, int>(_definition.MaxProduction);
-            CurrentProduction = BuildingSimulation.CalculateProduction(_instanceData, _definition);
+            if (_definition != null)
+            {
+                BaseProduction = new Dictionary<ResourceType, int>(_definition.BaseProduction);
+                MaxProduction = new Dictionary<ResourceType, int>(_definition.MaxProduction);
+                CurrentProduction = BuildingSimulation.CalculateProduction(_instanceData, _definition);
+            }
+            else if (_legacyData != null)
+            {
+                // Use legacy BuildingData for production
+                BaseProduction = new Dictionary<ResourceType, int>(_legacyData.BaseProduction);
+                MaxProduction = new Dictionary<ResourceType, int>(_legacyData.BaseProduction);
+
+                // Calculate current production based on legacy data and building state
+                CurrentProduction = new Dictionary<ResourceType, int>();
+                if (_instanceData.IsCompleted && _instanceData.IsActive)
+                {
+                    foreach (var kvp in _legacyData.BaseProduction)
+                    {
+                        // Apply efficiency multiplier to base production
+                        int production = Mathf.RoundToInt(kvp.Value * _instanceData.EfficiencyMultiplier);
+                        CurrentProduction[kvp.Key] = production;
+                    }
+                }
+            }
+            else
+            {
+                BaseProduction = new Dictionary<ResourceType, int>();
+                MaxProduction = new Dictionary<ResourceType, int>();
+                CurrentProduction = new Dictionary<ResourceType, int>();
+            }
 
             ProductionSummary = FormatResourceDictionary(CurrentProduction);
         }
 
         private void RefreshPopulationEffects()
         {
-            EducationGrowthPerWorker = _definition.EducationGrowthPerWorker;
-            WealthGrowthPerWorker = _definition.WealthGrowthPerWorker;
-            AffectsSpecificArchetype = _definition.AffectsSpecificArchetype;
-            AffectedArchetypeName = AffectsSpecificArchetype?.ToString() ?? "All Workers";
-            PopulationGrowthBonus = _definition.PopulationGrowthBonus;
+            if (_definition != null)
+            {
+                EducationGrowthPerWorker = _definition.EducationGrowthPerWorker;
+                WealthGrowthPerWorker = _definition.WealthGrowthPerWorker;
+                AffectsSpecificArchetype = _definition.AffectsSpecificArchetype;
+                AffectedArchetypeName = AffectsSpecificArchetype?.ToString() ?? "All Workers";
+                PopulationGrowthBonus = _definition.PopulationGrowthBonus;
+            }
+            else
+            {
+                EducationGrowthPerWorker = 0f;
+                WealthGrowthPerWorker = 0f;
+                AffectsSpecificArchetype = null;
+                AffectedArchetypeName = "All Workers";
+                PopulationGrowthBonus = 0f;
+            }
 
             HasPopulationEffects = EducationGrowthPerWorker > 0f ||
                                   WealthGrowthPerWorker > 0f ||
@@ -321,11 +411,15 @@ namespace TWK.UI.ViewModels
 
         public bool CanAssignWorker(PopulationArchetypes archetype)
         {
+            if (_definition == null)
+                return false;
             return _definition.CanWorkerTypeWork(archetype);
         }
 
         public float GetWorkerEfficiency(PopulationArchetypes archetype)
         {
+            if (_definition == null)
+                return 1f; // Default efficiency
             return _definition.GetWorkerEfficiency(archetype);
         }
 
@@ -336,6 +430,9 @@ namespace TWK.UI.ViewModels
 
         public List<PopulationArchetypes> GetAllowedWorkerTypes()
         {
+            if (_definition == null)
+                return new List<PopulationArchetypes>(); // Empty list if no definition
+
             return _definition.AllowedWorkerTypes.Count > 0
                 ? new List<PopulationArchetypes>(_definition.AllowedWorkerTypes)
                 : System.Enum.GetValues(typeof(PopulationArchetypes)).Cast<PopulationArchetypes>().ToList();

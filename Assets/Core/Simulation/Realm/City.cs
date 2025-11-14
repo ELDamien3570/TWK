@@ -15,6 +15,9 @@ namespace TWK.Realms
     public class City : MonoBehaviour, ISimulationAgent
     {
         // ========== DATA MODEL ==========
+        [SerializeField] private Realm parentRealm;
+        private int OwnerRealmID => parentRealm != null ? parentRealm.RealmID : -1; 
+
         [SerializeField] private CityData cityData = new CityData();
 
         // ========== INSPECTOR CONFIGURATION (for initialization) ==========
@@ -79,6 +82,7 @@ namespace TWK.Realms
                 cityData.Location = transform.position;
                 cityData.GrowthRate = growthRate;
                 cityData.TerritoryRadius = territoryRadius;
+                cityData.OwnerRealmID = OwnerRealmID;
             }
         }
 
@@ -141,13 +145,16 @@ namespace TWK.Realms
 
         // ========== PUBLIC API ==========
         /// <summary>
-        /// Build a building in this city (test helper).
+        /// Build a building in this city using BuildingDefinition.
         /// </summary>
-        public void BuildFarm(FarmBuildingData farmData, Vector3 position)
+        public void BuildBuilding(BuildingDefinition definition, Vector3 position)
         {
-            var instance = BuildingManager.Instance.ConstructBuilding(CityID, farmData, position);
-            cityData.BuildingIDs.Add(instance.ID);
-           // Debug.Log($"[City] {Name} started construction on a Farm at {position}");
+            var instanceData = BuildingManager.Instance.ConstructBuildingNew(CityID, definition, position);
+            if (instanceData != null)
+            {
+                cityData.BuildingIDs.Add(instanceData.ID);
+                Debug.Log($"[City] {Name} started construction on {definition.BuildingName} at {position}");
+            }
         }
 
         /// <summary>

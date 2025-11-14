@@ -69,9 +69,13 @@ namespace TWK.UI
         [SerializeField] private Button buildFarmButton;
         [SerializeField] private TextMeshProUGUI buildFarmCostText;
 
+        [Header("Settings")]
+        [SerializeField] private float refreshInterval = 1f; // Refresh UI every second
+
         private CityViewModel viewModel;
         private List<GameObject> currentPopGroupItems = new List<GameObject>();
         private List<GameObject> currentBuildingItems = new List<GameObject>();
+        private float timeSinceLastRefresh = 0f;
 
         private void Start()
         {
@@ -96,6 +100,17 @@ namespace TWK.UI
 
         private void SetupTabButtons()
         {
+            // Remove all existing listeners to prevent double-registration
+            populationTabButton?.onClick.RemoveAllListeners();
+            popGroupsTabButton?.onClick.RemoveAllListeners();
+            militaryTabButton?.onClick.RemoveAllListeners();
+            economicTabButton?.onClick.RemoveAllListeners();
+            buildingTabButton?.onClick.RemoveAllListeners();
+            cultureTabButton?.onClick.RemoveAllListeners();
+            religionTabButton?.onClick.RemoveAllListeners();
+            buildFarmButton?.onClick.RemoveAllListeners();
+
+            // Add listeners
             populationTabButton?.onClick.AddListener(() => ShowTab(populationTab));
             popGroupsTabButton?.onClick.AddListener(() => ShowTab(popGroupsTab));
             militaryTabButton?.onClick.AddListener(() => ShowTab(militaryTab));
@@ -106,6 +121,30 @@ namespace TWK.UI
 
             // Setup build button
             buildFarmButton?.onClick.AddListener(OnBuildFarmClicked);
+        }
+
+        private void Update()
+        {
+            // Periodic refresh
+            timeSinceLastRefresh += Time.deltaTime;
+            if (timeSinceLastRefresh >= refreshInterval)
+            {
+                timeSinceLastRefresh = 0f;
+                RefreshUI();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Clean up listeners
+            populationTabButton?.onClick.RemoveAllListeners();
+            popGroupsTabButton?.onClick.RemoveAllListeners();
+            militaryTabButton?.onClick.RemoveAllListeners();
+            economicTabButton?.onClick.RemoveAllListeners();
+            buildingTabButton?.onClick.RemoveAllListeners();
+            cultureTabButton?.onClick.RemoveAllListeners();
+            religionTabButton?.onClick.RemoveAllListeners();
+            buildFarmButton?.onClick.RemoveAllListeners();
         }
 
         private void ShowTab(GameObject tab)
@@ -370,13 +409,12 @@ namespace TWK.UI
                 return;
             }
 
-            // TODO: Replace with BuildingDefinition when loading is implemented
-            // For now, use the old BuildingData system
-            var farmData = Resources.Load<BuildingData>("Buildings/FarmBuildingData");
+            // Load farm BuildingDefinition from Resources
+            var farmDefinition = Resources.Load<BuildingDefinition>("Buildings/FarmDefinition");
 
-            if (farmData == null)
+            if (farmDefinition == null)
             {
-                Debug.LogError("[CityUIController] Could not find FarmBuildingData in Resources/Buildings/");
+                Debug.LogError("[CityUIController] Could not find FarmDefinition in Resources/Buildings/. Please create a BuildingDefinition asset for Farm.");
                 return;
             }
 
@@ -387,29 +425,13 @@ namespace TWK.UI
                 Random.Range(-5f, 5f)
             );
 
-            var buildingInstance = BuildingManager.Instance.ConstructBuilding(
-                targetCity.CityID,
-                farmData,
-                buildPosition
-            );
+            // Use new building system
+            targetCity.BuildBuilding(farmDefinition, buildPosition);
 
-            if (buildingInstance.ID > 0)
-            {
-                Debug.Log($"[CityUIController] Farm construction started at {buildPosition}");
+            Debug.Log($"[CityUIController] Farm construction requested at {buildPosition}");
 
-                // Add building to city
-                if (!targetCity.Data.BuildingIDs.Contains(buildingInstance.ID))
-                {
-                    targetCity.Data.BuildingIDs.Add(buildingInstance.ID);
-                }
-
-                // Refresh UI
-                RefreshUI();
-            }
-            else
-            {
-                Debug.LogWarning("[CityUIController] Farm construction failed (insufficient resources?)");
-            }
+            // Refresh UI
+            RefreshUI();
         }
 
         // ========== PUBLIC API ==========

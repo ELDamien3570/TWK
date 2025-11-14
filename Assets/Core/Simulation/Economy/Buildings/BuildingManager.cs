@@ -3,6 +3,7 @@ using UnityEngine;
 using TWK.Core;
 using TWK.Simulation;
 using TWK.Realms;
+using TWK.Cultures;
 
 namespace TWK.Economy
 {
@@ -21,6 +22,9 @@ namespace TWK.Economy
         // Definition lookup (BuildingDefinition.GetInstanceID() -> BuildingDefinition)
         // In real implementation, this would be populated from ScriptableObjects
         private Dictionary<int, BuildingDefinition> definitionLookup = new Dictionary<int, BuildingDefinition>();
+
+        // Legacy BuildingData lookup (building ID -> BuildingData) for backward compatibility
+        private Dictionary<int, BuildingData> legacyDataLookup = new Dictionary<int, BuildingData>();
 
         private WorldTimeManager worldTimeManager;
 
@@ -64,7 +68,9 @@ namespace TWK.Economy
 
         /// <summary>
         /// Construct a new building (backward compatible with old BuildingData).
+        /// DEPRECATED: Use ConstructBuildingNew() with BuildingDefinition instead.
         /// </summary>
+        [System.Obsolete("Use ConstructBuildingNew() with BuildingDefinition instead of BuildingData")]
         public BuildingInstance ConstructBuilding(int cityID, BuildingData data, Vector3 position)
         {
             // Create instance data
@@ -83,6 +89,9 @@ namespace TWK.Economy
                 instanceData.HasPaidConstructionCost = true;
                 buildings.Add(instanceData);
                 buildingLookup[instanceData.ID] = instanceData;
+
+                // Store legacy BuildingData for retrieval by UI
+                legacyDataLookup[instanceData.ID] = data;
 
                 if (instanceData.IsUnderConstruction)
                 {
@@ -108,6 +117,13 @@ namespace TWK.Economy
         /// </summary>
         public BuildingInstanceData ConstructBuildingNew(int cityID, BuildingDefinition definition, Vector3 position)
         {
+            // Check if city's culture has unlocked this building
+            if (!IsBuildingUnlockedForCity(cityID, definition))
+            {
+                Debug.LogWarning($"[BuildingManager] {definition.BuildingName} not unlocked for city {cityID}'s culture");
+                return null;
+            }
+
             var instanceData = new BuildingInstanceData(
                 nextBuildingID++,
                 cityID,
@@ -132,6 +148,33 @@ namespace TWK.Economy
                 Debug.LogWarning($"[BuildingManager] Insufficient resources to build {definition.BuildingName} in city {cityID}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Check if a building is unlocked for a city based on the city's culture.
+        /// </summary>
+        public bool IsBuildingUnlockedForCity(int cityID, BuildingDefinition definition)
+        {
+            // Get city's dominant culture
+            int cityCultureID = CultureManager.Instance.GetCityCulture(cityID);
+            if (cityCultureID == -1)
+            {
+                // City has no dominant culture, allow all buildings for now
+                // TODO: Decide default behavior
+                return true;
+            }
+
+            // Get culture
+            var culture = CultureManager.Instance.GetCulture(cityCultureID);
+            if (culture == null)
+            {
+                Debug.LogWarning($"[BuildingManager] Culture {cityCultureID} not found");
+                return false;
+            }
+
+            // Check if building is unlocked
+            int buildingDefID = definition.GetInstanceID();
+            return culture.IsBuildingUnlocked(buildingDefID);
         }
 
         private bool DeductConstructionCosts(int cityID, Dictionary<ResourceType, int> costs)
@@ -254,6 +297,19 @@ namespace TWK.Economy
         {
             // TODO: Implement when definitions are loaded
             return null;
+        }
+
+        public BuildingData GetLegacyBuildingData(int buildingID)
+        {
+            return legacyDataLookup.GetValueOrDefault(buildingID, null);
+        }
+
+        public IEnumerable<BuildingInstanceData> GetAllBuildings()
+        {
+            foreach (var building in buildings)
+            {
+                    yield return building;
+            }
         }
 
         // ========== WORKER MANAGEMENT ==========
