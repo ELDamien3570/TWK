@@ -176,7 +176,7 @@ namespace TWK.Economy
             return culture.IsBuildingUnlocked(definition);
         }
 
-        private bool DeductConstructionCosts(int cityID, List<ResourceAmount> costs)
+        private bool DeductConstructionCosts(int cityID, Dictionary<ResourceType, int> costs)
         {
             var resourceManager = ResourceManager.Instance;
 
