@@ -178,10 +178,10 @@ namespace TWK.Economy
         {
             var deficit = new Dictionary<PopulationArchetypes, int>();
 
-            foreach (var kvp in definition.RequiredWorkers_ByType)
+            foreach (var requirement in definition.RequiredWorkers_ByType)
             {
-                PopulationArchetypes archetype = kvp.Key;
-                int required = kvp.Value;
+                PopulationArchetypes archetype = requirement.Archetype;
+                int required = requirement.Count;
                 int assigned = instance.GetWorkerCount(archetype);
 
                 if (assigned < required)

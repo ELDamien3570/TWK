@@ -231,7 +231,7 @@ namespace TWK.Economy
                 int currentCount = kvp.Value;
 
                 // Determine how many we can remove (keep required workers if possible)
-                int requiredCount = definition.RequiredWorkers_ByType.GetValueOrDefault(archetype, 0);
+                int requiredCount = definition.RequiredWorkers_ByType.GetCount(archetype);
                 int removable = Mathf.Max(0, currentCount - requiredCount);
 
                 int toRemove = Mathf.Min(removable, maxToRemove - totalRemoved);
@@ -344,7 +344,7 @@ namespace TWK.Economy
 
         private static bool IsRequiredWorker(BuildingDefinition definition, PopulationArchetypes archetype)
         {
-            return definition.RequiredWorkers_ByType.ContainsKey(archetype);
+            return definition.RequiredWorkers_ByType.GetCount(archetype) > 0;
         }
 
         // ========== UI PLACEHOLDER METHODS ==========
