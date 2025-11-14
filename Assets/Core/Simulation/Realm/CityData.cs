@@ -18,6 +18,9 @@ namespace TWK.Realms
         public int OwnerRealmID;    
 
 
+        // ========== OWNERSHIP ==========
+        public int OwnerRealmID = -1;
+
         // ========== GEOGRAPHIC ==========
         public float LocationX, LocationY, LocationZ;
         public float TerritoryRadius;

@@ -24,6 +24,10 @@ namespace TWK.Cultures
         // Maps city ID -> culture ID (based on >50% population threshold)
         private Dictionary<int, int> cityCultures = new Dictionary<int, int>();
 
+        // ========== REALM LEADER CULTURES ==========
+        // Maps realm ID -> culture ID (culture of the realm's primary leader)
+        private Dictionary<int, int> realmLeaderCultures = new Dictionary<int, int>();
+
         // ========== XP ACCUMULATION ==========
         [Header("XP Settings")]
         [Tooltip("Days per month for XP generation")]
@@ -92,6 +96,31 @@ namespace TWK.Cultures
                 cultureLookup[culture.GetCultureID()] = culture;
                 culture.InitializeTechTrees();
             }
+        }
+
+        // ========== REALM LEADER CULTURES ==========
+
+        /// <summary>
+        /// Set the culture of a realm's primary leader.
+        /// Call this when a realm leader changes or when a leader changes culture.
+        /// </summary>
+        public void SetRealmLeaderCulture(int realmID, int cultureID)
+        {
+            int oldCulture = realmLeaderCultures.GetValueOrDefault(realmID, -1);
+            if (oldCulture != cultureID)
+            {
+                realmLeaderCultures[realmID] = cultureID;
+                Debug.Log($"[CultureManager] Realm {realmID} leader culture changed to {cultureID}");
+            }
+        }
+
+        /// <summary>
+        /// Get the culture of a realm's primary leader.
+        /// Returns -1 if not set.
+        /// </summary>
+        public int GetRealmLeaderCulture(int realmID)
+        {
+            return realmLeaderCultures.GetValueOrDefault(realmID, -1);
         }
 
         // ========== CULTURE OWNERSHIP ==========
@@ -353,13 +382,93 @@ namespace TWK.Cultures
             if (cityCultureID == -1) return;
 
             // Get realm leader's culture
-            // TODO: This requires realm/leader system to be implemented
-            // For now, skip assimilation
-            // int leaderCultureID = GetRealmLeaderCulture(city.OwnerRealmID);
-            // if (leaderCultureID == -1 || leaderCultureID == cityCultureID) return;
+            int leaderCultureID = GetRealmLeaderCulture(city.Data.OwnerRealmID);
+            if (leaderCultureID == -1)
+            {
+                // No realm leader culture set, skip assimilation
+                return;
+            }
+
+            if (leaderCultureID == cityCultureID)
+            {
+                // City already matches leader's culture, no assimilation needed
+                return;
+            }
+
+            // Get the target culture to assimilate toward
+            var targetCulture = GetCulture(leaderCultureID);
+            if (targetCulture == null)
+            {
+                Debug.LogWarning($"[CultureManager] Leader culture {leaderCultureID} not found for assimilation");
+                return;
+            }
 
             // Assimilate a small percentage of each pop group toward leader's culture
-            // Implementation will be completed when realm/leader system is ready
+            var popGroups = PopulationManager.Instance.GetPopulationsByCity(city.CityID).ToList();
+
+            foreach (var popGroup in popGroups)
+            {
+                // Skip if already the target culture
+                if (popGroup.Culture != null && popGroup.Culture.GetCultureID() == leaderCultureID)
+                    continue;
+
+                // Skip if no culture set
+                if (popGroup.Culture == null)
+                    continue;
+
+                // Calculate how many people to convert
+                int populationToConvert = Mathf.FloorToInt(popGroup.PopulationCount * baseAssimilationRate);
+
+                if (populationToConvert <= 0)
+                    continue;
+
+                // Don't convert more than the population
+                populationToConvert = Mathf.Min(populationToConvert, popGroup.PopulationCount);
+
+                // Convert by splitting off a new population group
+                SplitPopulationGroupForCultureConversion(
+                    popGroup,
+                    populationToConvert,
+                    targetCulture
+                );
+
+                Debug.Log($"[CultureManager] City {city.Name}: {populationToConvert} {popGroup.Archetype} converted from {popGroup.Culture.CultureName} to {targetCulture.CultureName}");
+            }
+
+            // Recalculate city culture after assimilation
+            CalculateCityCulture(city.CityID);
+        }
+
+        /// <summary>
+        /// Split off a portion of a population group for culture conversion.
+        /// Creates a new PopulationGroup with the target culture.
+        /// </summary>
+        private void SplitPopulationGroupForCultureConversion(
+            PopulationGroup sourceGroup,
+            int populationToConvert,
+            CultureData targetCulture)
+        {
+            // Reduce source population
+            float scaleFactor = (sourceGroup.PopulationCount - populationToConvert) / (float)sourceGroup.PopulationCount;
+            sourceGroup.Demographics.Scale(scaleFactor);
+
+            // Create new population group with converted population
+            var newGroup = PopulationManager.Instance.CreatePopulationGroup(
+                sourceGroup.OwnerCityID,
+                sourceGroup.Archetype,
+                populationToConvert,
+                targetCulture,
+                sourceGroup.AverageAge
+            );
+
+            // Copy economic and cultural properties from source
+            newGroup.Wealth = sourceGroup.Wealth;
+            newGroup.Education = sourceGroup.Education;
+            newGroup.Fervor = sourceGroup.Fervor;
+            newGroup.CurrentReligion = sourceGroup.CurrentReligion;
+            newGroup.Loyalty = sourceGroup.Loyalty;
+            newGroup.Happiness = sourceGroup.Happiness;
+            newGroup.GrowthModifier = sourceGroup.GrowthModifier;
         }
 
         // ========== TECH NODE UNLOCKING ==========
