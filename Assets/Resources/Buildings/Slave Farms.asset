@@ -40,13 +40,15 @@ MonoBehaviour:
     MaxCount: 300
     EfficiencyMultiplier: 1
     IsRequired: 1
+    EducationGrowthPerWorker: 0
+    WealthGrowthPerWorker: 0
   - Archetype: 2
     MinCount: 5
     MaxCount: 25
     EfficiencyMultiplier: 0.5
     IsRequired: 1
-  EducationGrowthPerWorker: 0
-  WealthGrowthPerWorker: 0
+    EducationGrowthPerWorker: 0
+    WealthGrowthPerWorker: 1
   PopulationGrowthBonus: 0
   BaseEfficiency: 1
   ConstructionTimeDays: 3
