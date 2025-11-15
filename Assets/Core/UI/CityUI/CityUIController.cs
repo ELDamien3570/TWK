@@ -444,12 +444,9 @@ namespace TWK.UI
                 currentBuildingItems.Add(item);
             }
 
-            // Only refresh build menu on first load, not on every refresh
-            // This prevents dropdown from resetting while user is selecting
-            if (availableBuildings.Count == 0)
-            {
-                RefreshBuildMenu();
-            }
+            // Always refresh build menu when building tab is shown
+            // This ensures newly unlocked buildings appear immediately
+            RefreshBuildMenu();
         }
 
         private void RefreshBuildMenu()
