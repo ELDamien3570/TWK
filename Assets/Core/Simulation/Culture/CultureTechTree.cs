@@ -34,6 +34,14 @@ namespace TWK.Cultures
         [Tooltip("Realm ID of the culture leader (largest population)")]
         public int OwnerRealmID = -1;
 
+        // ========== INNOVATION COST SCALING ==========
+        [Header("Innovation Cost Scaling (Per Tree)")]
+        [Tooltip("Base XP cost for the first innovation in this tree")]
+        public float BaseNodeCost = 1000f;
+
+        [Tooltip("XP cost increase per node unlocked (linear scaling). Example: 500 means each node costs 500 more XP")]
+        public float CostIncreasePerNode = 500f;
+
         // ========== CONSTRUCTOR ==========
         public CultureTechTree(TreeType treeType)
         {
@@ -54,11 +62,38 @@ namespace TWK.Cultures
         }
 
         /// <summary>
-        /// Check if there's enough XP to unlock a node.
+        /// Calculate the XP cost for the next innovation based on how many nodes are already unlocked.
+        /// Cost scales per tree: unlocking Warfare nodes doesn't affect Economics costs.
+        /// Formula: BaseNodeCost + (NodesUnlocked * CostIncreasePerNode)
+        /// Example: BaseNodeCost=1000, CostIncreasePerNode=500
+        ///   - 1st node = 1000 XP
+        ///   - 2nd node = 1500 XP
+        ///   - 10th node = 5500 XP
+        ///   - 19th node = 10,000 XP
+        /// </summary>
+        public float CalculateNextNodeCost()
+        {
+            int nodesUnlocked = UnlockedNodeIDs.Count;
+            return BaseNodeCost + (nodesUnlocked * CostIncreasePerNode);
+        }
+
+        /// <summary>
+        /// Check if there's enough XP to unlock the next node.
+        /// Uses dynamic cost calculation based on nodes already unlocked in this tree.
         /// </summary>
         public bool CanAffordNode(TechNode node)
         {
-            return AccumulatedXP >= node.Cost;
+            float cost = CalculateNextNodeCost();
+            return AccumulatedXP >= cost;
+        }
+
+        /// <summary>
+        /// Get the XP cost for unlocking a specific node (same as next node cost).
+        /// All nodes in a tree cost the same based on unlock count, regardless of which node.
+        /// </summary>
+        public float GetNodeCost(TechNode node)
+        {
+            return CalculateNextNodeCost();
         }
 
         /// <summary>
@@ -67,12 +102,6 @@ namespace TWK.Cultures
         /// </summary>
         public bool UnlockNode(TechNode node)
         {
-            if (!CanAffordNode(node))
-            {
-                Debug.LogWarning($"[CultureTechTree] Not enough XP to unlock {node.NodeName}");
-                return false;
-            }
-
             if (!node.ArePrerequisitesMet())
             {
                 Debug.LogWarning($"[CultureTechTree] Prerequisites not met for {node.NodeName}");
@@ -85,14 +114,23 @@ namespace TWK.Cultures
                 return false;
             }
 
+            // Calculate dynamic cost based on nodes already unlocked
+            float cost = CalculateNextNodeCost();
+
+            if (AccumulatedXP < cost)
+            {
+                Debug.LogWarning($"[CultureTechTree] Not enough XP to unlock {node.NodeName}. Need {cost:F0} XP, have {AccumulatedXP:F0} XP");
+                return false;
+            }
+
             // Spend XP
-            AccumulatedXP -= node.Cost;
+            AccumulatedXP -= cost;
 
             // Mark as unlocked
             node.IsUnlocked = true;
             UnlockedNodeIDs.Add(node.GetNodeID());
 
-            Debug.Log($"[CultureTechTree] Unlocked {node.NodeName} in {TreeType} tree");
+            Debug.Log($"[CultureTechTree] Unlocked {node.NodeName} in {TreeType} tree for {cost:F0} XP. Next node will cost {CalculateNextNodeCost():F0} XP.");
             return true;
         }
 

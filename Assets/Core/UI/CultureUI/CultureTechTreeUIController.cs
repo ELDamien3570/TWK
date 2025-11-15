@@ -177,14 +177,10 @@ namespace TWK.UI
             availableXPText.text = $"Available XP: {tree.AccumulatedXP:F0}";
             totalXPText.text = $"Total XP Earned: {tree.TotalXPEarned:F0}";
 
-            if (tree.OwnerRealmID >= 0)
-            {
-                ownerRealmText.text = $"Controlled by Realm {tree.OwnerRealmID}";
-            }
-            else
-            {
-                ownerRealmText.text = "No Owner";
-            }
+            // Show next innovation cost
+            float nextCost = tree.CalculateNextNodeCost();
+            int nodesUnlocked = tree.UnlockedNodeIDs.Count;
+            ownerRealmText.text = $"Nodes Unlocked: {nodesUnlocked} | Next Cost: {nextCost:F0} XP";
         }
 
         // ========== NODE LIST ==========
@@ -321,9 +317,12 @@ namespace TWK.UI
             if (selectedNode == null)
                 return;
 
+            var tree = currentCulture?.GetTechTree(currentTreeType);
+            float nodeCost = tree != null ? tree.GetNodeCost(selectedNode) : 0f;
+
             nodeNameText.text = selectedNode.NodeName;
             nodeDescriptionText.text = selectedNode.Description;
-            nodeCostText.text = $"Cost: {selectedNode.Cost} XP";
+            nodeCostText.text = $"Innovation Cost: {nodeCost:F0} XP";
 
             // Prerequisites
             if (selectedNode.Prerequisites.Count > 0)
@@ -430,14 +429,16 @@ namespace TWK.UI
             // Check if enough XP
             if (!tree.CanAffordNode(selectedNode))
             {
+                float nodeCost = tree.GetNodeCost(selectedNode);
                 unlockNodeButton.interactable = false;
-                unlockButtonText.text = $"Need {selectedNode.Cost} XP";
+                unlockButtonText.text = $"Need {nodeCost:F0} XP";
                 return;
             }
 
             // All checks passed
+            float cost = tree.GetNodeCost(selectedNode);
             unlockNodeButton.interactable = true;
-            unlockButtonText.text = $"Unlock ({selectedNode.Cost} XP)";
+            unlockButtonText.text = $"Unlock ({cost:F0} XP)";
         }
 
         // ========== NODE UNLOCKING ==========
