@@ -39,7 +39,7 @@ MonoBehaviour:
   AllowedWorkerTypes: 0000000004000000
   RequiredWorkers_ByType:
   - Archetype: 0
-    Count: 1
+    Count: 10
   WorkerEfficiency:
   - Archetype: 0
     Multiplier: 1

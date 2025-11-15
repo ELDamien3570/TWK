@@ -5614,6 +5614,10 @@ PrefabInstance:
       propertyPath: targetCity
       value: 
       objectReference: {fileID: 424178022}
+    - target: {fileID: 8658496696359696251, guid: c11c00eb8df210d478d4432259986464, type: 3}
+      propertyPath: m_fontSizeMin
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 9089595060107870743, guid: c11c00eb8df210d478d4432259986464, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
