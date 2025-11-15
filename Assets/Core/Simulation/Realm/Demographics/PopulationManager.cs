@@ -189,9 +189,9 @@ namespace TWK.Realms.Demographics
         public int GetIntPopulationByCity(int cityId)
         {
             int total = 0;
-            foreach (var pop in populationGroups)
-                if (pop.OwnerCityID == cityId)
-                    total += pop.PopulationCount;
+            // Use cached city index instead of iterating all populations
+            foreach (var pop in GetPopulationsByCity(cityId))
+                total += pop.PopulationCount;
             return total;
         }
 
@@ -442,15 +442,8 @@ namespace TWK.Realms.Demographics
         /// </summary>
         public List<PopulationGroup> GetAllPopulationGroups()
         {
-            var allGroups = new List<PopulationGroup>();
-
-            foreach (var city in GetAllCities())
-            {
-                var cityGroups = GetPopulationsByCity(city.CityID);
-                allGroups.AddRange(cityGroups);
-            }
-
-            return allGroups;
+            // Directly return the list instead of iterating through cities
+            return populationGroups;
         }
         #endregion
 

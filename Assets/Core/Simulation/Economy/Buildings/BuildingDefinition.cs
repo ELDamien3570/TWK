@@ -13,6 +13,9 @@ namespace TWK.Economy
     public class BuildingDefinition : ScriptableObject
     {
         [Header("Identity")]
+        [Tooltip("Stable ID for this building definition - generated from asset name hash")]
+        [SerializeField] private int stableDefinitionID;
+
         public string BuildingName;
         public TreeType BuildingCategory;
         public Sprite Icon;
@@ -64,6 +67,55 @@ namespace TWK.Economy
         [Header("Construction")]
         public int ConstructionTimeDays = 1;
 
+        // ========== WORKER SLOT CACHE ==========
+        // Cache archetype→slot lookup for faster worker allocation queries
+        [System.NonSerialized]
+        private Dictionary<PopulationArchetypes, WorkerSlot> workerSlotCache;
+
+        private void OnEnable()
+        {
+            // Generate stable ID if not set (first time or after reset)
+            if (stableDefinitionID == 0)
+            {
+                stableDefinitionID = GenerateStableID();
+            }
+
+            RebuildWorkerSlotCache();
+        }
+
+        /// <summary>
+        /// Generate a stable ID from the asset name and building name.
+        /// This provides a consistent ID across sessions unlike GetInstanceID().
+        /// </summary>
+        private int GenerateStableID()
+        {
+            string identifier = $"{name}_{BuildingName}";
+            return identifier.GetHashCode();
+        }
+
+        /// <summary>
+        /// Get the stable definition ID for this building.
+        /// Use this instead of GetInstanceID() for persistence.
+        /// </summary>
+        public int GetStableDefinitionID()
+        {
+            if (stableDefinitionID == 0)
+            {
+                stableDefinitionID = GenerateStableID();
+            }
+            return stableDefinitionID;
+        }
+
+        private void RebuildWorkerSlotCache()
+        {
+            workerSlotCache = new Dictionary<PopulationArchetypes, WorkerSlot>();
+            foreach (var slot in WorkerSlots)
+            {
+                if (slot != null)
+                    workerSlotCache[slot.Archetype] = slot;
+            }
+        }
+
         // ========== HELPER METHODS ==========
 
         /// <summary>
@@ -75,7 +127,8 @@ namespace TWK.Economy
             if (WorkerSlots.Count == 0)
                 return true;
 
-            return WorkerSlots.IsArchetypeAllowed(archetype);
+            // Use cached lookup instead of linear search
+            return workerSlotCache != null && workerSlotCache.ContainsKey(archetype);
         }
 
         /// <summary>
@@ -83,7 +136,10 @@ namespace TWK.Economy
         /// </summary>
         public float GetWorkerEfficiency(PopulationArchetypes archetype)
         {
-            return WorkerSlots.GetEfficiency(archetype, 1f);
+            // Use cached lookup instead of linear search
+            if (workerSlotCache != null && workerSlotCache.TryGetValue(archetype, out var slot))
+                return slot.EfficiencyMultiplier;
+            return 1f;
         }
 
         /// <summary>

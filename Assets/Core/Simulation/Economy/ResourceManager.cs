@@ -44,9 +44,9 @@ namespace TWK.Economy
 
                 resources[kvp.Key] += kvp.Value;
             }
-            
+
            //Debug.Log($"[ResourceManager] Applied ledger for City {cityId}.");
-            GetCityResources(cityId);
+           // Removed: GetCityResources(cityId) - expensive debug logging in hot path
         }
 
         public int GetResource(int cityId, ResourceType type)

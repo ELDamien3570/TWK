@@ -19,6 +19,9 @@ namespace TWK.Economy
         private List<BuildingInstanceData> buildings = new List<BuildingInstanceData>();
         private Dictionary<int, BuildingInstanceData> buildingLookup = new Dictionary<int, BuildingInstanceData>();
 
+        // City-indexed building cache for faster city-based queries
+        private Dictionary<int, List<int>> buildingsByCity = new Dictionary<int, List<int>>();
+
         // Definition lookup (BuildingDefinition.GetInstanceID() -> BuildingDefinition)
         // In real implementation, this would be populated from ScriptableObjects
         private Dictionary<int, BuildingDefinition> definitionLookup = new Dictionary<int, BuildingDefinition>();
@@ -91,9 +94,9 @@ namespace TWK.Economy
                 return null;
             }
 
-            // Use definition's GetInstanceID() as the definition ID
-            // This is a Unity Object instance ID that's stable during runtime
-            int definitionID = definition.GetInstanceID();
+            // Use definition's stable ID instead of GetInstanceID()
+            // GetInstanceID() can change between sessions, but stable ID is persistent
+            int definitionID = definition.GetStableDefinitionID();
 
             var instanceData = new BuildingInstanceData(
                 nextBuildingID++,
@@ -110,6 +113,11 @@ namespace TWK.Economy
                 instanceData.HasPaidConstructionCost = true;
                 buildings.Add(instanceData);
                 buildingLookup[instanceData.ID] = instanceData;
+
+                // Update city index cache
+                if (!buildingsByCity.ContainsKey(cityID))
+                    buildingsByCity[cityID] = new List<int>();
+                buildingsByCity[cityID].Add(instanceData.ID);
 
                 // Register the definition in the lookup if not already registered
                 // This allows BuildingViewModel to find the definition later
@@ -208,6 +216,12 @@ namespace TWK.Economy
             buildings.Remove(building);
             buildingLookup.Remove(buildingID);
 
+            // Update city index cache
+            if (buildingsByCity.ContainsKey(building.CityID))
+            {
+                buildingsByCity[building.CityID].Remove(buildingID);
+            }
+
             Debug.Log($"[BuildingManager] Cancelled construction of building ID {buildingID}");
             return true;
         }
@@ -222,23 +236,40 @@ namespace TWK.Economy
 
         public IEnumerable<BuildingInstanceData> GetBuildingsForCity(int cityID)
         {
-            foreach (var b in buildings)
-                if (b.CityID == cityID)
-                    yield return b;
+            // Use cached city index instead of iterating all buildings
+            if (!buildingsByCity.TryGetValue(cityID, out var buildingIds))
+                yield break;
+
+            foreach (int id in buildingIds)
+                yield return buildingLookup[id];
         }
 
         public IEnumerable<BuildingInstanceData> GetCompletedBuildingsForCity(int cityID)
         {
-            foreach (var b in buildings)
-                if (b.CityID == cityID && b.IsCompleted)
-                    yield return b;
+            // Use cached city index instead of iterating all buildings
+            if (!buildingsByCity.TryGetValue(cityID, out var buildingIds))
+                yield break;
+
+            foreach (int id in buildingIds)
+            {
+                var building = buildingLookup[id];
+                if (building.IsCompleted)
+                    yield return building;
+            }
         }
 
         public IEnumerable<BuildingInstanceData> GetBuildingsUnderConstruction(int cityID)
         {
-            foreach (var b in buildings)
-                if (b.CityID == cityID && b.IsUnderConstruction)
-                    yield return b;
+            // Use cached city index instead of iterating all buildings
+            if (!buildingsByCity.TryGetValue(cityID, out var buildingIds))
+                yield break;
+
+            foreach (int id in buildingIds)
+            {
+                var building = buildingLookup[id];
+                if (building.IsUnderConstruction)
+                    yield return building;
+            }
         }
 
         public BuildingInstanceData GetInstanceData(int buildingID)
@@ -306,13 +337,8 @@ namespace TWK.Economy
         /// </summary>
         public void AllocateWorkersForCity(int cityId)
         {
-            // Get buildings for this city
-            var cityBuildings = new List<BuildingInstanceData>();
-            foreach (var building in buildings)
-            {
-                if (building.CityID == cityId)
-                    cityBuildings.Add(building);
-            }
+            // Get buildings for this city using cached index
+            var cityBuildings = new List<BuildingInstanceData>(GetBuildingsForCity(cityId));
 
             // Call allocation system
             WorkerAllocationSystem.AllocateWorkersForCity(cityId, cityBuildings, definitionLookup);
@@ -326,12 +352,8 @@ namespace TWK.Economy
         /// </summary>
         public void DeallocateWorkersForCity(int cityId, int workersLost)
         {
-            var cityBuildings = new List<BuildingInstanceData>();
-            foreach (var building in buildings)
-            {
-                if (building.CityID == cityId)
-                    cityBuildings.Add(building);
-            }
+            // Get buildings for this city using cached index
+            var cityBuildings = new List<BuildingInstanceData>(GetBuildingsForCity(cityId));
 
             WorkerAllocationSystem.DeallocateWorkersForCity(cityId, cityBuildings, definitionLookup, workersLost);
 

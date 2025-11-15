@@ -62,6 +62,12 @@ namespace TWK.Cultures
         [Tooltip("Base rate of cultural assimilation per year (can be modified)")]
         [SerializeField] private float baseAssimilationRate = 0.02f; // 2% per year
 
+        // ========== REALM+CULTURE POPULATION CACHE ==========
+        // Cache realm+culture populations for efficient ownership calculations
+        // Key: (realmID, cultureID), Value: total population
+        private Dictionary<(int realmID, int cultureID), int> realmCulturePopulations = new Dictionary<(int, int), int>();
+        private bool realmCulturePopulationsDirty = true;
+
         // ========== TIME MANAGEMENT ==========
         private WorldTimeManager worldTimeManager;
 
@@ -120,6 +126,9 @@ namespace TWK.Cultures
         /// </summary>
         private void HandleCityPopulationChanged(int cityID)
         {
+            // Invalidate realm+culture population cache
+            realmCulturePopulationsDirty = true;
+
             // Recalculate city culture (this will fire OnCityCultureChanged if culture changed)
             CalculateCityCulture(cityID);
         }
@@ -214,37 +223,53 @@ namespace TWK.Cultures
             }
         }
 
-        private int GetRealmWithLargestCulturePopulation(int cultureID)
+        /// <summary>
+        /// Rebuild the realm+culture population cache from all population groups.
+        /// Called when cache is dirty (populations changed).
+        /// </summary>
+        private void RebuildRealmCulturePopulationCache()
         {
-            // Group population by realm and culture
-            var realmPopulations = new Dictionary<int, int>();
+            realmCulturePopulations.Clear();
 
             foreach (var popGroup in PopulationManager.Instance.GetAllPopulationGroups())
             {
                 if (popGroup.Culture == null) continue;
-                if (popGroup.Culture.GetCultureID() != cultureID) continue;
 
                 // Get realm ID from city
                 var city = PopulationManager.Instance.GetCityByID(popGroup.OwnerCityID);
                 if (city == null) continue;
 
                 int realmID = city.Data.OwnerRealmID;
-                if (!realmPopulations.ContainsKey(realmID))
-                    realmPopulations[realmID] = 0;
+                int cultureID = popGroup.Culture.GetCultureID();
+                var key = (realmID, cultureID);
 
-                realmPopulations[realmID] += popGroup.PopulationCount;
+                if (!realmCulturePopulations.ContainsKey(key))
+                    realmCulturePopulations[key] = 0;
+
+                realmCulturePopulations[key] += popGroup.PopulationCount;
             }
 
-            // Find realm with largest population
+            realmCulturePopulationsDirty = false;
+        }
+
+        private int GetRealmWithLargestCulturePopulation(int cultureID)
+        {
+            // Rebuild cache if dirty
+            if (realmCulturePopulationsDirty)
+            {
+                RebuildRealmCulturePopulationCache();
+            }
+
+            // Find realm with largest population for this culture using cached data
             int largestRealmID = -1;
             int largestPopulation = 0;
 
-            foreach (var kvp in realmPopulations)
+            foreach (var kvp in realmCulturePopulations)
             {
-                if (kvp.Value > largestPopulation)
+                if (kvp.Key.cultureID == cultureID && kvp.Value > largestPopulation)
                 {
                     largestPopulation = kvp.Value;
-                    largestRealmID = kvp.Key;
+                    largestRealmID = kvp.Key.realmID;
                 }
             }
 
