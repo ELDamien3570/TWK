@@ -10,13 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aec45fe3034b2e141b45e08af15d41e4, type: 3}
-  m_Name: Mil Tech
+  m_Name: Eco n 1a
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Cultures.TechNode
-  NodeName: Thessalian Horseman
-  Description: 'Unlock light horsement from thessaly '
-  Icon: {fileID: 21300000, guid: 9c63d6a9ca485ec489eb598b0edc441f, type: 3}
-  TreeType: 0
+  NodeName: Slave Greek Farms
+  Description: Requires a nobelman and slaves
+  Icon: {fileID: 21300000, guid: 8f4bd30db31a9f54ea0064f53d1894c7, type: 3}
+  TreeType: 3
   Cost: 1
   Prerequisites: []
-  UnlockedBuildings: []
+  UnlockedBuildings:
+  - {fileID: 11400000, guid: d766d6aae93351b41b4c46660e9bec26, type: 2}
   Modifiers: []

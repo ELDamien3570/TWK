@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aec45fe3034b2e141b45e08af15d41e4, type: 3}
-  m_Name: Greek Test Mine
+  m_Name: Mil n 1a
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Cultures.TechNode
-  NodeName: Slave Mines
-  Description: Mines that can only be run by slaves
-  Icon: {fileID: 21300000, guid: ad4f0495bda3d01418c589e71f5afba1, type: 3}
-  TreeType: 3
+  NodeName: Thessalian Horseman
+  Description: 'Unlock light horsement from thessaly '
+  Icon: {fileID: 21300000, guid: 9c63d6a9ca485ec489eb598b0edc441f, type: 3}
+  TreeType: 0
   Cost: 1
   Prerequisites: []
   UnlockedBuildings: []

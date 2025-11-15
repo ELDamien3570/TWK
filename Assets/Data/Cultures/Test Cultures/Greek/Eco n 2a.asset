@@ -10,14 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aec45fe3034b2e141b45e08af15d41e4, type: 3}
-  m_Name: Greek Test Mine 2
+  m_Name: Eco n 2a
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Cultures.TechNode
-  NodeName: Normal Mines
+  NodeName: Slave Mines
   Description: Mines that can only be run by slaves
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: ad4f0495bda3d01418c589e71f5afba1, type: 3}
   TreeType: 3
   Cost: 1
-  Prerequisites:
-  - {fileID: 11400000, guid: 2ebd0144710994d47be46b3a73e4d448, type: 2}
+  Prerequisites: []
   UnlockedBuildings: []
   Modifiers: []

@@ -2491,7 +2491,7 @@ MonoBehaviour:
     BuildingIDs: 
   cityName: Pella
   cityID: 0
-  growthRate: 1.3
+  growthRate: 1.15
   territoryRadius: 10
 --- !u!65 &424178023
 BoxCollider:

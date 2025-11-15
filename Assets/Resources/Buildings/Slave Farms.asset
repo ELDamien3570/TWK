@@ -34,20 +34,17 @@ MonoBehaviour:
   BaseMonthlyXP: 1
   MaxMonthlyXP: 5
   RequiresWorkers: 1
-  MinWorkers: 0
-  OptimalWorkers: 100
-  AllowedWorkerTypes: 0400000002000000
-  RequiredWorkers_ByType:
+  WorkerSlots:
   - Archetype: 4
-    Count: 10
+    MinCount: 50
+    MaxCount: 300
+    EfficiencyMultiplier: 1
+    IsRequired: 1
   - Archetype: 2
-    Count: 5
-  WorkerEfficiency:
-  - Archetype: 4
-    Multiplier: 0.8
-  - Archetype: 2
-    Multiplier: 1
-  WorkerPenalties: []
+    MinCount: 5
+    MaxCount: 25
+    EfficiencyMultiplier: 0.5
+    IsRequired: 1
   EducationGrowthPerWorker: 0
   WealthGrowthPerWorker: 0
   PopulationGrowthBonus: 0

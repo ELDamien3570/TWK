@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aec45fe3034b2e141b45e08af15d41e4, type: 3}
-  m_Name: Science Tech
+  m_Name: Rel n 1a
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Cultures.TechNode
-  NodeName: Stargazing
-  Description: Allows you to predict the next days weather during deployment
-  Icon: {fileID: 21300000, guid: 0ed276911e622384ba5f388f341f71b0, type: 3}
+  NodeName: Ierus
+  Description: Allows the recruitment of Iereuss'
+  Icon: {fileID: 0}
   TreeType: 0
   Cost: 1
   Prerequisites: []
