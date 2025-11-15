@@ -150,7 +150,8 @@ namespace TWK.Economy
             if (!definition.RequiresWorkers)
                 return false;
 
-            return (instance.TotalWorkers + additionalWorkers) <= definition.OptimalWorkers;
+            int optimalWorkers = definition.WorkerSlots.GetTotalMaxWorkers();
+            return (instance.TotalWorkers + additionalWorkers) <= optimalWorkers;
         }
 
         /// <summary>
@@ -161,13 +162,16 @@ namespace TWK.Economy
             if (!definition.RequiresWorkers)
                 return 1f;
 
-            if (instance.TotalWorkers < definition.MinWorkers)
+            int minWorkers = definition.WorkerSlots.GetTotalMinWorkers();
+            int optimalWorkers = definition.WorkerSlots.GetTotalMaxWorkers();
+
+            if (instance.TotalWorkers < minWorkers)
                 return 0f;
 
-            if (definition.OptimalWorkers == 0)
+            if (optimalWorkers == 0)
                 return 1f;
 
-            return Mathf.Clamp01(instance.TotalWorkers / (float)definition.OptimalWorkers);
+            return Mathf.Clamp01(instance.TotalWorkers / (float)optimalWorkers);
         }
 
         /// <summary>
@@ -178,10 +182,10 @@ namespace TWK.Economy
         {
             var deficit = new Dictionary<PopulationArchetypes, int>();
 
-            foreach (var requirement in definition.RequiredWorkers_ByType)
+            foreach (var slot in definition.WorkerSlots.GetRequiredSlots())
             {
-                PopulationArchetypes archetype = requirement.Archetype;
-                int required = requirement.Count;
+                PopulationArchetypes archetype = slot.Archetype;
+                int required = slot.MinCount;
                 int assigned = instance.GetWorkerCount(archetype);
 
                 if (assigned < required)

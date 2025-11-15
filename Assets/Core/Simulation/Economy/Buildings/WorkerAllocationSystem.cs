@@ -107,14 +107,15 @@ namespace TWK.Economy
 
                 var definition = definitions[building.BuildingDefinitionID];
 
-                if (!definition.RequiresWorkers || definition.RequiredWorkers_ByType.Count == 0)
+                var requiredSlots = definition.WorkerSlots.GetRequiredSlots();
+                if (!definition.RequiresWorkers || requiredSlots.Count == 0)
                     continue;
 
                 // Assign each required worker type
-                foreach (var requirement in definition.RequiredWorkers_ByType)
+                foreach (var slot in requiredSlots)
                 {
-                    PopulationArchetypes archetype = requirement.Archetype;
-                    int required = requirement.Count;
+                    PopulationArchetypes archetype = slot.Archetype;
+                    int required = slot.MinCount;
 
                     if (!availableWorkers.ContainsKey(archetype))
                         continue;
@@ -146,15 +147,18 @@ namespace TWK.Economy
                 if (!definition.RequiresWorkers)
                     continue;
 
-                int needed = definition.MinWorkers - building.TotalWorkers;
+                int minWorkers = definition.WorkerSlots.GetTotalMinWorkers();
+                int needed = minWorkers - building.TotalWorkers;
                 if (needed <= 0)
                     continue;
 
-                // Try to assign from allowed worker types
-                foreach (var archetype in definition.AllowedWorkerTypes)
+                // Try to assign from allowed worker types (any slot archetype)
+                foreach (var slot in definition.WorkerSlots)
                 {
                     if (needed <= 0)
                         break;
+
+                    PopulationArchetypes archetype = slot.Archetype;
 
                     if (!availableWorkers.ContainsKey(archetype) || availableWorkers[archetype] <= 0)
                         continue;
@@ -184,19 +188,22 @@ namespace TWK.Economy
                 if (!definition.RequiresWorkers)
                     continue;
 
-                int canAccept = definition.OptimalWorkers - building.TotalWorkers;
+                int optimalWorkers = definition.WorkerSlots.GetTotalMaxWorkers();
+                int canAccept = optimalWorkers - building.TotalWorkers;
                 if (canAccept <= 0)
                     continue;
 
                 // Prioritize worker types by efficiency (highest efficiency first)
-                var sortedArchetypes = definition.AllowedWorkerTypes
-                    .OrderByDescending(a => definition.GetWorkerEfficiency(a))
+                var sortedSlots = definition.WorkerSlots
+                    .OrderByDescending(s => s.EfficiencyMultiplier)
                     .ToList();
 
-                foreach (var archetype in sortedArchetypes)
+                foreach (var slot in sortedSlots)
                 {
                     if (canAccept <= 0)
                         break;
+
+                    PopulationArchetypes archetype = slot.Archetype;
 
                     if (!availableWorkers.ContainsKey(archetype) || availableWorkers[archetype] <= 0)
                         continue;
@@ -231,7 +238,8 @@ namespace TWK.Economy
                 int currentCount = kvp.Value;
 
                 // Determine how many we can remove (keep required workers if possible)
-                int requiredCount = definition.RequiredWorkers_ByType.GetCount(archetype);
+                var slot = definition.WorkerSlots.GetSlot(archetype);
+                int requiredCount = slot != null && slot.IsRequired ? slot.MinCount : 0;
                 int removable = Mathf.Max(0, currentCount - requiredCount);
 
                 int toRemove = Mathf.Min(removable, maxToRemove - totalRemoved);
@@ -344,7 +352,8 @@ namespace TWK.Economy
 
         private static bool IsRequiredWorker(BuildingDefinition definition, PopulationArchetypes archetype)
         {
-            return definition.RequiredWorkers_ByType.GetCount(archetype) > 0;
+            var slot = definition.WorkerSlots.GetSlot(archetype);
+            return slot != null && slot.IsRequired;
         }
 
         // ========== UI PLACEHOLDER METHODS ==========

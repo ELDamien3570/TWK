@@ -589,14 +589,18 @@ namespace TWK.UI
             if (def.RequiresWorkers)
             {
                 info += $"<b>Worker Requirements:</b>\n";
-                info += $"  Min Workers: {def.MinWorkers}\n";
-                info += $"  Optimal Workers: {def.OptimalWorkers}\n";
+                int minWorkers = def.WorkerSlots.GetTotalMinWorkers();
+                int optimalWorkers = def.WorkerSlots.GetTotalMaxWorkers();
+                info += $"  Min Workers: {minWorkers}\n";
+                info += $"  Optimal Workers: {(optimalWorkers == int.MaxValue ? "Unlimited" : optimalWorkers.ToString())}\n";
 
-                if (def.AllowedWorkerTypes != null && def.AllowedWorkerTypes.Count > 0)
+                if (def.WorkerSlots != null && def.WorkerSlots.Count > 0)
                 {
-                    info += "  Allowed Types: ";
-                    info += string.Join(", ", def.AllowedWorkerTypes);
-                    info += "\n";
+                    info += "  Worker Slots:\n";
+                    foreach (var slot in def.WorkerSlots)
+                    {
+                        info += $"    {slot.Archetype}: {slot.MinCount}-{(slot.HasMaxLimit ? slot.MaxCount.ToString() : "∞")} (x{slot.EfficiencyMultiplier:F1})\n";
+                    }
                 }
                 info += "\n";
             }

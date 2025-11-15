@@ -198,8 +198,8 @@ namespace TWK.UI.ViewModels
             if (_definition != null)
             {
                 RequiresWorkers = _definition.RequiresWorkers;
-                MinWorkers = _definition.MinWorkers;
-                OptimalWorkers = _definition.OptimalWorkers;
+                MinWorkers = _definition.WorkerSlots.GetTotalMinWorkers();
+                OptimalWorkers = _definition.WorkerSlots.GetTotalMaxWorkers();
             }
             else
             {
@@ -397,9 +397,15 @@ namespace TWK.UI.ViewModels
             if (_definition == null)
                 return new List<PopulationArchetypes>(); // Empty list if no definition
 
-            return _definition.AllowedWorkerTypes.Count > 0
-                ? new List<PopulationArchetypes>(_definition.AllowedWorkerTypes)
-                : System.Enum.GetValues(typeof(PopulationArchetypes)).Cast<PopulationArchetypes>().ToList();
+            if (_definition.WorkerSlots.Count > 0)
+            {
+                return _definition.WorkerSlots.Select(s => s.Archetype).ToList();
+            }
+            else
+            {
+                // If no slots defined, allow all archetypes
+                return System.Enum.GetValues(typeof(PopulationArchetypes)).Cast<PopulationArchetypes>().ToList();
+            }
         }
 
         private string FormatResourceDictionary(Dictionary<ResourceType, int> resources)

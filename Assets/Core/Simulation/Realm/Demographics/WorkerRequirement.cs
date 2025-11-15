@@ -47,109 +47,13 @@ namespace TWK.Realms.Demographics
         }
     }
 
-    // ========== LEGACY STRUCTS (Deprecated but kept for backward compatibility) ==========
-
-    /// <summary>
-    /// [DEPRECATED] Use WorkerSlot instead.
-    /// Represents a worker requirement for a specific population archetype.
-    /// </summary>
-    [Serializable]
-    public struct WorkerRequirement
-    {
-        public PopulationArchetypes Archetype;
-        public int Count;
-
-        public WorkerRequirement(PopulationArchetypes archetype, int count)
-        {
-            Archetype = archetype;
-            Count = count;
-        }
-    }
-
-    /// <summary>
-    /// [DEPRECATED] Use WorkerSlot instead.
-    /// Represents a worker efficiency modifier for a specific population archetype.
-    /// </summary>
-    [Serializable]
-    public struct WorkerEfficiencyModifier
-    {
-        public PopulationArchetypes Archetype;
-        public float Multiplier;
-
-        public WorkerEfficiencyModifier(PopulationArchetypes archetype, float multiplier)
-        {
-            Archetype = archetype;
-            Multiplier = multiplier;
-        }
-    }
-
     // ========== EXTENSION METHODS ==========
 
     /// <summary>
-    /// Extension methods for working with worker-related lists.
+    /// Extension methods for working with worker slots.
     /// </summary>
-    public static class WorkerExtensions
+    public static class WorkerSlotExtensions
     {
-        /// <summary>
-        /// Convert a list of WorkerRequirement to a Dictionary.
-        /// </summary>
-        public static Dictionary<PopulationArchetypes, int> ToDictionary(this List<WorkerRequirement> list)
-        {
-            var dict = new Dictionary<PopulationArchetypes, int>();
-            foreach (var item in list)
-            {
-                if (!dict.ContainsKey(item.Archetype))
-                {
-                    dict[item.Archetype] = item.Count;
-                }
-            }
-            return dict;
-        }
-
-        /// <summary>
-        /// Convert a list of WorkerEfficiencyModifier to a Dictionary.
-        /// </summary>
-        public static Dictionary<PopulationArchetypes, float> ToDictionary(this List<WorkerEfficiencyModifier> list)
-        {
-            var dict = new Dictionary<PopulationArchetypes, float>();
-            foreach (var item in list)
-            {
-                if (!dict.ContainsKey(item.Archetype))
-                {
-                    dict[item.Archetype] = item.Multiplier;
-                }
-            }
-            return dict;
-        }
-
-        /// <summary>
-        /// Get the count for a specific archetype from the list.
-        /// </summary>
-        public static int GetCount(this List<WorkerRequirement> list, PopulationArchetypes archetype)
-        {
-            foreach (var item in list)
-            {
-                if (item.Archetype == archetype)
-                    return item.Count;
-            }
-            return 0;
-        }
-
-        /// <summary>
-        /// Get the multiplier for a specific archetype from the list.
-        /// </summary>
-        public static float GetMultiplier(this List<WorkerEfficiencyModifier> list, PopulationArchetypes archetype, float defaultValue = 1f)
-        {
-            foreach (var item in list)
-            {
-                if (item.Archetype == archetype)
-                    return item.Multiplier;
-            }
-            return defaultValue;
-        }
-
-        // ========== WORKER SLOT EXTENSIONS ==========
-
         /// <summary>
         /// Get total minimum workers required across all slots.
         /// </summary>
@@ -207,6 +111,34 @@ namespace TWK.Realms.Demographics
         {
             var slot = slots.GetSlot(archetype);
             return slot != null ? slot.EfficiencyMultiplier : defaultValue;
+        }
+
+        /// <summary>
+        /// Get all required worker slots.
+        /// </summary>
+        public static List<WorkerSlot> GetRequiredSlots(this List<WorkerSlot> slots)
+        {
+            var required = new List<WorkerSlot>();
+            foreach (var slot in slots)
+            {
+                if (slot.IsRequired)
+                    required.Add(slot);
+            }
+            return required;
+        }
+
+        /// <summary>
+        /// Get all optional worker slots.
+        /// </summary>
+        public static List<WorkerSlot> GetOptionalSlots(this List<WorkerSlot> slots)
+        {
+            var optional = new List<WorkerSlot>();
+            foreach (var slot in slots)
+            {
+                if (slot.IsOptional)
+                    optional.Add(slot);
+            }
+            return optional;
         }
     }
 }

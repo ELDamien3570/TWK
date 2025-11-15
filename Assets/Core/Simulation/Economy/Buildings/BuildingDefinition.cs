@@ -51,23 +51,8 @@ namespace TWK.Economy
         [Tooltip("Does this building require workers to operate?")]
         public bool RequiresWorkers = true;
 
-        [Tooltip("Minimum workers needed to operate at all")]
-        public int MinWorkers = 0;
-
-        [Tooltip("Optimal workers for max production")]
-        public int OptimalWorkers = 10;
-
-        [Tooltip("Which population archetypes can work here? Empty = any")]
-        public List<PopulationArchetypes> AllowedWorkerTypes = new List<PopulationArchetypes>();
-
-        [Tooltip("Required worker types (must have at least one)")]
-        public List<WorkerRequirement> RequiredWorkers_ByType = new List<WorkerRequirement>();
-
-        [Tooltip("Worker efficiency multipliers by archetype (1.0 = normal)")]
-        public List<WorkerEfficiencyModifier> WorkerEfficiency = new List<WorkerEfficiencyModifier>();
-
-        [Tooltip("Penalties for certain worker types (negative multiplier)")]
-        public List<WorkerEfficiencyModifier> WorkerPenalties = new List<WorkerEfficiencyModifier>();
+        [Tooltip("Worker slot definitions - each slot defines an archetype with min/max counts and efficiency")]
+        public List<WorkerSlot> WorkerSlots = new List<WorkerSlot>();
 
         [Header("Population Effects")]
         [Tooltip("Education increase per day per worker")]
@@ -95,30 +80,19 @@ namespace TWK.Economy
         /// </summary>
         public bool CanWorkerTypeWork(PopulationArchetypes archetype)
         {
-            // If AllowedWorkerTypes is empty, all types can work
-            if (AllowedWorkerTypes.Count == 0)
+            // If WorkerSlots is empty, all types can work
+            if (WorkerSlots.Count == 0)
                 return true;
 
-            return AllowedWorkerTypes.Contains(archetype);
+            return WorkerSlots.IsArchetypeAllowed(archetype);
         }
 
         /// <summary>
         /// Get the efficiency multiplier for this worker type.
-        /// Accounts for both efficiency bonuses and penalties.
         /// </summary>
         public float GetWorkerEfficiency(PopulationArchetypes archetype)
         {
-            float efficiency = 1f;
-
-            // Apply efficiency multiplier
-            float efficiencyBonus = WorkerEfficiency.GetMultiplier(archetype, 1f);
-            efficiency *= efficiencyBonus;
-
-            // Apply penalties (negative effects)
-            float penalty = WorkerPenalties.GetMultiplier(archetype, 0f);
-            efficiency *= (1f - penalty);
-
-            return efficiency;
+            return WorkerSlots.GetEfficiency(archetype, 1f);
         }
 
         /// <summary>
@@ -136,14 +110,17 @@ namespace TWK.Economy
                 return production;
             }
 
-            if (workerCount < MinWorkers)
+            int minWorkers = WorkerSlots.GetTotalMinWorkers();
+            int optimalWorkers = WorkerSlots.GetTotalMaxWorkers();
+
+            if (workerCount < minWorkers)
             {
                 // Not enough workers = no production
                 return production;
             }
 
             // Calculate production scaling
-            float workerRatio = OptimalWorkers > 0 ? (workerCount / (float)OptimalWorkers) : 1f;
+            float workerRatio = optimalWorkers > 0 ? (workerCount / (float)optimalWorkers) : 1f;
             workerRatio = Mathf.Clamp01(workerRatio); // Cap at 100%
 
             foreach (var item in MaxProduction)
@@ -200,14 +177,17 @@ namespace TWK.Economy
                 return BaseMonthlyXP;
             }
 
-            if (workerCount < MinWorkers)
+            int minWorkers = WorkerSlots.GetTotalMinWorkers();
+            int optimalWorkers = WorkerSlots.GetTotalMaxWorkers();
+
+            if (workerCount < minWorkers)
             {
                 // Not enough workers = no XP
                 return 0f;
             }
 
             // Calculate XP scaling (same logic as production)
-            float workerRatio = OptimalWorkers > 0 ? (workerCount / (float)OptimalWorkers) : 1f;
+            float workerRatio = optimalWorkers > 0 ? (workerCount / (float)optimalWorkers) : 1f;
             workerRatio = Mathf.Clamp01(workerRatio); // Cap at 100%
 
             // Scale between base and max based on workers
