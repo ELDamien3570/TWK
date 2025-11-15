@@ -82,6 +82,13 @@ namespace TWK.Cultures
             }
 
             InitializeTechTreeLookup();
+
+            // Sync node unlock states from persisted data
+            // This restores the IsUnlocked flags after game reload
+            foreach (var tree in TechTrees)
+            {
+                tree.SyncNodeUnlockStates();
+            }
         }
 
         // ========== TECH TREE ACCESS ==========

@@ -50,6 +50,33 @@ namespace TWK.Cultures
             UnlockedNodeIDs = new List<int>();
         }
 
+        // ========== INITIALIZATION ==========
+
+        /// <summary>
+        /// Synchronize the runtime IsUnlocked flags with the persisted UnlockedNodeIDs list.
+        /// Must be called after deserialization to restore unlock state.
+        /// </summary>
+        public void SyncNodeUnlockStates()
+        {
+            // First, reset all nodes to locked
+            foreach (var node in AllNodes)
+            {
+                if (node != null)
+                    node.IsUnlocked = false;
+            }
+
+            // Then set unlocked state for nodes in UnlockedNodeIDs
+            foreach (var node in AllNodes)
+            {
+                if (node != null && UnlockedNodeIDs.Contains(node.GetNodeID()))
+                {
+                    node.IsUnlocked = true;
+                }
+            }
+
+            Debug.Log($"[CultureTechTree] Synced {UnlockedNodeIDs.Count} unlocked nodes in {TreeType} tree");
+        }
+
         // ========== XP METHODS ==========
 
         /// <summary>
