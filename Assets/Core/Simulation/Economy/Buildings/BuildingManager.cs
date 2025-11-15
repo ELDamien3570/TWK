@@ -75,10 +75,14 @@ namespace TWK.Economy
                 return null;
             }
 
+            // Use definition's GetInstanceID() as the definition ID
+            // This is a Unity Object instance ID that's stable during runtime
+            int definitionID = definition.GetInstanceID();
+
             var instanceData = new BuildingInstanceData(
                 nextBuildingID++,
                 cityID,
-                definition.GetInstanceID(),
+                definitionID,
                 position,
                 definition.ConstructionTimeDays,
                 definition.BaseEfficiency
@@ -91,7 +95,15 @@ namespace TWK.Economy
                 buildings.Add(instanceData);
                 buildingLookup[instanceData.ID] = instanceData;
 
-                Debug.Log($"[BuildingManager] Created {definition.BuildingName} (ID: {instanceData.ID})");
+                // Register the definition in the lookup if not already registered
+                // This allows BuildingViewModel to find the definition later
+                if (!definitionLookup.ContainsKey(definitionID))
+                {
+                    definitionLookup[definitionID] = definition;
+                    Debug.Log($"[BuildingManager] Registered definition for {definition.BuildingName} (DefID: {definitionID})");
+                }
+
+                Debug.Log($"[BuildingManager] Created {definition.BuildingName} (ID: {instanceData.ID}, DefID: {definitionID})");
                 return instanceData;
             }
             else

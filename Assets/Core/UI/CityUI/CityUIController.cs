@@ -409,8 +409,12 @@ namespace TWK.UI
                 currentBuildingItems.Add(item);
             }
 
-            // Refresh build menu
-            RefreshBuildMenu();
+            // Only refresh build menu on first load, not on every refresh
+            // This prevents dropdown from resetting while user is selecting
+            if (availableBuildings.Count == 0)
+            {
+                RefreshBuildMenu();
+            }
         }
 
         private void RefreshBuildMenu()
@@ -423,10 +427,12 @@ namespace TWK.UI
             // Populate dropdown
             if (buildingSelectionDropdown != null)
             {
+                // Save current selection index to try to preserve it
+                int currentSelection = buildingSelectionDropdown.value;
+
                 buildingSelectionDropdown.ClearOptions();
 
                 var options = new List<string>();
-                options.Add("-- Select Building to Construct --"); // Default option
 
                 foreach (var building in availableBuildings)
                 {
@@ -434,25 +440,34 @@ namespace TWK.UI
                         options.Add(building.BuildingName);
                 }
 
+                if (options.Count == 0)
+                {
+                    options.Add("No buildings available");
+                }
+
                 buildingSelectionDropdown.AddOptions(options);
-                buildingSelectionDropdown.value = 0;
+
+                // Try to preserve selection if still valid
+                if (currentSelection < options.Count)
+                    buildingSelectionDropdown.value = currentSelection;
+                else
+                    buildingSelectionDropdown.value = 0;
             }
 
-            // Clear selection
-            selectedBuildingDefinition = null;
-            UpdateBuildingInfoDisplay();
+            // Update selection based on dropdown value
+            OnBuildingSelectionChanged(buildingSelectionDropdown != null ? buildingSelectionDropdown.value : 0);
         }
 
         private void OnBuildingSelectionChanged(int index)
         {
-            // Index 0 is the placeholder "Select Building" option
-            if (index == 0 || index > availableBuildings.Count)
+            // Direct mapping - no placeholder offset
+            if (index >= 0 && index < availableBuildings.Count)
             {
-                selectedBuildingDefinition = null;
+                selectedBuildingDefinition = availableBuildings[index];
             }
             else
             {
-                selectedBuildingDefinition = availableBuildings[index - 1];
+                selectedBuildingDefinition = null;
             }
 
             UpdateBuildingInfoDisplay();
@@ -621,11 +636,8 @@ namespace TWK.UI
 
             Debug.Log($"[CityUIController] {selectedBuildingDefinition.BuildingName} construction requested at {buildPosition}");
 
-            // Reset dropdown and refresh
-            if (buildingSelectionDropdown != null)
-                buildingSelectionDropdown.value = 0;
-
-            selectedBuildingDefinition = null;
+            // Don't reset dropdown - let user build multiple of same building if desired
+            // Just refresh to update building list
             RefreshUI();
         }
 
@@ -674,7 +686,7 @@ namespace TWK.UI
             {
                 if (mainCulture == null)
                 {
-                    mainCultureInfoText.text = "<b>Main Culture:</b>\n<i>No dominant culture (requires >50% of population)</i>";
+                    mainCultureInfoText.text = "<b>Main Culture:</b>\n<i>No dominant culture (city has no population)</i>";
                 }
                 else
                 {
