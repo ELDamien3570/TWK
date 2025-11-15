@@ -21,38 +21,42 @@ MonoBehaviour:
   - TreeType: 0
     AccumulatedXP: 0
     TotalXPEarned: 0
-    AllNodes: []
+    AllNodes:
+    - {fileID: 11400000, guid: 42b933cac01e73949bbb3c2ee003051e, type: 2}
     UnlockedNodeIDs: 
     OwnerRealmID: 0
-    BaseNodeCost: 0
-    CostIncreasePerNode: 0
+    BaseNodeCost: 1000
+    CostIncreasePerNode: 500
   - TreeType: 1
     AccumulatedXP: 0
     TotalXPEarned: 0
-    AllNodes: []
+    AllNodes:
+    - {fileID: 11400000, guid: 33617806fdce049409848ce39beb62c8, type: 2}
     UnlockedNodeIDs: 
     OwnerRealmID: 0
-    BaseNodeCost: 0
-    CostIncreasePerNode: 0
+    BaseNodeCost: 1000
+    CostIncreasePerNode: 500
   - TreeType: 2
     AccumulatedXP: 0
     TotalXPEarned: 0
-    AllNodes: []
+    AllNodes:
+    - {fileID: 11400000, guid: ca450a991d7d4754b8b1ebbbf230cccb, type: 2}
     UnlockedNodeIDs: 
     OwnerRealmID: 0
-    BaseNodeCost: 0
-    CostIncreasePerNode: 0
+    BaseNodeCost: 1000
+    CostIncreasePerNode: 500
   - TreeType: 4
     AccumulatedXP: 0
     TotalXPEarned: 0
-    AllNodes: []
+    AllNodes:
+    - {fileID: 11400000, guid: 6b90639a8ba82b041af4836c369f6d4e, type: 2}
     UnlockedNodeIDs: 
     OwnerRealmID: 0
-    BaseNodeCost: 0
-    CostIncreasePerNode: 0
+    BaseNodeCost: 500
+    CostIncreasePerNode: 500
   - TreeType: 3
-    AccumulatedXP: 0
-    TotalXPEarned: 0
+    AccumulatedXP: 91500
+    TotalXPEarned: 100000
     AllNodes:
     - {fileID: 11400000, guid: 43dadef9a74ef84408ff690cdcaa0c63, type: 2}
     - {fileID: 11400000, guid: 2ebd0144710994d47be46b3a73e4d448, type: 2}
