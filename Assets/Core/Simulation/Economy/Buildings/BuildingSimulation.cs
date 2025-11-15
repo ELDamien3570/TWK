@@ -69,6 +69,7 @@ namespace TWK.Economy
 
         /// <summary>
         /// Apply population effects (education, wealth increases).
+        /// Effects are now defined per worker slot.
         /// </summary>
         private static void ApplyPopulationEffects(BuildingInstanceData instance, BuildingDefinition definition, int cityId)
         {
@@ -78,29 +79,45 @@ namespace TWK.Economy
             // Get all population groups for this city
             var populationGroups = PopulationManager.Instance.GetPopulationsByCity(cityId);
 
-            foreach (var popGroup in populationGroups)
+            // Process each archetype with assigned workers
+            foreach (var kvp in instance.AssignedWorkers)
             {
-                // Check if this building affects this archetype
-                if (definition.AffectsSpecificArchetype.HasValue &&
-                    popGroup.Archetype != definition.AffectsSpecificArchetype.Value)
+                PopulationArchetypes archetype = kvp.Key;
+                int workerCount = kvp.Value;
+
+                if (workerCount == 0)
                     continue;
 
-                // Only affect groups that have workers in this building
-                int workersInBuilding = instance.GetWorkerCount(popGroup.Archetype);
-                if (workersInBuilding == 0)
+                // Get the worker slot for this archetype
+                var slot = definition.WorkerSlots.GetSlot(archetype);
+                if (slot == null)
                     continue;
 
-                // Apply education growth
-                if (definition.EducationGrowthPerWorker > 0)
+                // Find the population group for this archetype
+                PopulationGroup popGroup = null;
+                foreach (var group in populationGroups)
                 {
-                    float educationGain = definition.EducationGrowthPerWorker * workersInBuilding;
+                    if (group.Archetype == archetype)
+                    {
+                        popGroup = group;
+                        break;
+                    }
+                }
+
+                if (popGroup == null)
+                    continue;
+
+                // Apply education growth from this slot
+                if (slot.EducationGrowthPerWorker > 0)
+                {
+                    float educationGain = slot.EducationGrowthPerWorker * workerCount;
                     popGroup.Education = Mathf.Clamp(popGroup.Education + educationGain, 0f, 100f);
                 }
 
-                // Apply wealth growth
-                if (definition.WealthGrowthPerWorker > 0)
+                // Apply wealth growth from this slot
+                if (slot.WealthGrowthPerWorker > 0)
                 {
-                    float wealthGain = definition.WealthGrowthPerWorker * workersInBuilding;
+                    float wealthGain = slot.WealthGrowthPerWorker * workerCount;
                     popGroup.Wealth = Mathf.Clamp(popGroup.Wealth + wealthGain, 0f, 100f);
                 }
             }

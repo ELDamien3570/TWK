@@ -647,14 +647,37 @@ namespace TWK.UI
                 info += ")\n\n";
             }
 
-            // Population effects
-            if (def.EducationGrowthPerWorker > 0 || def.WealthGrowthPerWorker > 0 || def.PopulationGrowthBonus > 0)
+            // Population effects (now per worker slot)
+            bool hasPopEffects = def.PopulationGrowthBonus > 0;
+            if (!hasPopEffects && def.WorkerSlots != null)
+            {
+                foreach (var slot in def.WorkerSlots)
+                {
+                    if (slot.EducationGrowthPerWorker > 0 || slot.WealthGrowthPerWorker > 0)
+                    {
+                        hasPopEffects = true;
+                        break;
+                    }
+                }
+            }
+
+            if (hasPopEffects)
             {
                 info += "<b>Population Effects:</b>\n";
-                if (def.EducationGrowthPerWorker > 0)
-                    info += $"  Education: +{def.EducationGrowthPerWorker:F2} per worker/day\n";
-                if (def.WealthGrowthPerWorker > 0)
-                    info += $"  Wealth: +{def.WealthGrowthPerWorker:F2} per worker/day\n";
+
+                // Show per-archetype effects from worker slots
+                if (def.WorkerSlots != null)
+                {
+                    foreach (var slot in def.WorkerSlots)
+                    {
+                        if (slot.EducationGrowthPerWorker > 0)
+                            info += $"  {slot.Archetype} Education: +{slot.EducationGrowthPerWorker:F2} per worker/day\n";
+                        if (slot.WealthGrowthPerWorker > 0)
+                            info += $"  {slot.Archetype} Wealth: +{slot.WealthGrowthPerWorker:F2} per worker/day\n";
+                    }
+                }
+
+                // Show building-wide growth bonus
                 if (def.PopulationGrowthBonus > 0)
                     info += $"  Growth Bonus: +{def.PopulationGrowthBonus:F1}%\n";
             }

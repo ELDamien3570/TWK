@@ -51,19 +51,10 @@ namespace TWK.Economy
         [Tooltip("Does this building require workers to operate?")]
         public bool RequiresWorkers = true;
 
-        [Tooltip("Worker slot definitions - each slot defines an archetype with min/max counts and efficiency")]
+        [Tooltip("Worker slot definitions - each slot defines an archetype with min/max counts, efficiency, and population effects")]
         public List<WorkerSlot> WorkerSlots = new List<WorkerSlot>();
 
         [Header("Population Effects")]
-        [Tooltip("Education increase per day per worker")]
-        public float EducationGrowthPerWorker = 0f;
-
-        [Tooltip("Wealth increase per day per worker")]
-        public float WealthGrowthPerWorker = 0f;
-
-        [Tooltip("Affects specific population archetype only? Null = affects all workers")]
-        public PopulationArchetypes? AffectsSpecificArchetype = null;
-
         [Tooltip("Population growth bonus (for eco hubs like markets)")]
         public float PopulationGrowthBonus = 0f;
 

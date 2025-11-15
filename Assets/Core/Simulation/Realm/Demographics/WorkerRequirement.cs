@@ -29,6 +29,13 @@ namespace TWK.Realms.Demographics
         [Tooltip("Is this archetype required for the building to function?")]
         public bool IsRequired = false;
 
+        [Header("Population Effects")]
+        [Tooltip("Education increase per day per worker of this type")]
+        public float EducationGrowthPerWorker = 0f;
+
+        [Tooltip("Wealth increase per day per worker of this type")]
+        public float WealthGrowthPerWorker = 0f;
+
         /// <summary>
         /// Check if this slot is optional (not required).
         /// </summary>

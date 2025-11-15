@@ -78,10 +78,6 @@ namespace TWK.UI.ViewModels
         public string ProductionSummary { get; private set; }
 
         // ========== POPULATION EFFECTS ==========
-        public float EducationGrowthPerWorker { get; private set; }
-        public float WealthGrowthPerWorker { get; private set; }
-        public PopulationArchetypes? AffectsSpecificArchetype { get; private set; }
-        public string AffectedArchetypeName { get; private set; }
         public float PopulationGrowthBonus { get; private set; }
         public bool HasPopulationEffects { get; private set; }
 
@@ -274,24 +270,26 @@ namespace TWK.UI.ViewModels
         {
             if (_definition != null)
             {
-                EducationGrowthPerWorker = _definition.EducationGrowthPerWorker;
-                WealthGrowthPerWorker = _definition.WealthGrowthPerWorker;
-                AffectsSpecificArchetype = _definition.AffectsSpecificArchetype;
-                AffectedArchetypeName = AffectsSpecificArchetype?.ToString() ?? "All Workers";
                 PopulationGrowthBonus = _definition.PopulationGrowthBonus;
+
+                // Check if any worker slot has population effects
+                bool hasSlotEffects = false;
+                foreach (var slot in _definition.WorkerSlots)
+                {
+                    if (slot.EducationGrowthPerWorker > 0f || slot.WealthGrowthPerWorker > 0f)
+                    {
+                        hasSlotEffects = true;
+                        break;
+                    }
+                }
+
+                HasPopulationEffects = hasSlotEffects || PopulationGrowthBonus > 0f;
             }
             else
             {
-                EducationGrowthPerWorker = 0f;
-                WealthGrowthPerWorker = 0f;
-                AffectsSpecificArchetype = null;
-                AffectedArchetypeName = "All Workers";
                 PopulationGrowthBonus = 0f;
+                HasPopulationEffects = false;
             }
-
-            HasPopulationEffects = EducationGrowthPerWorker > 0f ||
-                                  WealthGrowthPerWorker > 0f ||
-                                  PopulationGrowthBonus > 0f;
         }
 
         // ========== HELPER METHODS ==========
@@ -341,17 +339,28 @@ namespace TWK.UI.ViewModels
                 return "No population effects";
 
             var effects = new List<string>();
-            if (EducationGrowthPerWorker > 0f)
-                effects.Add($"+{EducationGrowthPerWorker:F2} education/worker/day");
-            if (WealthGrowthPerWorker > 0f)
-                effects.Add($"+{WealthGrowthPerWorker:F2} wealth/worker/day");
+
+            // Add per-archetype effects from worker slots
+            if (_definition != null)
+            {
+                foreach (var slot in _definition.WorkerSlots)
+                {
+                    var slotEffects = new List<string>();
+                    if (slot.EducationGrowthPerWorker > 0f)
+                        slotEffects.Add($"+{slot.EducationGrowthPerWorker:F2} edu");
+                    if (slot.WealthGrowthPerWorker > 0f)
+                        slotEffects.Add($"+{slot.WealthGrowthPerWorker:F2} wealth");
+
+                    if (slotEffects.Count > 0)
+                        effects.Add($"{slot.Archetype}: {string.Join(", ", slotEffects)}/worker/day");
+                }
+            }
+
+            // Add building-wide population growth bonus
             if (PopulationGrowthBonus > 0f)
                 effects.Add($"+{PopulationGrowthBonus:F2}% population growth");
 
-            string effectStr = string.Join(" | ", effects);
-            return AffectsSpecificArchetype.HasValue
-                ? $"{effectStr} (affects {AffectedArchetypeName} only)"
-                : effectStr;
+            return string.Join(" | ", effects);
         }
 
         public string GetProductionEfficiency()
