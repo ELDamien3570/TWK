@@ -5,13 +5,15 @@ using TWK.Realms;
 using TWK.Realms.Demographics;
 using TWK.Economy;
 using System.Linq;
+using TWK.Core;
+using TWK.Simulation;
 
 namespace TWK.Cultures
 {
     /// <summary>
     /// Manager for all culture systems: ownership, tech trees, XP accumulation, and assimilation.
     /// </summary>
-    public class CultureManager : MonoBehaviour
+    public class CultureManager : MonoBehaviour, ISimulationAgent
     {
         public static CultureManager Instance { get; private set; }
 
@@ -60,7 +62,18 @@ namespace TWK.Cultures
         [Tooltip("Base rate of cultural assimilation per year (can be modified)")]
         [SerializeField] private float baseAssimilationRate = 0.02f; // 2% per year
 
+        // ========== TIME MANAGEMENT ==========
+        private WorldTimeManager worldTimeManager;
+
         // ========== INITIALIZATION ==========
+
+        public void Initialize(WorldTimeManager worldTimeManager)
+        {
+            this.worldTimeManager = worldTimeManager;
+            worldTimeManager.OnDayTick += AdvanceDay;
+
+            Debug.Log("[CultureManager] Initialized and registered with WorldTimeManager");
+        }
 
         private void Awake()
         {
@@ -317,13 +330,13 @@ namespace TWK.Cultures
             OnCityCultureChanged?.Invoke(cityID, oldCultureID, newCultureID);
         }
 
-        // ========== XP ACCUMULATION ==========
+        // ========== SIMULATION INTERFACE ==========
 
         /// <summary>
-        /// Call this from SimulationManager every day.
+        /// Called every day by WorldTimeManager.
         /// Accumulates XP monthly from buildings.
         /// </summary>
-        public void SimulateDay()
+        public void AdvanceDay()
         {
             daysSinceLastXPTick++;
 
@@ -332,6 +345,17 @@ namespace TWK.Cultures
                 ProcessMonthlyXP();
                 daysSinceLastXPTick = 0;
             }
+        }
+
+        public void AdvanceSeason()
+        {
+            // Culture assimilation could happen here seasonally if desired
+        }
+
+        public void AdvanceYear()
+        {
+            // Process yearly culture assimilation
+            ProcessCultureAssimilation();
         }
 
         private void ProcessMonthlyXP()

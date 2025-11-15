@@ -45,6 +45,11 @@ namespace TWK.Core
             else
                 Debug.LogError("BuildingManager not found in scene!");
 
+            if (CultureManager.Instance != null)
+                CultureManager.Instance.Initialize(worldTimeManager);
+            else
+                Debug.LogError("CultureManager not found in scene!");
+
             // Initialize ViewModelService for UI
             if (ViewModelService.Instance != null)
                 ViewModelService.Instance.Initialize(worldTimeManager);
