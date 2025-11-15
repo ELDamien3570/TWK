@@ -346,15 +346,23 @@ namespace TWK.Cultures
                 if (definition == null) continue;
 
                 // Get city
-                
 
 
                 var city = PopulationManager.Instance.GetCityByID(instanceData.CityID); //Using Population to query cities right now, this is TEST LOGIC
                 if (city == null) continue;
 
-                // Get city's culture
+                // Get city's culture (calculate if not set yet)
                 int cityCultureID = GetCityCulture(instanceData.CityID);
-                if (cityCultureID == -1) continue;
+                if (cityCultureID == -1)
+                {
+                    // City culture not calculated yet, calculate it now
+                    cityCultureID = CalculateCityCulture(instanceData.CityID);
+                    if (cityCultureID == -1)
+                    {
+                        // City has no population, skip this building
+                        continue;
+                    }
+                }
 
                 // Calculate XP (same as production calculation)
                 float averageEfficiency = CalculateAverageWorkerEfficiency(instanceData, definition);

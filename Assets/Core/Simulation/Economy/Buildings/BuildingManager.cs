@@ -48,13 +48,29 @@ namespace TWK.Economy
 
         public void AdvanceDay()
         {
+            // Track which cities have completed buildings (to allocate workers)
+            var citiesWithCompletedBuildings = new HashSet<int>();
+
             // Process construction for all buildings
             foreach (var building in buildings)
             {
                 if (building.IsUnderConstruction)
                 {
-                    BuildingSimulation.AdvanceConstruction(building);
+                    bool justCompleted = BuildingSimulation.AdvanceConstruction(building);
+
+                    // If building just completed, mark city for worker allocation
+                    if (justCompleted && building.IsCompleted)
+                    {
+                        citiesWithCompletedBuildings.Add(building.CityID);
+                        Debug.Log($"[BuildingManager] Building {building.ID} completed in city {building.CityID}, will allocate workers");
+                    }
                 }
+            }
+
+            // Allocate workers for cities with newly completed buildings
+            foreach (var cityId in citiesWithCompletedBuildings)
+            {
+                AllocateWorkersForCity(cityId);
             }
         }
 
