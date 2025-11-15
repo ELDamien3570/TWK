@@ -437,7 +437,11 @@ namespace TWK.UI
                 foreach (var building in availableBuildings)
                 {
                     if (building != null)
-                        options.Add(building.BuildingName);
+                    {
+                        // Color building name by TreeType for easy visual categorization
+                        string coloredName = GetColoredBuildingName(building);
+                        options.Add(coloredName);
+                    }
                 }
 
                 if (options.Count == 0)
@@ -456,6 +460,39 @@ namespace TWK.UI
 
             // Update selection based on dropdown value
             OnBuildingSelectionChanged(buildingSelectionDropdown != null ? buildingSelectionDropdown.value : 0);
+        }
+
+        /// <summary>
+        /// Get building name with color based on TreeType (Economics, Warfare, etc.).
+        /// Uses TextMeshPro rich text color tags for simple visual categorization.
+        /// </summary>
+        private string GetColoredBuildingName(BuildingDefinition building)
+        {
+            string colorHex = GetTreeTypeColorHex(building.BuildingCategory);
+            return $"<color={colorHex}>{building.BuildingName}</color>";
+        }
+
+        /// <summary>
+        /// Get color hex code for each TreeType.
+        /// Simple color scheme for temporary UI.
+        /// </summary>
+        private string GetTreeTypeColorHex(TreeType treeType)
+        {
+            switch (treeType)
+            {
+                case TreeType.Economics:
+                    return "#FFD700";  // Gold
+                case TreeType.Warfare:
+                    return "#DC143C";  // Crimson
+                case TreeType.Religion:
+                    return "#9370DB";  // Medium Purple
+                case TreeType.Politics:
+                    return "#4169E1";  // Royal Blue
+                case TreeType.Science:
+                    return "#20B2AA";  // Light Sea Green
+                default:
+                    return "#FFFFFF";  // White
+            }
         }
 
         private void OnBuildingSelectionChanged(int index)
