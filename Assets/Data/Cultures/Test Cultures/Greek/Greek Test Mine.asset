@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Cultures.TechNode
   NodeName: Slave Mines
   Description: Mines that can only be run by slaves
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: ad4f0495bda3d01418c589e71f5afba1, type: 3}
   TreeType: 3
   Cost: 1
   Prerequisites: []

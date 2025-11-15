@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94752516ec062e24794575afafbdff50, type: 3}
-  m_Name: Greek Farm
+  m_Name: Slave Farms
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Economy.BuildingDefinition
   BuildingName: Early Greek Farm
   BuildingCategory: 3
@@ -24,30 +24,32 @@ MonoBehaviour:
     Amount: 1
   BaseMaintenanceCost:
   - ResourceType: 1
-    Amount: 1
+    Amount: 0
   BaseProduction:
   - ResourceType: 0
-    Amount: 100
+    Amount: 0
   MaxProduction:
   - ResourceType: 0
-    Amount: 1000
-  BaseMonthlyXP: 5
-  MaxMonthlyXP: 25
+    Amount: 800
+  BaseMonthlyXP: 1
+  MaxMonthlyXP: 5
   RequiresWorkers: 1
   MinWorkers: 0
   OptimalWorkers: 100
-  AllowedWorkerTypes: 0000000004000000
+  AllowedWorkerTypes: 0400000002000000
   RequiredWorkers_ByType:
-  - Archetype: 0
+  - Archetype: 4
     Count: 10
+  - Archetype: 2
+    Count: 5
   WorkerEfficiency:
-  - Archetype: 0
-    Multiplier: 1
   - Archetype: 4
     Multiplier: 0.8
+  - Archetype: 2
+    Multiplier: 1
   WorkerPenalties: []
   EducationGrowthPerWorker: 0
-  WealthGrowthPerWorker: 0.01
-  PopulationGrowthBonus: 0.01
+  WealthGrowthPerWorker: 0
+  PopulationGrowthBonus: 0
   BaseEfficiency: 1
   ConstructionTimeDays: 3

@@ -1132,7 +1132,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 221743204}
-  - component: {fileID: 221743203}
   m_Layer: 0
   m_Name: Theban Culture
   m_TagString: Untagged
@@ -1140,18 +1139,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &221743203
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 221743202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9e40cfeaae573346bc27fc2c0151edc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TWK.Culture.Culture
 --- !u!4 &221743204
 Transform:
   m_ObjectHideFlags: 0
@@ -2307,7 +2294,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.8857316, g: 0.5896226, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -5585,6 +5572,30 @@ PrefabInstance:
     - target: {fileID: 7635236323032447216, guid: c11c00eb8df210d478d4432259986464, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7898472753844606541, guid: c11c00eb8df210d478d4432259986464, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -27.1833
+      objectReference: {fileID: 0}
+    - target: {fileID: 7898472753844606541, guid: c11c00eb8df210d478d4432259986464, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -7.8007
+      objectReference: {fileID: 0}
+    - target: {fileID: 8118082384393578636, guid: c11c00eb8df210d478d4432259986464, type: 3}
+      propertyPath: m_fontSize
+      value: 34.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 8118082384393578636, guid: c11c00eb8df210d478d4432259986464, type: 3}
+      propertyPath: m_fontStyle
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8118082384393578636, guid: c11c00eb8df210d478d4432259986464, type: 3}
+      propertyPath: m_fontSizeMin
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8118082384393578636, guid: c11c00eb8df210d478d4432259986464, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8562883475075671784, guid: c11c00eb8df210d478d4432259986464, type: 3}
       propertyPath: m_AnchorMax.y
@@ -9319,7 +9330,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1972394889}
-  - component: {fileID: 1972394888}
   m_Layer: 0
   m_Name: Macedonian Culture
   m_TagString: Untagged
@@ -9327,18 +9337,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1972394888
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1972394887}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9e40cfeaae573346bc27fc2c0151edc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TWK.Culture.Culture
 --- !u!4 &1972394889
 Transform:
   m_ObjectHideFlags: 0

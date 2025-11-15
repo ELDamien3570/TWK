@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94752516ec062e24794575afafbdff50, type: 3}
-  m_Name: Greek Farm
+  m_Name: Better Greek Farm
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Economy.BuildingDefinition
-  BuildingName: Early Greek Farm
+  BuildingName: Better Greek Farm
   BuildingCategory: 3
   Icon: {fileID: 21300000, guid: 51857a42e5544c54caccaca7b1b743ac, type: 3}
   IsHub: 0
@@ -21,21 +21,21 @@ MonoBehaviour:
   RequiredHubTypes: 03000000
   BaseBuildCost:
   - ResourceType: 1
-    Amount: 1
+    Amount: 5
   BaseMaintenanceCost:
   - ResourceType: 1
-    Amount: 1
+    Amount: 2
   BaseProduction:
   - ResourceType: 0
-    Amount: 100
+    Amount: 300
   MaxProduction:
   - ResourceType: 0
-    Amount: 1000
-  BaseMonthlyXP: 5
-  MaxMonthlyXP: 25
+    Amount: 2000
+  BaseMonthlyXP: 1
+  MaxMonthlyXP: 3
   RequiresWorkers: 1
   MinWorkers: 0
-  OptimalWorkers: 100
+  OptimalWorkers: 150
   AllowedWorkerTypes: 0000000004000000
   RequiredWorkers_ByType:
   - Archetype: 0
