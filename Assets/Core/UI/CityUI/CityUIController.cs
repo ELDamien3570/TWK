@@ -105,11 +105,40 @@ namespace TWK.UI
             // Setup tab buttons
             SetupTabButtons();
 
+            // Subscribe to culture events
+            SubscribeToCultureEvents();
+
             // Show default tab
             ShowTab(populationTab);
 
             // Refresh UI
             RefreshUI();
+        }
+
+        private void SubscribeToCultureEvents()
+        {
+            if (CultureManager.Instance != null)
+            {
+                CultureManager.Instance.OnCultureBuildingsChanged += HandleCultureBuildingsChanged;
+            }
+        }
+
+        /// <summary>
+        /// Handle culture building unlocks - refresh build menu if it affects this city.
+        /// </summary>
+        private void HandleCultureBuildingsChanged(int cultureID)
+        {
+            if (targetCity == null) return;
+
+            // Check if this building change affects our city's culture
+            int cityCultureID = CultureManager.Instance.GetCityCulture(targetCity.CityID);
+
+            if (cityCultureID == cultureID)
+            {
+                // This city's culture unlocked new buildings - refresh the dropdown
+                RefreshBuildMenu();
+                Debug.Log($"[CityUIController] Culture {cultureID} unlocked new buildings - refreshing build menu for {targetCity.Name}");
+            }
         }
 
         private void SetupTabButtons()
@@ -152,6 +181,12 @@ namespace TWK.UI
 
         private void OnDestroy()
         {
+            // Unsubscribe from culture events
+            if (CultureManager.Instance != null)
+            {
+                CultureManager.Instance.OnCultureBuildingsChanged -= HandleCultureBuildingsChanged;
+            }
+
             // Clean up listeners
             populationTabButton?.onClick.RemoveAllListeners();
             popGroupsTabButton?.onClick.RemoveAllListeners();
