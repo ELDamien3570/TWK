@@ -69,6 +69,7 @@ namespace TWK.UI
             SetupCultureDropdown();
             SetupTabButtons();
             SetupUnlockButton();
+            SubscribeToEvents();
 
             if (cultureDropdown.options.Count > 0)
             {
@@ -76,6 +77,32 @@ namespace TWK.UI
             }
 
             nodeDetailsPanel?.SetActive(false);
+        }
+
+        private void SubscribeToEvents()
+        {
+            // Subscribe to XP changes to auto-refresh the UI
+            if (CultureManager.Instance != null)
+            {
+                CultureManager.Instance.OnCultureXPAdded += HandleCultureXPAdded;
+            }
+        }
+
+        private void HandleCultureXPAdded(int cultureID, TreeType treeType, float xpAmount)
+        {
+            // Only refresh if we're currently viewing this culture and tree
+            if (currentCulture != null &&
+                currentCulture.GetCultureID() == cultureID &&
+                currentTreeType == treeType)
+            {
+                RefreshTreeInfo();
+
+                // Also refresh node details if a node is selected (to update unlock button state)
+                if (selectedNode != null)
+                {
+                    RefreshUnlockButton();
+                }
+            }
         }
 
         private void SetupCultureDropdown()
@@ -468,6 +495,13 @@ namespace TWK.UI
 
         private void OnDestroy()
         {
+            // Unsubscribe from events
+            if (CultureManager.Instance != null)
+            {
+                CultureManager.Instance.OnCultureXPAdded -= HandleCultureXPAdded;
+            }
+
+            // Remove UI listeners
             cultureDropdown?.onValueChanged.RemoveAllListeners();
             economicsTabButton?.onClick.RemoveAllListeners();
             warfareTabButton?.onClick.RemoveAllListeners();

@@ -28,6 +28,12 @@ namespace TWK.Cultures
         /// </summary>
         public event Action<int> OnCultureBuildingsChanged;
 
+        /// <summary>
+        /// Fired when XP is added to a culture's tech tree.
+        /// Args: cultureID, treeType, xpAmount
+        /// </summary>
+        public event Action<int, TreeType, float> OnCultureXPAdded;
+
         // ========== CULTURE DATA ==========
         [Header("Cultures")]
         [SerializeField] private List<CultureData> allCultures = new List<CultureData>();
@@ -397,6 +403,9 @@ namespace TWK.Cultures
                     {
                         tree.AddXP(xp);
                         Debug.Log($"[CultureManager] {culture.CultureName} gained {xp:F2} XP in {treeType} tree");
+
+                        // Fire event for UI updates
+                        OnCultureXPAdded?.Invoke(cultureID, treeType, xp);
                     }
                 }
             }
