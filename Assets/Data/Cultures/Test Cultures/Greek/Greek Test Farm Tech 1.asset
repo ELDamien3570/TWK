@@ -20,5 +20,5 @@ MonoBehaviour:
   Prerequisites:
   - {fileID: 11400000, guid: 43dadef9a74ef84408ff690cdcaa0c63, type: 2}
   UnlockedBuildings:
-  - {fileID: 11400000, guid: d22ae95c547d1da4f8931f5987222059, type: 2}
+  - {fileID: 11400000, guid: 5fc08b4e6ae33ae4a807118237474623, type: 2}
   Modifiers: []
