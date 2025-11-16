@@ -63,12 +63,8 @@ namespace TWK.UI
         private void OnEnable()
         {
             // Refresh dropdown every time the panel becomes active
+            // This will also trigger OnReligionChanged() to update the display
             RefreshReligionDropdown();
-
-            if (religionDropdown != null && religionDropdown.options.Count > 0 && currentReligion == null)
-            {
-                OnReligionChanged(0);
-            }
         }
 
         private void SetupReligionDropdown()
@@ -113,14 +109,24 @@ namespace TWK.UI
 
             religionDropdown.AddOptions(options);
 
+            // Determine which index to select and display
+            int indexToSelect = 0;
+
             // Restore selection if the religion still exists
             if (currentlySelected != null)
             {
                 int newIndex = allReligions.IndexOf(currentlySelected);
                 if (newIndex >= 0)
                 {
-                    religionDropdown.SetValueWithoutNotify(newIndex);
+                    indexToSelect = newIndex;
                 }
+            }
+
+            // Set the value and trigger display update
+            if (allReligions.Count > 0)
+            {
+                religionDropdown.SetValueWithoutNotify(indexToSelect);
+                OnReligionChanged(indexToSelect); // Manually trigger to update display
             }
         }
 
@@ -129,21 +135,32 @@ namespace TWK.UI
         private void OnReligionChanged(int index)
         {
             if (ReligionManager.Instance == null)
+            {
+                Debug.LogWarning("[ReligionDataUIController] ReligionManager instance is null in OnReligionChanged");
                 return;
+            }
 
             var religions = ReligionManager.Instance.GetAllReligions();
             if (index < 0 || index >= religions.Count)
+            {
+                Debug.LogWarning($"[ReligionDataUIController] Invalid index {index} (total religions: {religions.Count})");
                 return;
+            }
 
             currentReligion = religions[index];
+            Debug.Log($"[ReligionDataUIController] Selected religion: {currentReligion.ReligionName}");
             RefreshReligionDisplay();
         }
 
         private void RefreshReligionDisplay()
         {
             if (currentReligion == null)
+            {
+                Debug.LogWarning("[ReligionDataUIController] currentReligion is null in RefreshReligionDisplay");
                 return;
+            }
 
+            Debug.Log($"[ReligionDataUIController] Refreshing display for {currentReligion.ReligionName}");
             RefreshBasicInfo();
             RefreshIdentityInfo();
             RefreshDeities();
@@ -159,9 +176,13 @@ namespace TWK.UI
         {
             if (religionNameText != null)
                 religionNameText.text = currentReligion.ReligionName;
+            else
+                Debug.LogWarning("[ReligionDataUIController] religionNameText is null - not assigned in inspector?");
 
             if (religionDescriptionText != null)
                 religionDescriptionText.text = currentReligion.Description;
+            else
+                Debug.LogWarning("[ReligionDataUIController] religionDescriptionText is null - not assigned in inspector?");
         }
 
         // ========== IDENTITY INFO ==========
