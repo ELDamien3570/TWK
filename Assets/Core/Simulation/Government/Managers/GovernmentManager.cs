@@ -481,7 +481,7 @@ namespace TWK.Government
                     modifierCopy.SourceID = realmID;
                     modifierCopy.SourceType = $"Edict:{edict.EdictName}";
                     modifierCopy.DurationDays = durationDays;
-                    modifierCopy.StartDay = currentDayCounter;
+                    modifierCopy.AppliedOnDay = currentDayCounter;
 
                     // Add as global modifier (affects entire realm)
                     ModifierManager.Instance.AddGlobalTimedModifier(modifierCopy);
@@ -699,7 +699,7 @@ namespace TWK.Government
             // Calculate culture match percentage
             long totalPops = realmPops.Sum(p => (long)p.PopulationCount);
             long matchingPops = realmPops
-                .Where(p => p.CultureID == leaderCultureID)
+                .Where(p => p.Culture != null && p.Culture.GetCultureID() == leaderCultureID)
                 .Sum(p => (long)p.PopulationCount);
 
             float matchPercentage = totalPops > 0 ? (float)matchingPops / totalPops : 0f;

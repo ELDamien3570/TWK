@@ -172,7 +172,7 @@ namespace TWK.UI
             {
                 ContractManager.Instance.OnContractCreated += OnContractCreated;
                 ContractManager.Instance.OnContractTerminated += OnContractTerminated;
-                ContractManager.Instance.OnContractLoyaltyChanged += OnContractLoyaltyChanged;
+                ContractManager.Instance.OnLoyaltyChanged += OnContractLoyaltyChanged;
             }
         }
 
@@ -198,7 +198,7 @@ namespace TWK.UI
             {
                 ContractManager.Instance.OnContractCreated -= OnContractCreated;
                 ContractManager.Instance.OnContractTerminated -= OnContractTerminated;
-                ContractManager.Instance.OnContractLoyaltyChanged -= OnContractLoyaltyChanged;
+                ContractManager.Instance.OnLoyaltyChanged -= OnContractLoyaltyChanged;
             }
 
             // Clean up listeners
