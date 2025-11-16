@@ -316,33 +316,25 @@ namespace TWK.UI
             if (currentReligion.Deities == null || currentReligion.Deities.Count == 0)
                 return;
 
-            // Create deity items (if prefab exists)
+            // Create deity items using the DeityUIItem component
             if (deityItemPrefab != null && deitiesContainer != null)
             {
                 foreach (var deity in currentReligion.Deities)
                 {
                     if (deity == null) continue;
 
-                    var deityItem = Instantiate(deityItemPrefab, deitiesContainer);
-                    currentDeityItems.Add(deityItem);
+                    var deityItemObj = Instantiate(deityItemPrefab, deitiesContainer);
+                    currentDeityItems.Add(deityItemObj);
 
-                    // Try to set deity data via text components
-                    var nameText = deityItem.GetComponentInChildren<TextMeshProUGUI>();
-                    if (nameText != null)
+                    // Initialize the deity item with data
+                    var deityUIItem = deityItemObj.GetComponent<DeityUIItem>();
+                    if (deityUIItem != null)
                     {
-                        string deityText = $"<b>{deity.Name}</b>";
-                        if (!string.IsNullOrEmpty(deity.Title))
-                            deityText += $" - <i>{deity.Title}</i>";
-
-                        if (!string.IsNullOrEmpty(deity.Description))
-                            deityText += $"\n{deity.Description}";
-
-                        if (deity.FamousTraits != null && deity.FamousTraits.Count > 0)
-                        {
-                            deityText += $"\n<i>Traits: {string.Join(", ", deity.FamousTraits)}</i>";
-                        }
-
-                        nameText.text = deityText;
+                        deityUIItem.Initialize(deity);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[ReligionDataUIController] DeityUIItem component not found on prefab. Add DeityUIItem script to the deity prefab.");
                     }
                 }
             }
@@ -369,44 +361,25 @@ namespace TWK.UI
             if (currentReligion.Tenets == null || currentReligion.Tenets.Count == 0)
                 return;
 
-            // Create tenet items (if prefab exists)
+            // Create tenet items using the TenetUIItem component
             if (tenetItemPrefab != null && tenetsContainer != null)
             {
                 foreach (var tenet in currentReligion.Tenets)
                 {
                     if (tenet == null) continue;
 
-                    var tenetItem = Instantiate(tenetItemPrefab, tenetsContainer);
-                    currentTenetItems.Add(tenetItem);
+                    var tenetItemObj = Instantiate(tenetItemPrefab, tenetsContainer);
+                    currentTenetItems.Add(tenetItemObj);
 
-                    // Try to set tenet data via text components
-                    var textComponent = tenetItem.GetComponentInChildren<TextMeshProUGUI>();
-                    if (textComponent != null)
+                    // Initialize the tenet item with data
+                    var tenetUIItem = tenetItemObj.GetComponent<TenetUIItem>();
+                    if (tenetUIItem != null)
                     {
-                        string tenetText = $"<b>{tenet.Name}</b> ({tenet.Category})";
-
-                        if (!string.IsNullOrEmpty(tenet.Description))
-                            tenetText += $"\n{tenet.Description}";
-
-                        // Show modifier effects
-                        if (tenet.Modifiers != null && tenet.Modifiers.Count > 0)
-                        {
-                            tenetText += "\n<i>Effects:</i>";
-                            foreach (var modifier in tenet.Modifiers)
-                            {
-                                foreach (var effect in modifier.Effects)
-                                {
-                                    tenetText += $"\n  • {effect.GetDescription()}";
-                                }
-                            }
-                        }
-
-                        if (tenet.HasSpecialRules && !string.IsNullOrEmpty(tenet.SpecialRulesDescription))
-                        {
-                            tenetText += $"\n<color=yellow>Special: {tenet.SpecialRulesDescription}</color>";
-                        }
-
-                        textComponent.text = tenetText;
+                        tenetUIItem.Initialize(tenet);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[ReligionDataUIController] TenetUIItem component not found on prefab. Add TenetUIItem script to the tenet prefab.");
                     }
                 }
             }
