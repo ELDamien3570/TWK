@@ -6,6 +6,7 @@ using TWK.Core;
 using TWK.Simulation;
 using TWK.Religion;
 using TWK.Cultures;
+using TWK.Government;
 
 namespace TWK.UI.ViewModels
 {
@@ -23,6 +24,9 @@ namespace TWK.UI.ViewModels
         private Dictionary<int, CityViewModel> cityViewModels = new Dictionary<int, CityViewModel>();
         private Dictionary<int, ReligionViewModel> religionViewModels = new Dictionary<int, ReligionViewModel>();
         private Dictionary<int, CultureViewModel> cultureViewModels = new Dictionary<int, CultureViewModel>();
+        private Dictionary<int, GovernmentViewModel> governmentViewModels = new Dictionary<int, GovernmentViewModel>();
+        private Dictionary<int, BureaucracyViewModel> bureaucracyViewModels = new Dictionary<int, BureaucracyViewModel>();
+        private Dictionary<int, ContractViewModel> contractViewModels = new Dictionary<int, ContractViewModel>();
 
         // ========== EVENTS ==========
         /// <summary>
@@ -44,6 +48,21 @@ namespace TWK.UI.ViewModels
         /// Invoked when a specific culture ViewModel is updated.
         /// </summary>
         public event Action<int> OnCultureViewModelUpdated;
+
+        /// <summary>
+        /// Invoked when a specific government ViewModel is updated.
+        /// </summary>
+        public event Action<int> OnGovernmentViewModelUpdated;
+
+        /// <summary>
+        /// Invoked when a specific bureaucracy ViewModel is updated.
+        /// </summary>
+        public event Action<int> OnBureaucracyViewModelUpdated;
+
+        /// <summary>
+        /// Invoked when a specific contract ViewModel is updated.
+        /// </summary>
+        public event Action<int> OnContractViewModelUpdated;
 
         // ========== LIFECYCLE ==========
         private void Awake()
@@ -116,6 +135,25 @@ namespace TWK.UI.ViewModels
                 CultureManager.Instance.OnCultureBuildingsChanged += OnCultureBuildingsChanged;
                 CultureManager.Instance.OnCultureXPAdded += OnCultureXPAdded;
             }
+
+            // Subscribe to GovernmentManager events
+            if (GovernmentManager.Instance != null)
+            {
+                GovernmentManager.Instance.OnGovernmentChanged += OnGovernmentChanged;
+                GovernmentManager.Instance.OnOfficeAssigned += OnOfficeAssigned;
+                GovernmentManager.Instance.OnOfficeCreated += OnOfficeCreated;
+                GovernmentManager.Instance.OnEdictEnacted += OnEdictEnacted;
+                GovernmentManager.Instance.OnLegitimacyChanged += OnLegitimacyChanged;
+                GovernmentManager.Instance.OnCapacityChanged += OnCapacityChanged;
+            }
+
+            // Subscribe to ContractManager events
+            if (ContractManager.Instance != null)
+            {
+                ContractManager.Instance.OnContractCreated += OnContractCreated;
+                ContractManager.Instance.OnContractTerminated += OnContractTerminated;
+                ContractManager.Instance.OnLoyaltyChanged += OnContractLoyaltyChanged;
+            }
         }
 
         private void UnsubscribeFromManagerEvents()
@@ -133,6 +171,25 @@ namespace TWK.UI.ViewModels
                 CultureManager.Instance.OnCityCultureChanged -= OnCityCultureChanged;
                 CultureManager.Instance.OnCultureBuildingsChanged -= OnCultureBuildingsChanged;
                 CultureManager.Instance.OnCultureXPAdded -= OnCultureXPAdded;
+            }
+
+            // Unsubscribe from GovernmentManager events
+            if (GovernmentManager.Instance != null)
+            {
+                GovernmentManager.Instance.OnGovernmentChanged -= OnGovernmentChanged;
+                GovernmentManager.Instance.OnOfficeAssigned -= OnOfficeAssigned;
+                GovernmentManager.Instance.OnOfficeCreated -= OnOfficeCreated;
+                GovernmentManager.Instance.OnEdictEnacted -= OnEdictEnacted;
+                GovernmentManager.Instance.OnLegitimacyChanged -= OnLegitimacyChanged;
+                GovernmentManager.Instance.OnCapacityChanged -= OnCapacityChanged;
+            }
+
+            // Unsubscribe from ContractManager events
+            if (ContractManager.Instance != null)
+            {
+                ContractManager.Instance.OnContractCreated -= OnContractCreated;
+                ContractManager.Instance.OnContractTerminated -= OnContractTerminated;
+                ContractManager.Instance.OnLoyaltyChanged -= OnContractLoyaltyChanged;
             }
         }
 
@@ -237,6 +294,21 @@ namespace TWK.UI.ViewModels
             }
 
             foreach (var viewModel in cultureViewModels.Values)
+            {
+                viewModel.Refresh();
+            }
+
+            foreach (var viewModel in governmentViewModels.Values)
+            {
+                viewModel.Refresh();
+            }
+
+            foreach (var viewModel in bureaucracyViewModels.Values)
+            {
+                viewModel.Refresh();
+            }
+
+            foreach (var viewModel in contractViewModels.Values)
             {
                 viewModel.Refresh();
             }
@@ -392,6 +464,113 @@ namespace TWK.UI.ViewModels
             }
         }
 
+        // ========== GOVERNMENT VIEWMODEL MANAGEMENT ==========
+        /// <summary>
+        /// Register or get a government ViewModel for a realm.
+        /// </summary>
+        public GovernmentViewModel GetGovernmentViewModel(int realmID)
+        {
+            if (governmentViewModels.TryGetValue(realmID, out var viewModel))
+                return viewModel;
+
+            // Auto-create on first access
+            var newViewModel = new GovernmentViewModel(realmID);
+            governmentViewModels[realmID] = newViewModel;
+
+            return newViewModel;
+        }
+
+        /// <summary>
+        /// Refresh a specific government ViewModel.
+        /// </summary>
+        public void RefreshGovernmentViewModel(int realmID)
+        {
+            if (governmentViewModels.TryGetValue(realmID, out var viewModel))
+            {
+                viewModel.Refresh();
+                OnGovernmentViewModelUpdated?.Invoke(realmID);
+            }
+        }
+
+        // ========== BUREAUCRACY VIEWMODEL MANAGEMENT ==========
+        /// <summary>
+        /// Register or get a bureaucracy ViewModel for a realm.
+        /// </summary>
+        public BureaucracyViewModel GetBureaucracyViewModel(int realmID)
+        {
+            if (bureaucracyViewModels.TryGetValue(realmID, out var viewModel))
+                return viewModel;
+
+            // Auto-create on first access
+            var newViewModel = new BureaucracyViewModel(realmID);
+            bureaucracyViewModels[realmID] = newViewModel;
+
+            return newViewModel;
+        }
+
+        /// <summary>
+        /// Refresh a specific bureaucracy ViewModel.
+        /// </summary>
+        public void RefreshBureaucracyViewModel(int realmID)
+        {
+            if (bureaucracyViewModels.TryGetValue(realmID, out var viewModel))
+            {
+                viewModel.Refresh();
+                OnBureaucracyViewModelUpdated?.Invoke(realmID);
+            }
+        }
+
+        // ========== CONTRACT VIEWMODEL MANAGEMENT ==========
+        /// <summary>
+        /// Register a contract ViewModel.
+        /// </summary>
+        public void RegisterContract(Contract contract)
+        {
+            if (contract == null)
+            {
+                Debug.LogError("[ViewModelService] Cannot register null contract");
+                return;
+            }
+
+            if (contractViewModels.ContainsKey(contract.ContractID))
+                return;
+
+            var viewModel = new ContractViewModel(contract);
+            contractViewModels[contract.ContractID] = viewModel;
+        }
+
+        /// <summary>
+        /// Get a contract ViewModel by ID.
+        /// </summary>
+        public ContractViewModel GetContractViewModel(int contractID)
+        {
+            if (contractViewModels.TryGetValue(contractID, out var viewModel))
+                return viewModel;
+
+            Debug.LogWarning($"[ViewModelService] Contract ViewModel not found for ID: {contractID}");
+            return null;
+        }
+
+        /// <summary>
+        /// Refresh a specific contract ViewModel.
+        /// </summary>
+        public void RefreshContractViewModel(int contractID)
+        {
+            if (contractViewModels.TryGetValue(contractID, out var viewModel))
+            {
+                viewModel.Refresh();
+                OnContractViewModelUpdated?.Invoke(contractID);
+            }
+        }
+
+        /// <summary>
+        /// Remove a contract ViewModel when contract is terminated.
+        /// </summary>
+        public void UnregisterContract(int contractID)
+        {
+            contractViewModels.Remove(contractID);
+        }
+
         // ========== EVENT HANDLERS ==========
         private void OnNewReligionRegistered()
         {
@@ -432,6 +611,64 @@ namespace TWK.UI.ViewModels
         {
             // Refresh culture ViewModel when XP is added
             RefreshCultureViewModel(cultureID);
+        }
+
+        // ========== GOVERNMENT EVENT HANDLERS ==========
+        private void OnGovernmentChanged(int realmID, GovernmentData newGovernment)
+        {
+            // Refresh government and bureaucracy ViewModels when government changes
+            RefreshGovernmentViewModel(realmID);
+            RefreshBureaucracyViewModel(realmID);
+        }
+
+        private void OnOfficeAssigned(int realmID, Office office)
+        {
+            // Refresh bureaucracy ViewModel when office is assigned
+            RefreshBureaucracyViewModel(realmID);
+        }
+
+        private void OnOfficeCreated(int realmID, Office office)
+        {
+            // Refresh bureaucracy ViewModel when new office is created
+            RefreshBureaucracyViewModel(realmID);
+        }
+
+        private void OnEdictEnacted(int realmID, Edict edict)
+        {
+            // Refresh government ViewModel when edict is enacted
+            RefreshGovernmentViewModel(realmID);
+        }
+
+        private void OnLegitimacyChanged(int realmID, float newLegitimacy)
+        {
+            // Refresh government ViewModel when legitimacy changes
+            RefreshGovernmentViewModel(realmID);
+        }
+
+        private void OnCapacityChanged(int realmID, float newCapacity)
+        {
+            // Refresh government and bureaucracy ViewModels when capacity changes
+            RefreshGovernmentViewModel(realmID);
+            RefreshBureaucracyViewModel(realmID);
+        }
+
+        // ========== CONTRACT EVENT HANDLERS ==========
+        private void OnContractCreated(Contract contract)
+        {
+            // Auto-register the contract ViewModel
+            RegisterContract(contract);
+        }
+
+        private void OnContractTerminated(Contract contract)
+        {
+            // Unregister the contract ViewModel
+            UnregisterContract(contract.ContractID);
+        }
+
+        private void OnContractLoyaltyChanged(Contract contract, float newLoyalty)
+        {
+            // Refresh the contract ViewModel
+            RefreshContractViewModel(contract.ContractID);
         }
 
         // ========== DEBUGGING ==========
