@@ -66,7 +66,7 @@ namespace TWK.Modifiers
     {
         All,          // All buildings
         Economic,     // Economic category buildings
-        Agricultural, // Agricultural category buildings
+        Political, // Agricultural category buildings
         Military,     // Military category buildings
         Cultural,     // Cultural category buildings
         Religious,    // Religious category buildings

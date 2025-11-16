@@ -132,12 +132,11 @@ namespace TWK.Modifiers
             // Map TreeType to BuildingCategoryFilter
             return buildingCategory switch
             {
-                TreeType.Economic => BuildingFilter == BuildingCategoryFilter.Economic,
-                TreeType.Agricultural => BuildingFilter == BuildingCategoryFilter.Agricultural,
-                TreeType.Military => BuildingFilter == BuildingCategoryFilter.Military,
-                TreeType.Cultural => BuildingFilter == BuildingCategoryFilter.Cultural,
-                TreeType.Religious => BuildingFilter == BuildingCategoryFilter.Religious,
-                TreeType.Scientific => BuildingFilter == BuildingCategoryFilter.Scientific,
+                TreeType.Economics => BuildingFilter == BuildingCategoryFilter.Economic,
+                TreeType.Warfare => BuildingFilter == BuildingCategoryFilter.Military,
+                TreeType.Politics => BuildingFilter == BuildingCategoryFilter.Political,
+                TreeType.Science => BuildingFilter == BuildingCategoryFilter.Scientific,
+                TreeType.Religion => BuildingFilter == BuildingCategoryFilter.Religious,
                 _ => false
             };
         }
