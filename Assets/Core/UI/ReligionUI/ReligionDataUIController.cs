@@ -52,6 +52,7 @@ namespace TWK.UI
         private ReligionData currentReligion;
         private List<GameObject> currentDeityItems = new List<GameObject>();
         private List<GameObject> currentTenetItems = new List<GameObject>();
+        private bool isInitialized = false;
 
         // ========== INITIALIZATION ==========
 
@@ -71,6 +72,10 @@ namespace TWK.UI
             {
                 ReligionManager.Instance.newReligionRegistered += RefreshReligionDropdown;
             }
+
+            // Mark as initialized and do the first refresh
+            isInitialized = true;
+            RefreshReligionDropdown();
         }
 
         private void OnDestroy()
@@ -103,9 +108,11 @@ namespace TWK.UI
 
         private void OnEnable()
         {
-            // Refresh dropdown every time the panel becomes active
-            // This will also trigger OnReligionChanged() to update the display
-            RefreshReligionDropdown();
+            // Only refresh if we've already initialized (prevents early OnEnable calls before Start)
+            if (isInitialized)
+            {
+                RefreshReligionDropdown();
+            }
         }
 
         private void SetupReligionDropdown()
@@ -122,6 +129,10 @@ namespace TWK.UI
             if (religionDropdown == null)
                 return;
 
+            // Silently return if ViewModelService isn't ready yet (can happen during early initialization)
+            if (ViewModelService.Instance == null)
+                return;
+
             // Store current selection
             int currentIndex = religionDropdown.value;
             string currentlySelectedName = null;
@@ -133,12 +144,6 @@ namespace TWK.UI
 
             // Clear and rebuild dropdown
             religionDropdown.ClearOptions();
-
-            if (ViewModelService.Instance == null)
-            {
-                Debug.LogWarning("[ReligionDataUIController] ViewModelService instance not found");
-                return;
-            }
 
             // Get religion ViewModels from ViewModelService
             var allReligionViewModels = ViewModelService.Instance.GetAllReligionViewModels().ToList();
