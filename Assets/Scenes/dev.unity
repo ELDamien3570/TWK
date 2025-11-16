@@ -5612,7 +5612,7 @@ PrefabInstance:
     - target: {fileID: 8597935903169887857, guid: c11c00eb8df210d478d4432259986464, type: 3}
       propertyPath: targetCity
       value: 
-      objectReference: {fileID: 424178022}
+      objectReference: {fileID: 569499577}
     - target: {fileID: 8712679451247310108, guid: c11c00eb8df210d478d4432259986464, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -9684,6 +9684,7 @@ MonoBehaviour:
   - {fileID: 424178022}
   - {fileID: 569499577}
   testCulture: {fileID: 11400000, guid: eb5d54655effc004784bfa80ca820175, type: 2}
+  testReligion: {fileID: 11400000, guid: 6f29e42489021964c8f189329ce09b5d, type: 2}
 --- !u!114 &2059557211
 MonoBehaviour:
   m_ObjectHideFlags: 0

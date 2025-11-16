@@ -7,6 +7,7 @@ using TWK.Simulation;
 using TWK.Economy;
 using TWK.UI.ViewModels;
 using TWK.Cultures;
+using TWK.Religion;
 
 
 namespace TWK.Core
@@ -24,6 +25,7 @@ namespace TWK.Core
         [SerializeField] private City[] testCities;
 
         [SerializeField] private CultureData testCulture;
+        [SerializeField] private ReligionData testReligion;
 
         private void Start()
         {
@@ -104,12 +106,12 @@ namespace TWK.Core
                     //city.BuildFarm(testFarmData, Vector3.zero);
 
                     // Register a few population groups per city
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Laborer, 14671, testCulture, 25 );
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Artisan, 142, testCulture, 32);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Noble, 68, testCulture, 43);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Merchant, 24, testCulture, 38);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Clergy, 38, testCulture, 29);
-                    PopulationManager.Instance.RegisterPopulation(city.CityID, PopulationArchetypes.Slave, 1483, testCulture, 21);
+                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Laborer, 14671, testCulture, testReligion, 25 );
+                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Artisan, 142, testCulture, testReligion, 32);
+                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Noble, 68, testCulture, testReligion, 43);
+                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Merchant, 24, testCulture, testReligion, 38);
+                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Clergy, 38, testCulture, testReligion, 29);
+                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Slave, 1483, testCulture, testReligion, 21);
 
                     // Explicitly recalculate city culture after populations are registered
                     // This ensures culture is calculated even if event subscription timing is off

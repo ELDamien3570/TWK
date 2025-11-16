@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TWK.Core;
 using TWK.Cultures;
 using TWK.Economy;
+using TWK.Religion;
 using TWK.Simulation;
 using UnityEngine;
 
@@ -131,7 +132,23 @@ namespace TWK.Realms.Demographics
         #region Population Management
         public int RegisterPopulation(int cityId, PopulationArchetypes archetype, int count,  CultureData inCulture, float averageAge = 30f)
         {
-            var pop = new PopulationGroup(nextID++, cityId, archetype, count, inCulture, averageAge);
+            var pop = new PopulationGroup(nextID++, cityId, archetype, count, inCulture, null, averageAge);
+            populationGroups.Add(pop);
+            populationIndexById[pop.ID] = populationGroups.Count - 1;
+
+            if (!populationsByCity.ContainsKey(cityId))
+                populationsByCity[cityId] = new List<int>();
+            populationsByCity[cityId].Add(pop.ID);
+
+            // Fire event for population change
+            OnCityPopulationChanged?.Invoke(cityId);
+
+            return pop.ID;
+        }
+
+        public int RegisterPopulationWithReligion(int cityId, PopulationArchetypes archetype, int count, CultureData inCulture, ReligionData inRel, float averageAge = 30f) // Method for testing in SimulationManager, not production logic
+        {
+            var pop = new PopulationGroup(nextID++, cityId, archetype, count, inCulture, inRel, averageAge);
             populationGroups.Add(pop);
             populationIndexById[pop.ID] = populationGroups.Count - 1;
 
@@ -156,7 +173,7 @@ namespace TWK.Realms.Demographics
             CultureData culture,
             float averageAge = 30f)
         {
-            var pop = new PopulationGroup(nextID++, cityId, archetype, count, culture, averageAge);
+            var pop = new PopulationGroup(nextID++, cityId, archetype, count, culture, null, averageAge);
             populationGroups.Add(pop);
             populationIndexById[pop.ID] = populationGroups.Count - 1;
 

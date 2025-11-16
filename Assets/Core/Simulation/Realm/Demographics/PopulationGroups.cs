@@ -114,7 +114,7 @@ namespace TWK.Realms.Demographics
         public float GrowthModifier { get; set; }
 
         // ========== CONSTRUCTOR ==========
-        public PopulationGroup(int id, int ownerCityId, PopulationArchetypes archetype, int initialPopulation, CultureData culture = null, float averageAge = 30f)
+        public PopulationGroup(int id, int ownerCityId, PopulationArchetypes archetype, int initialPopulation, CultureData culture = null, ReligionData religion = null, float averageAge = 30f)
         {
             this.ID = id;
             this.OwnerCityID = ownerCityId;
@@ -131,7 +131,7 @@ namespace TWK.Realms.Demographics
             // Initialize cultural properties
             this.Culture = culture; // Can be set later if not provided
             this.Fervor = 50f; // Medium fervor by default
-            this.CurrentReligion = null; // Set by city/realm
+            this.CurrentReligion = religion; // Set by city/realm
             this.Loyalty = GetDefaultLoyaltyForArchetype(archetype);
 
             // Initialize legacy properties
