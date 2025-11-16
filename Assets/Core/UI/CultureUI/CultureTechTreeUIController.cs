@@ -4,12 +4,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using TWK.Cultures;
+using TWK.UI.ViewModels;
 
 namespace TWK.UI
 {
     /// <summary>
     /// Main controller for the culture tech tree UI.
     /// Allows viewing and unlocking tech nodes for different cultures and tree types.
+    /// Uses CultureViewModel for data access.
     /// </summary>
     public class CultureTechTreeUIController : MonoBehaviour
     {
@@ -55,7 +57,8 @@ namespace TWK.UI
         [SerializeField] private int playerRealmID = 0; // Set this to the player's realm ID
 
         // ========== STATE ==========
-        private CultureData currentCulture;
+        private CultureViewModel currentCultureViewModel;
+        private CultureData currentCulture; // Still needed for tech tree operations
         private TreeType currentTreeType = TreeType.Economics;
         private TechNode selectedNode;
         private List<TechNodeUIItem> nodeUIItems = new List<TechNodeUIItem>();
@@ -109,8 +112,14 @@ namespace TWK.UI
         {
             cultureDropdown?.ClearOptions();
 
-            var cultures = CultureManager.Instance.GetAllCultures();
-            var options = cultures.Select(c => new TMP_Dropdown.OptionData(c.CultureName)).ToList();
+            if (ViewModelService.Instance == null)
+            {
+                Debug.LogWarning("[CultureTechTreeUI] ViewModelService instance not found");
+                return;
+            }
+
+            var cultureVMs = ViewModelService.Instance.GetAllCultureViewModels().ToList();
+            var options = cultureVMs.Select(vm => new TMP_Dropdown.OptionData(vm.CultureName)).ToList();
 
             cultureDropdown?.AddOptions(options);
             cultureDropdown?.onValueChanged.AddListener(OnCultureChanged);
@@ -134,22 +143,39 @@ namespace TWK.UI
 
         private void OnCultureChanged(int index)
         {
-            var cultures = CultureManager.Instance.GetAllCultures();
-            if (index < 0 || index >= cultures.Count)
+            if (ViewModelService.Instance == null)
+            {
+                Debug.LogWarning("[CultureTechTreeUI] ViewModelService instance is null in OnCultureChanged");
                 return;
+            }
 
-            currentCulture = cultures[index];
+            var cultureVMs = ViewModelService.Instance.GetAllCultureViewModels().ToList();
+            if (index < 0 || index >= cultureVMs.Count)
+            {
+                Debug.LogWarning($"[CultureTechTreeUI] Invalid index {index} (total cultures: {cultureVMs.Count})");
+                return;
+            }
+
+            currentCultureViewModel = cultureVMs[index];
+
+            // Get the underlying CultureData for tech tree operations
+            if (CultureManager.Instance != null)
+            {
+                currentCulture = CultureManager.Instance.GetAllCultures()
+                    .FirstOrDefault(c => c.GetCultureID() == currentCultureViewModel.CultureID);
+            }
+
             RefreshCultureInfo();
             ShowTreeType(currentTreeType);
         }
 
         private void RefreshCultureInfo()
         {
-            if (currentCulture == null)
+            if (currentCultureViewModel == null)
                 return;
 
-            cultureNameText.text = currentCulture.CultureName;
-            cultureDescriptionText.text = currentCulture.Description;
+            cultureNameText.text = currentCultureViewModel.CultureName;
+            cultureDescriptionText.text = currentCultureViewModel.Description;
         }
 
         // ========== TREE TYPE TABS ==========
@@ -484,8 +510,12 @@ namespace TWK.UI
         /// </summary>
         public void SelectCulture(CultureData culture)
         {
-            var cultures = CultureManager.Instance.GetAllCultures();
-            int index = cultures.IndexOf(culture);
+            if (culture == null || ViewModelService.Instance == null)
+                return;
+
+            var cultureVMs = ViewModelService.Instance.GetAllCultureViewModels().ToList();
+            int cultureID = culture.GetCultureID();
+            int index = cultureVMs.FindIndex(vm => vm.CultureID == cultureID);
 
             if (index >= 0)
             {

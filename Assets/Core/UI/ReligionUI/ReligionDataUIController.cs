@@ -4,12 +4,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using TWK.Religion;
+using TWK.UI.ViewModels;
 
 namespace TWK.UI
 {
     /// <summary>
     /// Main controller for the religion data UI.
     /// Allows viewing detailed information about religions including deities, tenets, identity, etc.
+    /// Uses ReligionViewModel for data access.
     /// </summary>
     public class ReligionDataUIController : MonoBehaviour
     {
@@ -48,7 +50,8 @@ namespace TWK.UI
         [SerializeField] private TextMeshProUGUI ritualsText;
 
         // ========== STATE ==========
-        private ReligionData currentReligion;
+        private ReligionViewModel currentReligionViewModel;
+        private ReligionData currentReligion; // Still needed for detailed data access
         private List<GameObject> currentDeityItems = new List<GameObject>();
         private List<GameObject> currentTenetItems = new List<GameObject>();
 
@@ -73,7 +76,7 @@ namespace TWK.UI
         }
 
         /// <summary>
-        /// Refresh the religion dropdown options from ReligionManager.
+        /// Refresh the religion dropdown options from ViewModelService.
         /// Called automatically on OnEnable, or can be called manually/via button.
         /// </summary>
         public void RefreshReligionDropdown()
@@ -83,29 +86,24 @@ namespace TWK.UI
 
             // Store current selection
             int currentIndex = religionDropdown.value;
-            ReligionData currentlySelected = null;
+            int currentlySelectedID = -1;
 
-            if (currentIndex >= 0 && currentIndex < religionDropdown.options.Count)
+            if (currentIndex >= 0 && currentIndex < religionDropdown.options.Count && currentReligionViewModel != null)
             {
-                string currentName = religionDropdown.options[currentIndex].text;
-                if (ReligionManager.Instance != null)
-                {
-                    var religions = ReligionManager.Instance.GetAllReligions();
-                    currentlySelected = religions.FirstOrDefault(r => r.ReligionName == currentName);
-                }
+                currentlySelectedID = currentReligionViewModel.ReligionID;
             }
 
             // Clear and rebuild dropdown
             religionDropdown.ClearOptions();
 
-            if (ReligionManager.Instance == null)
+            if (ViewModelService.Instance == null)
             {
-                Debug.LogWarning("[ReligionDataUIController] ReligionManager instance not found");
+                Debug.LogWarning("[ReligionDataUIController] ViewModelService instance not found");
                 return;
             }
 
-            var allReligions = ReligionManager.Instance.GetAllReligions();
-            var options = allReligions.Select(r => new TMP_Dropdown.OptionData(r.ReligionName)).ToList();
+            var allReligionVMs = ViewModelService.Instance.GetAllReligionViewModels().ToList();
+            var options = allReligionVMs.Select(vm => new TMP_Dropdown.OptionData(vm.ReligionName)).ToList();
 
             religionDropdown.AddOptions(options);
 
@@ -113,9 +111,9 @@ namespace TWK.UI
             int indexToSelect = 0;
 
             // Restore selection if the religion still exists
-            if (currentlySelected != null)
+            if (currentlySelectedID >= 0)
             {
-                int newIndex = allReligions.IndexOf(currentlySelected);
+                int newIndex = allReligionVMs.FindIndex(vm => vm.ReligionID == currentlySelectedID);
                 if (newIndex >= 0)
                 {
                     indexToSelect = newIndex;
@@ -123,7 +121,7 @@ namespace TWK.UI
             }
 
             // Set the value and trigger display update
-            if (allReligions.Count > 0)
+            if (allReligionVMs.Count > 0)
             {
                 religionDropdown.SetValueWithoutNotify(indexToSelect);
                 OnReligionChanged(indexToSelect); // Manually trigger to update display
@@ -134,33 +132,41 @@ namespace TWK.UI
 
         private void OnReligionChanged(int index)
         {
-            if (ReligionManager.Instance == null)
+            if (ViewModelService.Instance == null)
             {
-                Debug.LogWarning("[ReligionDataUIController] ReligionManager instance is null in OnReligionChanged");
+                Debug.LogWarning("[ReligionDataUIController] ViewModelService instance is null in OnReligionChanged");
                 return;
             }
 
-            var religions = ReligionManager.Instance.GetAllReligions();
-            if (index < 0 || index >= religions.Count)
+            var religionVMs = ViewModelService.Instance.GetAllReligionViewModels().ToList();
+            if (index < 0 || index >= religionVMs.Count)
             {
-                Debug.LogWarning($"[ReligionDataUIController] Invalid index {index} (total religions: {religions.Count})");
+                Debug.LogWarning($"[ReligionDataUIController] Invalid index {index} (total religions: {religionVMs.Count})");
                 return;
             }
 
-            currentReligion = religions[index];
-            Debug.Log($"[ReligionDataUIController] Selected religion: {currentReligion.ReligionName}");
+            currentReligionViewModel = religionVMs[index];
+
+            // Get the underlying ReligionData for detailed displays
+            if (ReligionManager.Instance != null)
+            {
+                currentReligion = ReligionManager.Instance.GetAllReligions()
+                    .FirstOrDefault(r => r.GetStableReligionID() == currentReligionViewModel.ReligionID);
+            }
+
+            Debug.Log($"[ReligionDataUIController] Selected religion: {currentReligionViewModel.ReligionName}");
             RefreshReligionDisplay();
         }
 
         private void RefreshReligionDisplay()
         {
-            if (currentReligion == null)
+            if (currentReligionViewModel == null)
             {
-                Debug.LogWarning("[ReligionDataUIController] currentReligion is null in RefreshReligionDisplay");
+                Debug.LogWarning("[ReligionDataUIController] currentReligionViewModel is null in RefreshReligionDisplay");
                 return;
             }
 
-            Debug.Log($"[ReligionDataUIController] Refreshing display for {currentReligion.ReligionName}");
+            Debug.Log($"[ReligionDataUIController] Refreshing display for {currentReligionViewModel.ReligionName}");
             RefreshBasicInfo();
             RefreshIdentityInfo();
             RefreshDeities();
@@ -175,12 +181,12 @@ namespace TWK.UI
         private void RefreshBasicInfo()
         {
             if (religionNameText != null)
-                religionNameText.text = currentReligion.ReligionName;
+                religionNameText.text = currentReligionViewModel.ReligionName;
             else
                 Debug.LogWarning("[ReligionDataUIController] religionNameText is null - not assigned in inspector?");
 
             if (religionDescriptionText != null)
-                religionDescriptionText.text = currentReligion.Description;
+                religionDescriptionText.text = currentReligionViewModel.Description;
             else
                 Debug.LogWarning("[ReligionDataUIController] religionDescriptionText is null - not assigned in inspector?");
         }
@@ -190,44 +196,44 @@ namespace TWK.UI
         private void RefreshIdentityInfo()
         {
             if (religionTypeText != null)
-                religionTypeText.text = $"<b>Type:</b> {currentReligion.ReligionType}";
+                religionTypeText.text = $"<b>Type:</b> {currentReligionViewModel.ReligionType}";
 
             if (traditionText != null)
-                traditionText.text = $"<b>Tradition:</b> {currentReligion.Tradition}";
+                traditionText.text = $"<b>Tradition:</b> {currentReligionViewModel.Tradition}";
 
             if (centralizationText != null)
-                centralizationText.text = $"<b>Organization:</b> {currentReligion.Centralization}";
+                centralizationText.text = $"<b>Organization:</b> {currentReligionViewModel.Centralization}";
 
             if (evangelismText != null)
-                evangelismText.text = $"<b>Evangelism:</b> {currentReligion.Evangelism}";
+                evangelismText.text = $"<b>Evangelism:</b> {currentReligionViewModel.Evangelism}";
 
             if (syncretismText != null)
-                syncretismText.text = $"<b>Syncretism:</b> {currentReligion.Syncretism}";
+                syncretismText.text = $"<b>Syncretism:</b> {currentReligionViewModel.Syncretism}";
 
             // Head of Faith (if centralized)
             if (headOfFaithText != null)
             {
-                if (currentReligion.IsCentralized())
+                if (currentReligionViewModel.IsCentralized)
                 {
-                    string headInfo = $"<b>Head of Faith:</b> {currentReligion.HeadOfFaithTitle}\n";
+                    string headInfo = $"<b>Head of Faith:</b> {currentReligionViewModel.HeadOfFaithTitle}\n";
 
-                    if (currentReligion.HeadPowers != HeadOfFaithPowers.None)
+                    if (currentReligionViewModel.HeadPowers != HeadOfFaithPowers.None)
                     {
                         headInfo += "<b>Powers:</b>\n";
 
-                        if ((currentReligion.HeadPowers & HeadOfFaithPowers.Excommunication) != 0)
+                        if ((currentReligionViewModel.HeadPowers & HeadOfFaithPowers.Excommunication) != 0)
                             headInfo += "  • Excommunication\n";
-                        if ((currentReligion.HeadPowers & HeadOfFaithPowers.GrantDivorce) != 0)
+                        if ((currentReligionViewModel.HeadPowers & HeadOfFaithPowers.GrantDivorce) != 0)
                             headInfo += "  • Grant Divorce\n";
-                        if ((currentReligion.HeadPowers & HeadOfFaithPowers.GrantClaims) != 0)
+                        if ((currentReligionViewModel.HeadPowers & HeadOfFaithPowers.GrantClaims) != 0)
                             headInfo += "  • Grant Claims\n";
-                        if ((currentReligion.HeadPowers & HeadOfFaithPowers.CallCrusade) != 0)
+                        if ((currentReligionViewModel.HeadPowers & HeadOfFaithPowers.CallCrusade) != 0)
                             headInfo += "  • Call Crusade\n";
-                        if ((currentReligion.HeadPowers & HeadOfFaithPowers.InvestClergy) != 0)
+                        if ((currentReligionViewModel.HeadPowers & HeadOfFaithPowers.InvestClergy) != 0)
                             headInfo += "  • Invest Clergy\n";
-                        if ((currentReligion.HeadPowers & HeadOfFaithPowers.TaxClergy) != 0)
+                        if ((currentReligionViewModel.HeadPowers & HeadOfFaithPowers.TaxClergy) != 0)
                             headInfo += "  • Tax Clergy\n";
-                        if ((currentReligion.HeadPowers & HeadOfFaithPowers.GrantIndulgences) != 0)
+                        if ((currentReligionViewModel.HeadPowers & HeadOfFaithPowers.GrantIndulgences) != 0)
                             headInfo += "  • Grant Indulgences\n";
                     }
 
@@ -243,10 +249,10 @@ namespace TWK.UI
             if (fervorInfoText != null)
             {
                 string fervorInfo = $"<b>Fervor:</b>\n";
-                fervorInfo += $"  Base: {currentReligion.BaseFervor:F0}\n";
-                fervorInfo += $"  Decay Rate: {currentReligion.FervorDecayRate:F1}/season\n";
-                fervorInfo += $"  Conversion Resistance: {currentReligion.ConversionResistance:F0}%\n";
-                fervorInfo += $"  Conversion Speed: {currentReligion.ConversionSpeed:F1}x";
+                fervorInfo += $"  Base: {currentReligionViewModel.BaseFervor:F0}\n";
+                fervorInfo += $"  Decay Rate: {currentReligionViewModel.FervorDecayRate:F1}/season\n";
+                fervorInfo += $"  Conversion Resistance: {currentReligionViewModel.ConversionResistance:F0}%\n";
+                fervorInfo += $"  Conversion Speed: {currentReligionViewModel.ConversionSpeed:F1}x";
 
                 fervorInfoText.text = fervorInfo;
             }
@@ -266,12 +272,13 @@ namespace TWK.UI
 
             if (deitiesHeaderText != null)
             {
-                int deityCount = currentReligion.Deities?.Count ?? 0;
+                int deityCount = currentReligionViewModel.DeityCount;
                 string pantheonType = deityCount == 0 ? "No Deities" : deityCount == 1 ? "Monotheistic" : "Polytheistic";
                 deitiesHeaderText.text = $"<b>Deities ({deityCount} - {pantheonType}):</b>";
             }
 
-            if (currentReligion.Deities == null || currentReligion.Deities.Count == 0)
+            // Access detailed deity data from underlying ReligionData
+            if (currentReligion == null || currentReligion.Deities == null || currentReligion.Deities.Count == 0)
                 return;
 
             // Create deity items (if prefab exists)
@@ -320,11 +327,12 @@ namespace TWK.UI
 
             if (tenetsHeaderText != null)
             {
-                int tenetCount = currentReligion.Tenets?.Count ?? 0;
+                int tenetCount = currentReligionViewModel.TenetCount;
                 tenetsHeaderText.text = $"<b>Tenets ({tenetCount}):</b>";
             }
 
-            if (currentReligion.Tenets == null || currentReligion.Tenets.Count == 0)
+            // Access detailed tenet data from underlying ReligionData
+            if (currentReligion == null || currentReligion.Tenets == null || currentReligion.Tenets.Count == 0)
                 return;
 
             // Create tenet items (if prefab exists)
@@ -517,11 +525,12 @@ namespace TWK.UI
         /// </summary>
         public void SetReligion(ReligionData religion)
         {
-            if (religion == null || ReligionManager.Instance == null)
+            if (religion == null || ViewModelService.Instance == null)
                 return;
 
-            var religions = ReligionManager.Instance.GetAllReligions();
-            int index = religions.IndexOf(religion);
+            var religionVMs = ViewModelService.Instance.GetAllReligionViewModels().ToList();
+            int religionID = religion.GetStableReligionID();
+            int index = religionVMs.FindIndex(vm => vm.ReligionID == religionID);
 
             if (index >= 0)
             {
