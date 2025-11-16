@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab4a56df8aea8ce4983530b76df78e49, type: 3}
+  m_Name: Hellenism
+  m_EditorClassIdentifier: Assembly-CSharp::TWK.Religion.ReligionData
+  ReligionName: Hellenism
+  Description: Pantheon from Greece
+  ReligionType: 0
+  Deities:
+  - Name: Zues
+    Title: God of Thunder
+    Description: Greatest of god
+    Mythos: Legends of thunder
+    FamousTraits:
+    - Wrathful
+    HolyLands:
+    - Name: Mount Olympus
+      Significance: Homeland
+      Importance: 0
+      ProvinceID: 0
+      FervorBonus: 10
+      PietyPerSeason: 150
+    Festivals:
+    - Name: Olympic Games
+      Description: Greeks come together to show off their mastery of sport
+      Frequency: 0
+      Season: 2
+      HappinessBonus: 15
+      FervorBonus: 15
+      GoldCost: 150
+    Rituals:
+    - Name: Offerings to Zues
+      Description: Offer sacrifice to Zues in exchange for stength
+      Effect:
+        FervorGain: 0
+        HappinessGain: 0
+        StabilityGain: 15
+        PrestigeGain: 15
+        CanTriggerEvent: 0
+        EventID: 
+      PietyCost: 100
+      Cooldown: 160
+    Icon: {fileID: 21300000, guid: 0fc496198523f3645b0cc97d79491409, type: 3}
+    DeityColor: {r: 1, g: 0.97981787, b: 0, a: 0}
+  Tradition: 1
+  Centralization: 0
+  Evangelism: 0
+  Syncretism: 1
+  HeadOfFaithTitle: High Priest
+  HeadPowers: 0
+  Tenets:
+  - Name: Godly Fitness
+    Description: 'Characters of this faith are of higher physical accumen '
+    Category: 0
+    Modifiers: []
+    HasSpecialRules: 0
+    SpecialRulesDescription: 
+    Icon: {fileID: 21300000, guid: 9c63d6a9ca485ec489eb598b0edc441f, type: 3}
+  ConversionResistance: 50
+  ConversionSpeed: 1
+  BaseFervor: 50
+  FervorDecayRate: 1
+  ReligionIcon: {fileID: 21300000, guid: d8bfc86f5bce3174b84dee9a891ce788, type: 3}
+  ReligionColor: {r: 0, g: 1, b: 0.9825597, a: 1}
