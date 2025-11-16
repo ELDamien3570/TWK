@@ -11,7 +11,6 @@ namespace TWK.UI
     /// <summary>
     /// Main controller for the culture tech tree UI.
     /// Allows viewing and unlocking tech nodes for different cultures and tree types.
-    /// Uses CultureViewModel for data access.
     /// </summary>
     public class CultureTechTreeUIController : MonoBehaviour
     {
@@ -57,8 +56,7 @@ namespace TWK.UI
         [SerializeField] private int playerRealmID = 0; // Set this to the player's realm ID
 
         // ========== STATE ==========
-        private CultureViewModel currentCultureViewModel;
-        private CultureData currentCulture; // Still needed for tech tree operations
+        private CultureData currentCulture;
         private TreeType currentTreeType = TreeType.Economics;
         private TechNode selectedNode;
         private List<TechNodeUIItem> nodeUIItems = new List<TechNodeUIItem>();
@@ -84,10 +82,81 @@ namespace TWK.UI
 
         private void SubscribeToEvents()
         {
+            // Subscribe to ViewModelService events
+            if (ViewModelService.Instance != null)
+            {
+                ViewModelService.Instance.OnCultureViewModelUpdated += OnCultureViewModelUpdated;
+                ViewModelService.Instance.OnViewModelsUpdated += OnViewModelsUpdated;
+            }
+
             // Subscribe to XP changes to auto-refresh the UI
             if (CultureManager.Instance != null)
             {
                 CultureManager.Instance.OnCultureXPAdded += HandleCultureXPAdded;
+            }
+        }
+
+        private void OnCultureViewModelUpdated(int updatedCultureId)
+        {
+            // Refresh the dropdown when a culture ViewModel is updated
+            RefreshCultureDropdown();
+        }
+
+        private void OnViewModelsUpdated()
+        {
+            // Refresh the dropdown when all ViewModels are updated
+            RefreshCultureDropdown();
+        }
+
+        /// <summary>
+        /// Refresh the culture dropdown options from ViewModelService.
+        /// </summary>
+        private void RefreshCultureDropdown()
+        {
+            if (cultureDropdown == null)
+                return;
+
+            // Store current selection
+            int currentIndex = cultureDropdown.value;
+            string currentlySelectedName = null;
+
+            if (currentIndex >= 0 && currentIndex < cultureDropdown.options.Count)
+            {
+                currentlySelectedName = cultureDropdown.options[currentIndex].text;
+            }
+
+            cultureDropdown.ClearOptions();
+
+            if (ViewModelService.Instance == null)
+            {
+                Debug.LogWarning("[CultureTechTreeUIController] ViewModelService instance not found");
+                return;
+            }
+
+            // Get culture ViewModels from ViewModelService
+            var allCultureViewModels = ViewModelService.Instance.GetAllCultureViewModels().ToList();
+            var options = allCultureViewModels.Select(vm => new TMP_Dropdown.OptionData(vm.CultureName)).ToList();
+
+            cultureDropdown.AddOptions(options);
+
+            // Determine which index to select
+            int indexToSelect = 0;
+
+            // Restore selection if the culture still exists
+            if (!string.IsNullOrEmpty(currentlySelectedName))
+            {
+                int newIndex = allCultureViewModels.FindIndex(vm => vm.CultureName == currentlySelectedName);
+                if (newIndex >= 0)
+                {
+                    indexToSelect = newIndex;
+                }
+            }
+
+            // Set the value and trigger display update
+            if (allCultureViewModels.Count > 0)
+            {
+                cultureDropdown.SetValueWithoutNotify(indexToSelect);
+                OnCultureChanged(indexToSelect);
             }
         }
 
@@ -110,19 +179,8 @@ namespace TWK.UI
 
         private void SetupCultureDropdown()
         {
-            cultureDropdown?.ClearOptions();
-
-            if (ViewModelService.Instance == null)
-            {
-                Debug.LogWarning("[CultureTechTreeUI] ViewModelService instance not found");
-                return;
-            }
-
-            var cultureVMs = ViewModelService.Instance.GetAllCultureViewModels().ToList();
-            var options = cultureVMs.Select(vm => new TMP_Dropdown.OptionData(vm.CultureName)).ToList();
-
-            cultureDropdown?.AddOptions(options);
             cultureDropdown?.onValueChanged.AddListener(OnCultureChanged);
+            RefreshCultureDropdown();
         }
 
         private void SetupTabButtons()
@@ -143,39 +201,22 @@ namespace TWK.UI
 
         private void OnCultureChanged(int index)
         {
-            if (ViewModelService.Instance == null)
-            {
-                Debug.LogWarning("[CultureTechTreeUI] ViewModelService instance is null in OnCultureChanged");
+            var cultures = CultureManager.Instance.GetAllCultures();
+            if (index < 0 || index >= cultures.Count)
                 return;
-            }
 
-            var cultureVMs = ViewModelService.Instance.GetAllCultureViewModels().ToList();
-            if (index < 0 || index >= cultureVMs.Count)
-            {
-                Debug.LogWarning($"[CultureTechTreeUI] Invalid index {index} (total cultures: {cultureVMs.Count})");
-                return;
-            }
-
-            currentCultureViewModel = cultureVMs[index];
-
-            // Get the underlying CultureData for tech tree operations
-            if (CultureManager.Instance != null)
-            {
-                currentCulture = CultureManager.Instance.GetAllCultures()
-                    .FirstOrDefault(c => c.GetCultureID() == currentCultureViewModel.CultureID);
-            }
-
+            currentCulture = cultures[index];
             RefreshCultureInfo();
             ShowTreeType(currentTreeType);
         }
 
         private void RefreshCultureInfo()
         {
-            if (currentCultureViewModel == null)
+            if (currentCulture == null)
                 return;
 
-            cultureNameText.text = currentCultureViewModel.CultureName;
-            cultureDescriptionText.text = currentCultureViewModel.Description;
+            cultureNameText.text = currentCulture.CultureName;
+            cultureDescriptionText.text = currentCulture.Description;
         }
 
         // ========== TREE TYPE TABS ==========
@@ -510,12 +551,8 @@ namespace TWK.UI
         /// </summary>
         public void SelectCulture(CultureData culture)
         {
-            if (culture == null || ViewModelService.Instance == null)
-                return;
-
-            var cultureVMs = ViewModelService.Instance.GetAllCultureViewModels().ToList();
-            int cultureID = culture.GetCultureID();
-            int index = cultureVMs.FindIndex(vm => vm.CultureID == cultureID);
+            var cultures = CultureManager.Instance.GetAllCultures();
+            int index = cultures.IndexOf(culture);
 
             if (index >= 0)
             {
@@ -527,6 +564,13 @@ namespace TWK.UI
 
         private void OnDestroy()
         {
+            // Unsubscribe from ViewModelService events
+            if (ViewModelService.Instance != null)
+            {
+                ViewModelService.Instance.OnCultureViewModelUpdated -= OnCultureViewModelUpdated;
+                ViewModelService.Instance.OnViewModelsUpdated -= OnViewModelsUpdated;
+            }
+
             // Unsubscribe from events
             if (CultureManager.Instance != null)
             {
