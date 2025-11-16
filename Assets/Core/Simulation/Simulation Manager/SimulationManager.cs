@@ -98,12 +98,19 @@ namespace TWK.Core
                 }
             }
 
+            if (testReligion != null)
+            {
+                ReligionManager.Instance.RegisterReligion(testReligion);
+            }
+
             if (testCities.Length > 0)
             {
                 foreach (var city in testCities)
                 {
                     city.Initialize(worldTimeManager);
                     //city.BuildFarm(testFarmData, Vector3.zero);
+
+                   
 
                     // Register a few population groups per city
                     PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Laborer, 14671, testCulture, testReligion, 25 );
