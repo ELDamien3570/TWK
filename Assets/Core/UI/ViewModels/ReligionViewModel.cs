@@ -109,7 +109,7 @@ namespace TWK.UI.ViewModels
                 foreach (var deity in _religionSource.Deities)
                 {
                     if (deity != null)
-                        DeityNames.Add(deity.DeityName);
+                        DeityNames.Add(deity.Name);
                 }
             }
 
@@ -121,7 +121,7 @@ namespace TWK.UI.ViewModels
                 foreach (var tenet in _religionSource.Tenets)
                 {
                     if (tenet != null)
-                        TenetNames.Add(tenet.TenetName);
+                        TenetNames.Add(tenet.Name);
                 }
             }
 
