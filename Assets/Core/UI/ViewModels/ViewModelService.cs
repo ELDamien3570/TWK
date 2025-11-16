@@ -95,14 +95,14 @@ namespace TWK.UI.ViewModels
 
             if (cityViewModels.ContainsKey(city.CityID))
             {
-                Debug.LogWarning($"[ViewModelService] City {city.Name} (ID: {city.CityID}) already registered");
+                //Debug.LogWarning($"[ViewModelService] City {city.Name} (ID: {city.CityID}) already registered");
                 return;
             }
 
             var viewModel = new CityViewModel(city);
             cityViewModels[city.CityID] = viewModel;
 
-            Debug.Log($"[ViewModelService] Registered city: {city.Name} (ID: {city.CityID})");
+           // Debug.Log($"[ViewModelService] Registered city: {city.Name} (ID: {city.CityID})");
         }
 
         /// <summary>

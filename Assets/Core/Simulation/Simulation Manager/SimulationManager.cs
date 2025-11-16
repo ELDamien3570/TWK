@@ -52,6 +52,11 @@ namespace TWK.Core
             else
                 Debug.LogError("CultureManager not found in scene!");
 
+            if (ReligionManager.Instance != null)
+                ReligionManager.Instance.Initialize(worldTimeManager);
+            else
+                Debug.LogError("ReligionManager not found in scene!");
+
             // Initialize ViewModelService for UI
             if (ViewModelService.Instance != null)
                 ViewModelService.Instance.Initialize(worldTimeManager);
@@ -71,7 +76,7 @@ namespace TWK.Core
             foreach (var city in testCities)
             {
                 int totalPop = city.GetTotalPopulation();
-                Debug.Log($"City: {city.Name} | Total Population: {totalPop}");
+               // Debug.Log($"City: {city.Name} | Total Population: {totalPop}");
 
                 var breakdown = city.GetPopulationBreakdown();
 
@@ -81,7 +86,7 @@ namespace TWK.Core
                     breakdownString += $"{kvp.Key}: {kvp.Value}, ";
                     
                 }
-                Debug.Log(breakdownString);
+                //Debug.Log(breakdownString);
             }
         }
         

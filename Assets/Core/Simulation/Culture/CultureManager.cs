@@ -349,7 +349,7 @@ namespace TWK.Cultures
         /// </summary>
         private void FireCityCultureChangedEvent(int cityID, int oldCultureID, int newCultureID)
         {
-            Debug.Log($"[CultureManager] City {cityID} culture changed from {oldCultureID} to {newCultureID}");
+           // Debug.Log($"[CultureManager] City {cityID} culture changed from {oldCultureID} to {newCultureID}");
 
             // Fire event for cities and other systems to react
             OnCityCultureChanged?.Invoke(cityID, oldCultureID, newCultureID);

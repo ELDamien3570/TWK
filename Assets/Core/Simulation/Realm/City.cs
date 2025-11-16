@@ -118,7 +118,7 @@ namespace TWK.Realms
             // Register with PopulationManager
             PopulationManager.Instance.RegisterCity(this);
 
-            Debug.Log($"[City] Initialized: {Name} (ID: {CityID})");
+          // Debug.Log($"[City] Initialized: {Name} (ID: {CityID})");
         }
 
         private void OnDestroy()
