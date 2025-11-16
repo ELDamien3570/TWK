@@ -58,6 +58,17 @@ namespace TWK.UI
         {
             SetupReligionDropdown();
 
+            // Add listener to refresh dropdown when clicked
+            if (religionDropdown != null)
+            {
+                // Get the dropdown's button component and add listener to refresh on click
+                var button = religionDropdown.GetComponent<Button>();
+                if (button != null)
+                {
+                    button.onClick.AddListener(RefreshReligionDropdown);
+                }
+            }
+
             if (religionDropdown != null && religionDropdown.options.Count > 0)
             {
                 OnReligionChanged(0);
@@ -66,7 +77,35 @@ namespace TWK.UI
 
         private void SetupReligionDropdown()
         {
-            religionDropdown?.ClearOptions();
+            religionDropdown?.onValueChanged.AddListener(OnReligionChanged);
+            RefreshReligionDropdown();
+        }
+
+        /// <summary>
+        /// Refresh the religion dropdown options from ReligionManager.
+        /// Called on start and when the dropdown is clicked.
+        /// </summary>
+        private void RefreshReligionDropdown()
+        {
+            if (religionDropdown == null)
+                return;
+
+            // Store current selection
+            int currentIndex = religionDropdown.value;
+            ReligionData currentlySelected = null;
+
+            if (currentIndex >= 0 && currentIndex < religionDropdown.options.Count)
+            {
+                string currentName = religionDropdown.options[currentIndex].text;
+                if (ReligionManager.Instance != null)
+                {
+                    var religions = ReligionManager.Instance.GetAllReligions();
+                    currentlySelected = religions.FirstOrDefault(r => r.ReligionName == currentName);
+                }
+            }
+
+            // Clear and rebuild dropdown
+            religionDropdown.ClearOptions();
 
             if (ReligionManager.Instance == null)
             {
@@ -74,11 +113,20 @@ namespace TWK.UI
                 return;
             }
 
-            var religions = ReligionManager.Instance.GetAllReligions();
-            var options = religions.Select(r => new TMP_Dropdown.OptionData(r.ReligionName)).ToList();
+            var allReligions = ReligionManager.Instance.GetAllReligions();
+            var options = allReligions.Select(r => new TMP_Dropdown.OptionData(r.ReligionName)).ToList();
 
-            religionDropdown?.AddOptions(options);
-            religionDropdown?.onValueChanged.AddListener(OnReligionChanged);
+            religionDropdown.AddOptions(options);
+
+            // Restore selection if the religion still exists
+            if (currentlySelected != null)
+            {
+                int newIndex = allReligions.IndexOf(currentlySelected);
+                if (newIndex >= 0)
+                {
+                    religionDropdown.SetValueWithoutNotify(newIndex);
+                }
+            }
         }
 
         // ========== RELIGION SELECTION ==========
