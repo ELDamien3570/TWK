@@ -243,9 +243,11 @@ namespace TWK.Government
                 return;
             }
 
-            // TODO: Get agent from Agent system and read skill level
-            // For now, use base efficiency
-            office.RecalculateEfficiency();
+            // TODO: Get agent from Agent system when AgentManager is implemented
+            // For now, use base efficiency with a placeholder skill level
+            // Expected integration: AgentManager.Instance.GetAgent(agentID).SkillLevels[office.SkillTree]
+            float agentSkillLevel = 50f; // Placeholder: moderate skill
+            office.UpdateEfficiency(agentSkillLevel);
         }
 
         /// <summary>
@@ -396,7 +398,12 @@ namespace TWK.Government
                 return false;
             }
 
-            // TODO: Check if realm has enough gold for enactment cost
+            // Check if realm has enough gold for enactment cost
+            if (!CanAffordEdictCost(realmID, edictTemplate.EnactmentCost))
+            {
+                Debug.LogWarning($"[GovernmentManager] Realm {realmID} cannot afford edict '{edictTemplate.EdictName}' (Cost: {edictTemplate.EnactmentCost})");
+                return false;
+            }
 
             if (!realmEdicts.ContainsKey(realmID))
             {
@@ -408,13 +415,48 @@ namespace TWK.Government
             edict.Enact(currentMonthCounter, realmID);
             realmEdicts[realmID].Add(edict);
 
+            // Deduct enactment cost
+            DeductRealmGold(realmID, edict.EnactmentCost, $"Edict: {edict.EdictName}");
+
             // Apply loyalty effects to populations
             ApplyEdictLoyaltyEffects(realmID, edict);
+
+            // Register edict modifiers with ModifierManager
+            RegisterEdictModifiers(realmID, edict);
 
             OnEdictEnacted?.Invoke(realmID, edict);
             Debug.Log($"[GovernmentManager] Edict '{edict.EdictName}' enacted in realm {realmID}");
 
             return true;
+        }
+
+        /// <summary>
+        /// Register edict modifiers with ModifierManager as global timed modifiers.
+        /// </summary>
+        private void RegisterEdictModifiers(int realmID, Edict edict)
+        {
+            if (ModifierManager.Instance == null || edict.Modifiers == null || edict.Modifiers.Count == 0)
+                return;
+
+            // Calculate expiration in days (1 month = 30 days)
+            int durationDays = edict.IsPermanent ? -1 : edict.DurationMonths * 30;
+
+            foreach (var modifier in edict.Modifiers)
+            {
+                if (modifier != null)
+                {
+                    var modifierCopy = modifier.Clone();
+                    modifierCopy.SourceID = realmID;
+                    modifierCopy.SourceType = $"Edict:{edict.EdictName}";
+                    modifierCopy.DurationDays = durationDays;
+                    modifierCopy.StartDay = currentDayCounter;
+
+                    // Add as global modifier (affects entire realm)
+                    ModifierManager.Instance.AddGlobalTimedModifier(modifierCopy);
+                }
+            }
+
+            Debug.Log($"[GovernmentManager] Registered {edict.Modifiers.Count} modifiers for edict '{edict.EdictName}' (Duration: {(edict.IsPermanent ? "permanent" : $"{durationDays} days")})");
         }
 
         /// <summary>
@@ -491,6 +533,67 @@ namespace TWK.Government
             }
         }
 
+        // ========== ECONOMY INTEGRATION ==========
+
+        /// <summary>
+        /// Check if a realm can afford a cost.
+        /// </summary>
+        private bool CanAffordEdictCost(int realmID, int cost)
+        {
+            if (cost <= 0)
+                return true;
+
+            // TODO: Implement proper realm treasury system
+            // For now, get the capital city's gold (requires realm->city mapping)
+            // Placeholder: always allow for testing
+            return true;
+        }
+
+        /// <summary>
+        /// Deduct gold from a realm's treasury.
+        /// </summary>
+        private void DeductRealmGold(int realmID, int amount, string reason)
+        {
+            if (amount <= 0)
+                return;
+
+            // TODO: Implement proper realm treasury system
+            // Expected implementation:
+            // 1. Get realm's capital city ID
+            // 2. Use ResourceManager to deduct gold from that city
+            // Example:
+            // int capitalCityID = RealmManager.Instance.GetCapitalCity(realmID);
+            // if (ResourceManager.Instance != null)
+            // {
+            //     var ledger = new ResourceLedger(capitalCityID);
+            //     ledger.DailyChange[ResourceType.Gold] = -amount;
+            //     ResourceManager.Instance.ApplyLedger(capitalCityID, ledger);
+            // }
+
+            Debug.Log($"[GovernmentManager] Deducted {amount} gold from realm {realmID} for {reason}");
+        }
+
+        /// <summary>
+        /// Add gold to a realm's treasury.
+        /// </summary>
+        private void AddRealmGold(int realmID, int amount, string reason)
+        {
+            if (amount <= 0)
+                return;
+
+            // TODO: Implement proper realm treasury system
+            // Expected implementation:
+            // int capitalCityID = RealmManager.Instance.GetCapitalCity(realmID);
+            // if (ResourceManager.Instance != null)
+            // {
+            //     var ledger = new ResourceLedger(capitalCityID);
+            //     ledger.DailyChange[ResourceType.Gold] = amount;
+            //     ResourceManager.Instance.ApplyLedger(capitalCityID, ledger);
+            // }
+
+            Debug.Log($"[GovernmentManager] Added {amount} gold to realm {realmID} from {reason}");
+        }
+
         // ========== LEGITIMACY & CAPACITY ==========
 
         /// <summary>
@@ -546,6 +649,109 @@ namespace TWK.Government
             if (Mathf.Abs(delta) > 0.1f)
             {
                 Debug.Log($"[GovernmentManager] Realm {realmID} capacity changed by {delta:F1} to {newValue:F1}");
+            }
+        }
+
+        // ========== CULTURE & RELIGION INTEGRATION ==========
+
+        /// <summary>
+        /// Calculate legitimacy bonus from culture alignment between ruler and population.
+        /// </summary>
+        private float CalculateCultureLegitimacyBonus(int realmID)
+        {
+            if (TWK.Cultures.CultureManager.Instance == null || PopulationManager.Instance == null)
+                return 0f;
+
+            // Get realm leader's culture
+            int leaderCultureID = TWK.Cultures.CultureManager.Instance.GetRealmLeaderCulture(realmID);
+            if (leaderCultureID == -1)
+                return 0f;
+
+            // Get all population groups in realm
+            var allPops = PopulationManager.Instance.GetAllPopulationGroups();
+            var realmPops = allPops.Where(p =>
+            {
+                var city = PopulationManager.Instance.GetCityByID(p.OwnerCityID);
+                return city != null && city.GetComponent<TWK.Realms.Realm>()?.RealmID == realmID;
+            }).ToList();
+
+            if (realmPops.Count == 0)
+                return 0f;
+
+            // Calculate culture match percentage
+            int totalPops = realmPops.Sum(p => p.PopulationCount);
+            int matchingPops = realmPops
+                .Where(p => p.CultureID == leaderCultureID)
+                .Sum(p => p.PopulationCount);
+
+            float matchPercentage = totalPops > 0 ? (float)matchingPops / totalPops : 0f;
+
+            // Legitimacy bonus: +10 for perfect match, -10 for complete mismatch
+            float bonus = (matchPercentage - 0.5f) * 20f;
+
+            return bonus;
+        }
+
+        /// <summary>
+        /// Calculate legitimacy bonus from clergy happiness (important for theocracies).
+        /// </summary>
+        private float CalculateClergyLegitimacyBonus(int realmID)
+        {
+            if (PopulationManager.Instance == null)
+                return 0f;
+
+            var government = GetRealmGovernment(realmID);
+            if (government == null)
+                return 0f;
+
+            // Check if this is a theocratic government
+            bool isTheocracy = government.RegimeForm == RegimeForm.Autocratic &&
+                              government.Institutions.Any(i => i != null && i.InstitutionName.Contains("Theocracy"));
+
+            // Get clergy population groups
+            var allPops = PopulationManager.Instance.GetAllPopulationGroups();
+            var clergyPops = allPops.Where(p =>
+            {
+                var city = PopulationManager.Instance.GetCityByID(p.OwnerCityID);
+                if (city == null)
+                    return false;
+                var realm = city.GetComponent<TWK.Realms.Realm>();
+                return realm != null && realm.RealmID == realmID && p.Archetype == PopulationArchetypes.Clergy;
+            }).ToList();
+
+            if (clergyPops.Count == 0)
+                return 0f;
+
+            // Calculate average clergy happiness
+            float avgHappiness = clergyPops.Average(p => p.Happiness);
+
+            // Theocracies get stronger bonus/penalty from clergy happiness
+            float multiplier = isTheocracy ? 0.2f : 0.1f;
+
+            // Happiness ranges from -100 to 100, so this gives -20 to +20 for theocracy, -10 to +10 for others
+            float bonus = avgHappiness * multiplier;
+
+            return bonus;
+        }
+
+        /// <summary>
+        /// Apply periodic legitimacy modifiers from culture and religion.
+        /// Called yearly.
+        /// </summary>
+        private void ApplyCultureAndReligionLegitimacy()
+        {
+            foreach (var realmID in activeGovernments.Keys.ToList())
+            {
+                float cultureBonus = CalculateCultureLegitimacyBonus(realmID);
+                float clergyBonus = CalculateClergyLegitimacyBonus(realmID);
+
+                float totalBonus = cultureBonus + clergyBonus;
+
+                if (Mathf.Abs(totalBonus) > 0.1f)
+                {
+                    ModifyLegitimacy(realmID, totalBonus);
+                    Debug.Log($"[GovernmentManager] Realm {realmID} received culture/religion legitimacy: {totalBonus:F1} (culture: {cultureBonus:F1}, clergy: {clergyBonus:F1})");
+                }
             }
         }
 
@@ -797,6 +1003,9 @@ namespace TWK.Government
 
         public void AdvanceYear()
         {
+            // Apply culture and religion legitimacy effects
+            ApplyCultureAndReligionLegitimacy();
+
             // Yearly legitimacy decay
             foreach (var realmID in realmLegitimacy.Keys.ToList())
             {
