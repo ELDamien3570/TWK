@@ -18,7 +18,7 @@ MonoBehaviour:
   Deities:
   - Name: Zues
     Title: God of Thunder
-    Description: Greatest of god
+    Description: Greatest of gods
     Mythos: Legends of thunder
     FamousTraits:
     - Wrathful
@@ -51,6 +51,114 @@ MonoBehaviour:
       Cooldown: 160
     Icon: {fileID: 21300000, guid: 0fc496198523f3645b0cc97d79491409, type: 3}
     DeityColor: {r: 1, g: 0.97981787, b: 0, a: 0}
+  - Name: Ares
+    Title: God of Thunder
+    Description: Greak god of War
+    Mythos: War and blades and stuff
+    FamousTraits:
+    - Wrathful
+    HolyLands:
+    - Name: Mount Olympus
+      Significance: Homeland
+      Importance: 0
+      ProvinceID: 0
+      FervorBonus: 10
+      PietyPerSeason: 150
+    Festivals:
+    - Name: Attican Areia
+      Description: Unbinding Ares for campaigning season
+      Frequency: 0
+      Season: 0
+      HappinessBonus: 15
+      FervorBonus: 15
+      GoldCost: 150
+    Rituals:
+    - Name: Offerings to Areas
+      Description: Offer sacrifice to Zues in exchange for knowledge in Warfare
+      Effect:
+        FervorGain: 0
+        HappinessGain: 0
+        StabilityGain: 15
+        PrestigeGain: 15
+        CanTriggerEvent: 0
+        EventID: 
+      PietyCost: 100
+      Cooldown: 160
+    Icon: {fileID: 21300000, guid: 6fa365c0ceed64a49836c8da6dc0fcf8, type: 3}
+    DeityColor: {r: 1, g: 0.028497245, b: 0, a: 0}
+  - Name: Athena
+    Title: Goddess of War and Wisdom
+    Description: ' One of the twelve great Olympians, Athena is the goddess of war,
+      fortifications and the defence of towns, and of good counsel and heroic endeavour.'
+    Mythos: War and blades and stuff
+    FamousTraits:
+    - Wise
+    HolyLands:
+    - Name: Mount Olympus
+      Significance: Homeland
+      Importance: 0
+      ProvinceID: 0
+      FervorBonus: 10
+      PietyPerSeason: 150
+    Festivals:
+    - Name: Panathenaea
+      Description: Greeks come together to show off their mastery of sport
+      Frequency: 0
+      Season: 1
+      HappinessBonus: 15
+      FervorBonus: 15
+      GoldCost: 150
+    Rituals:
+    - Name: Offerings to Athena
+      Description: Offer sacrifice to Athena in exchange for Wisdom
+      Effect:
+        FervorGain: 0
+        HappinessGain: 0
+        StabilityGain: 15
+        PrestigeGain: 15
+        CanTriggerEvent: 0
+        EventID: 
+      PietyCost: 100
+      Cooldown: 160
+    Icon: {fileID: 21300000, guid: cc85561e633b0f741be39cda62c016e6, type: 3}
+    DeityColor: {r: 0, g: 0.87452483, b: 1, a: 0}
+  - Name: Poseidon
+    Title: 'God of the sea '
+    Description: Poseidon is the ancient Greek god of the sea, storms, earthquakes,
+      and horses
+    Mythos: Waves and sinking boats and stuff
+    FamousTraits:
+    - Protector
+    HolyLands:
+    - Name: Mount Olympus
+      Significance: Homeland
+      Importance: 0
+      ProvinceID: 0
+      FervorBonus: 10
+      PietyPerSeason: 150
+    Festivals:
+    - Name: Isthmian Games
+      Description: Greeks come together in the Corinthian winter to show off their
+        mastery of sport
+      Frequency: 0
+      Season: 3
+      HappinessBonus: 15
+      FervorBonus: 15
+      GoldCost: 150
+    Rituals:
+    - Name: Offerings to Poseidon
+      Description: Offer sacrifice to Athena in exchange for safe maritime passage
+      Effect:
+        FervorGain: 0
+        HappinessGain: 0
+        StabilityGain: 15
+        PrestigeGain: 15
+        CanTriggerEvent: 0
+        EventID: 
+      PietyCost: 100
+      Cooldown: 160
+    Icon: {fileID: 21300000, guid: 73fb65db34104d4499ac4c37ce55300c, type: 3}
+    DeityColor: {r: 0, g: 0.08628178, b: 1, a: 0}
   Tradition: 1
   Centralization: 0
   Evangelism: 0
