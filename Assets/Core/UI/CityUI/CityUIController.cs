@@ -8,6 +8,7 @@ using TWK.UI.ViewModels;
 using TWK.Economy;
 using TWK.Realms.Demographics;
 using TWK.Cultures;
+using TWK.UI.Common;
 
 namespace TWK.UI
 {
@@ -64,6 +65,7 @@ namespace TWK.UI
         [SerializeField] private TextMeshProUGUI economicResourcesText;
         [SerializeField] private TextMeshProUGUI economicProductionText;
         [SerializeField] private TextMeshProUGUI economicConsumptionText;
+        [SerializeField] private ModifierDisplayPanel economicModifierPanel;
 
         [Header("Building Tab")]
         [SerializeField] private Transform buildingListContainer;
@@ -415,6 +417,67 @@ namespace TWK.UI
                 }
                 economicConsumptionText.text = consumption;
             }
+
+            // Display active modifiers affecting this city
+            if (economicModifierPanel != null)
+            {
+                RefreshModifierDisplay();
+            }
+        }
+
+        /// <summary>
+        /// Refresh the modifier display panel with all active modifiers for this city.
+        /// </summary>
+        private void RefreshModifierDisplay()
+        {
+            var cultureModifiers = new List<TWK.Modifiers.Modifier>();
+            var religionModifiers = new List<TWK.Modifiers.Modifier>();
+            var eventModifiers = new List<TWK.Modifiers.Modifier>();
+
+            // Get culture modifiers
+            int cultureID = CultureManager.Instance.GetCityCulture(targetCity.CityID);
+            if (cultureID != -1)
+            {
+                var culture = CultureManager.Instance.GetCulture(cultureID);
+                if (culture != null)
+                {
+                    var modifiers = culture.GetAllModifiers();
+                    foreach (var mod in modifiers)
+                    {
+                        // Tag with source type for display
+                        mod.SourceType = "Culture";
+                    }
+                    cultureModifiers.AddRange(modifiers);
+                }
+            }
+
+            // TODO: Get religion modifiers when religion system is implemented
+
+            // Get timed event modifiers
+            if (TWK.Modifiers.ModifierManager.Instance != null)
+            {
+                var timedMods = TWK.Modifiers.ModifierManager.Instance.GetCityTimedModifiers(targetCity.CityID);
+                foreach (var mod in timedMods)
+                {
+                    mod.SourceType = "Event";
+                }
+                eventModifiers.AddRange(timedMods);
+
+                // Also add global timed modifiers
+                var globalMods = TWK.Modifiers.ModifierManager.Instance.GetGlobalTimedModifiers();
+                foreach (var mod in globalMods)
+                {
+                    mod.SourceType = "Global Event";
+                }
+                eventModifiers.AddRange(globalMods);
+            }
+
+            // Display modifiers by category
+            economicModifierPanel.DisplayModifiersByCategory(
+                cultureModifiers: cultureModifiers,
+                religionModifiers: religionModifiers,
+                eventModifiers: eventModifiers
+            );
         }
 
         // ========== BUILDING TAB ==========
