@@ -244,6 +244,62 @@ namespace TWK.Realms
         }
 
         /// <summary>
+        /// Get population breakdown by religion with counts and percentages.
+        /// </summary>
+        public Dictionary<TWK.Religion.ReligionData, (int count, float percentage)> GetReligionBreakdown()
+        {
+            var religionPopulations = new Dictionary<TWK.Religion.ReligionData, int>();
+            int totalPopulation = 0;
+
+            foreach (var pop in PopulationManager.Instance.GetPopulationsByCity(CityID))
+            {
+                if (pop.CurrentReligion == null) continue;
+
+                if (!religionPopulations.ContainsKey(pop.CurrentReligion))
+                    religionPopulations[pop.CurrentReligion] = 0;
+
+                religionPopulations[pop.CurrentReligion] += pop.PopulationCount;
+                totalPopulation += pop.PopulationCount;
+            }
+
+            var breakdown = new Dictionary<TWK.Religion.ReligionData, (int count, float percentage)>();
+            foreach (var kvp in religionPopulations)
+            {
+                float percentage = totalPopulation > 0 ? (kvp.Value / (float)totalPopulation) * 100f : 0f;
+                breakdown[kvp.Key] = (kvp.Value, percentage);
+            }
+
+            return breakdown;
+        }
+
+        /// <summary>
+        /// Get the city's main (dominant) religion.
+        /// Returns the religion with the highest population, or null if the city has no population.
+        /// </summary>
+        public TWK.Religion.ReligionData GetMainReligion()
+        {
+            var religionBreakdown = GetReligionBreakdown();
+
+            if (religionBreakdown.Count == 0)
+                return null;
+
+            // Find religion with highest population
+            TWK.Religion.ReligionData dominantReligion = null;
+            int maxPopulation = 0;
+
+            foreach (var kvp in religionBreakdown)
+            {
+                if (kvp.Value.count > maxPopulation)
+                {
+                    maxPopulation = kvp.Value.count;
+                    dominantReligion = kvp.Key;
+                }
+            }
+
+            return dominantReligion;
+        }
+
+        /// <summary>
         /// Get all buildings available to construct in this city based on its culture.
         /// </summary>
         public HashSet<BuildingDefinition> GetAvailableBuildings()

@@ -81,6 +81,10 @@ namespace TWK.UI
         [SerializeField] private TextMeshProUGUI cultureBreakdownText;
         [SerializeField] private TextMeshProUGUI mainCultureInfoText;
 
+        [Header("Religion Tab")]
+        [SerializeField] private TextMeshProUGUI religionBreakdownText;
+        [SerializeField] private TextMeshProUGUI mainReligionInfoText;
+
         [Header("Settings")]
         [SerializeField] private float refreshInterval = 1f; // Refresh UI every second
 
@@ -272,7 +276,8 @@ namespace TWK.UI
                 RefreshBuildingTab();
             else if (activeTab == cultureTab)
                 RefreshCultureTab();
-            // Religion tab is blank for now
+            else if (activeTab == religionTab)
+                RefreshReligionTab();
         }
 
         private GameObject GetActiveTab()
@@ -864,6 +869,108 @@ namespace TWK.UI
                     }
 
                     mainCultureInfoText.text = info;
+                }
+            }
+        }
+
+        // ========== RELIGION TAB ==========
+
+        private void RefreshReligionTab()
+        {
+            if (targetCity == null) return;
+
+            // Get religion breakdown from city
+            var religionBreakdown = targetCity.GetReligionBreakdown();
+            var mainReligion = targetCity.GetMainReligion();
+
+            // Display religion breakdown
+            if (religionBreakdownText != null)
+            {
+                if (religionBreakdown.Count == 0)
+                {
+                    religionBreakdownText.text = "<b>Population by Religion:</b>\n<i>No population data available</i>";
+                }
+                else
+                {
+                    string breakdown = "<b>Population by Religion:</b>\n\n";
+
+                    // Sort by population count (descending)
+                    var sortedReligions = religionBreakdown.OrderByDescending(kvp => kvp.Value.count);
+
+                    foreach (var kvp in sortedReligions)
+                    {
+                        var religion = kvp.Key;
+                        var (count, percentage) = kvp.Value;
+
+                        // Highlight main religion
+                        string prefix = (mainReligion != null && religion == mainReligion) ? "<b>★ " : "  ";
+                        string suffix = (mainReligion != null && religion == mainReligion) ? " (Dominant)</b>" : "";
+
+                        breakdown += $"{prefix}{religion.ReligionName}: {count:N0} ({percentage:F1}%){suffix}\n";
+                    }
+
+                    religionBreakdownText.text = breakdown;
+                }
+            }
+
+            // Display main religion info
+            if (mainReligionInfoText != null)
+            {
+                if (mainReligion == null)
+                {
+                    mainReligionInfoText.text = "<b>Dominant Religion:</b>\n<i>No dominant religion (city has no population)</i>";
+                }
+                else
+                {
+                    string info = $"<b>Dominant Religion:</b> {mainReligion.ReligionName}\n\n";
+
+                    // Religion type
+                    info += $"<b>Type:</b> {mainReligion.ReligionType}\n";
+
+                    // Identity summary
+                    info += $"<b>Tradition:</b> {mainReligion.Tradition}\n";
+                    info += $"<b>Organization:</b> {mainReligion.Centralization}\n";
+                    info += $"<b>Evangelism:</b> {mainReligion.Evangelism}\n";
+                    info += $"<b>Syncretism:</b> {mainReligion.Syncretism}\n\n";
+
+                    // Deities
+                    if (mainReligion.Deities != null && mainReligion.Deities.Count > 0)
+                    {
+                        info += $"<b>Deities:</b>\n";
+                        foreach (var deity in mainReligion.Deities)
+                        {
+                            if (deity != null)
+                            {
+                                info += $"  • {deity.Name}";
+                                if (!string.IsNullOrEmpty(deity.Title))
+                                    info += $" - {deity.Title}";
+                                info += "\n";
+                            }
+                        }
+                        info += "\n";
+                    }
+
+                    // Tenets count
+                    if (mainReligion.Tenets != null && mainReligion.Tenets.Count > 0)
+                    {
+                        info += $"<b>Tenets:</b> {mainReligion.Tenets.Count}\n";
+                    }
+
+                    // Average fervor in city
+                    float totalFervor = 0f;
+                    int religionPopCount = 0;
+                    foreach (var pop in PopulationManager.Instance.GetPopulationsByCity(targetCity.CityID))
+                    {
+                        if (pop.CurrentReligion == mainReligion)
+                        {
+                            totalFervor += pop.Fervor * pop.PopulationCount;
+                            religionPopCount += pop.PopulationCount;
+                        }
+                    }
+                    float avgFervor = religionPopCount > 0 ? totalFervor / religionPopCount : 0f;
+                    info += $"<b>Average Fervor:</b> {avgFervor:F1}\n";
+
+                    mainReligionInfoText.text = info;
                 }
             }
         }
