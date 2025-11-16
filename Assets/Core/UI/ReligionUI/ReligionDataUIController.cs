@@ -57,6 +57,7 @@ namespace TWK.UI
         private void Start()
         {
             SetupReligionDropdown();
+            ReligionManager.Instance.newReligionRegistered += RefreshReligionDropdown;
         }
 
         private void OnEnable()

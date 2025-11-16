@@ -4,6 +4,7 @@ using TWK.Core;
 using TWK.Simulation;
 using TWK.Realms.Demographics;
 using TWK.Modifiers;
+using System;
 
 namespace TWK.Religion
 {
@@ -62,6 +63,8 @@ namespace TWK.Religion
         public event FestivalEventHandler OnFestivalStarted;
         public event FestivalEventHandler OnFestivalEnded;
 
+        public event Action newReligionRegistered;
+
         // ========== INITIALIZATION ==========
 
         private void Awake()
@@ -106,6 +109,7 @@ namespace TWK.Religion
 
             religionRegistry[religionID] = religion;
             OnReligionCreated?.Invoke(religionID);
+            newReligionRegistered?.Invoke();
 
             Debug.Log($"[ReligionManager] Registered religion: {religion.ReligionName} (ID: {religionID})");
         }
