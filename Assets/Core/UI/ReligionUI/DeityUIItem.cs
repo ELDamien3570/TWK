@@ -50,6 +50,9 @@ namespace TWK.UI
             {
                 deityIcon.sprite = currentDeity.Icon != null ? currentDeity.Icon : defaultIcon;
                 deityIcon.enabled = deityIcon.sprite != null;
+
+                // Set icon color to deity's color
+                deityIcon.color = currentDeity.DeityColor;
             }
 
             // Set name (with title if available)

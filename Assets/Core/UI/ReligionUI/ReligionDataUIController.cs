@@ -371,11 +371,11 @@ namespace TWK.UI
                     var tenetItemObj = Instantiate(tenetItemPrefab, tenetsContainer);
                     currentTenetItems.Add(tenetItemObj);
 
-                    // Initialize the tenet item with data
+                    // Initialize the tenet item with data and religion color
                     var tenetUIItem = tenetItemObj.GetComponent<TenetUIItem>();
                     if (tenetUIItem != null)
                     {
-                        tenetUIItem.Initialize(tenet);
+                        tenetUIItem.Initialize(tenet, currentReligion.ReligionColor);
                     }
                     else
                     {

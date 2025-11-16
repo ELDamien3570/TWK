@@ -20,12 +20,13 @@ namespace TWK.UI
         [SerializeField] private Sprite defaultIcon;
 
         private Tenet currentTenet;
+        private Color religionColor = Color.white;
 
         /// <summary>
         /// Initialize this UI item with tenet data.
         /// Call this after instantiating the prefab.
         /// </summary>
-        public void Initialize(Tenet tenet)
+        public void Initialize(Tenet tenet, Color religionColor)
         {
             if (tenet == null)
             {
@@ -34,6 +35,7 @@ namespace TWK.UI
             }
 
             currentTenet = tenet;
+            this.religionColor = religionColor;
             RefreshDisplay();
         }
 
@@ -50,6 +52,9 @@ namespace TWK.UI
             {
                 tenetIcon.sprite = currentTenet.Icon != null ? currentTenet.Icon : defaultIcon;
                 tenetIcon.enabled = tenetIcon.sprite != null;
+
+                // Set icon color to religion's color
+                tenetIcon.color = religionColor;
             }
 
             // Set name with category
