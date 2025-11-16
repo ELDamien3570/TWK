@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using TWK.Cultures;
+using TWK.UI.ViewModels;
 
 namespace TWK.UI
 {
@@ -81,10 +82,81 @@ namespace TWK.UI
 
         private void SubscribeToEvents()
         {
+            // Subscribe to ViewModelService events
+            if (ViewModelService.Instance != null)
+            {
+                ViewModelService.Instance.OnCultureViewModelUpdated += OnCultureViewModelUpdated;
+                ViewModelService.Instance.OnViewModelsUpdated += OnViewModelsUpdated;
+            }
+
             // Subscribe to XP changes to auto-refresh the UI
             if (CultureManager.Instance != null)
             {
                 CultureManager.Instance.OnCultureXPAdded += HandleCultureXPAdded;
+            }
+        }
+
+        private void OnCultureViewModelUpdated(int updatedCultureId)
+        {
+            // Refresh the dropdown when a culture ViewModel is updated
+            RefreshCultureDropdown();
+        }
+
+        private void OnViewModelsUpdated()
+        {
+            // Refresh the dropdown when all ViewModels are updated
+            RefreshCultureDropdown();
+        }
+
+        /// <summary>
+        /// Refresh the culture dropdown options from ViewModelService.
+        /// </summary>
+        private void RefreshCultureDropdown()
+        {
+            if (cultureDropdown == null)
+                return;
+
+            // Store current selection
+            int currentIndex = cultureDropdown.value;
+            string currentlySelectedName = null;
+
+            if (currentIndex >= 0 && currentIndex < cultureDropdown.options.Count)
+            {
+                currentlySelectedName = cultureDropdown.options[currentIndex].text;
+            }
+
+            cultureDropdown.ClearOptions();
+
+            if (ViewModelService.Instance == null)
+            {
+                Debug.LogWarning("[CultureTechTreeUIController] ViewModelService instance not found");
+                return;
+            }
+
+            // Get culture ViewModels from ViewModelService
+            var allCultureViewModels = ViewModelService.Instance.GetAllCultureViewModels().ToList();
+            var options = allCultureViewModels.Select(vm => new TMP_Dropdown.OptionData(vm.CultureName)).ToList();
+
+            cultureDropdown.AddOptions(options);
+
+            // Determine which index to select
+            int indexToSelect = 0;
+
+            // Restore selection if the culture still exists
+            if (!string.IsNullOrEmpty(currentlySelectedName))
+            {
+                int newIndex = allCultureViewModels.FindIndex(vm => vm.CultureName == currentlySelectedName);
+                if (newIndex >= 0)
+                {
+                    indexToSelect = newIndex;
+                }
+            }
+
+            // Set the value and trigger display update
+            if (allCultureViewModels.Count > 0)
+            {
+                cultureDropdown.SetValueWithoutNotify(indexToSelect);
+                OnCultureChanged(indexToSelect);
             }
         }
 
@@ -107,13 +179,8 @@ namespace TWK.UI
 
         private void SetupCultureDropdown()
         {
-            cultureDropdown?.ClearOptions();
-
-            var cultures = CultureManager.Instance.GetAllCultures();
-            var options = cultures.Select(c => new TMP_Dropdown.OptionData(c.CultureName)).ToList();
-
-            cultureDropdown?.AddOptions(options);
             cultureDropdown?.onValueChanged.AddListener(OnCultureChanged);
+            RefreshCultureDropdown();
         }
 
         private void SetupTabButtons()
@@ -497,6 +564,13 @@ namespace TWK.UI
 
         private void OnDestroy()
         {
+            // Unsubscribe from ViewModelService events
+            if (ViewModelService.Instance != null)
+            {
+                ViewModelService.Instance.OnCultureViewModelUpdated -= OnCultureViewModelUpdated;
+                ViewModelService.Instance.OnViewModelsUpdated -= OnViewModelsUpdated;
+            }
+
             // Unsubscribe from events
             if (CultureManager.Instance != null)
             {

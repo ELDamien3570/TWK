@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using TWK.Religion;
+using TWK.UI.ViewModels;
 
 namespace TWK.UI
 {
@@ -57,7 +58,47 @@ namespace TWK.UI
         private void Start()
         {
             SetupReligionDropdown();
-            ReligionManager.Instance.newReligionRegistered += RefreshReligionDropdown;
+
+            // Subscribe to ViewModelService events
+            if (ViewModelService.Instance != null)
+            {
+                ViewModelService.Instance.OnReligionViewModelUpdated += OnReligionViewModelUpdated;
+                ViewModelService.Instance.OnViewModelsUpdated += OnViewModelsUpdated;
+            }
+
+            // Also keep the ReligionManager event for when new religions are registered
+            if (ReligionManager.Instance != null)
+            {
+                ReligionManager.Instance.newReligionRegistered += RefreshReligionDropdown;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from ViewModelService events
+            if (ViewModelService.Instance != null)
+            {
+                ViewModelService.Instance.OnReligionViewModelUpdated -= OnReligionViewModelUpdated;
+                ViewModelService.Instance.OnViewModelsUpdated -= OnViewModelsUpdated;
+            }
+
+            // Unsubscribe from ReligionManager events
+            if (ReligionManager.Instance != null)
+            {
+                ReligionManager.Instance.newReligionRegistered -= RefreshReligionDropdown;
+            }
+        }
+
+        private void OnReligionViewModelUpdated(int updatedReligionId)
+        {
+            // Refresh the dropdown when a religion ViewModel is updated
+            RefreshReligionDropdown();
+        }
+
+        private void OnViewModelsUpdated()
+        {
+            // Refresh the dropdown when all ViewModels are updated
+            RefreshReligionDropdown();
         }
 
         private void OnEnable()
@@ -73,7 +114,7 @@ namespace TWK.UI
         }
 
         /// <summary>
-        /// Refresh the religion dropdown options from ReligionManager.
+        /// Refresh the religion dropdown options from ViewModelService.
         /// Called automatically on OnEnable, or can be called manually/via button.
         /// </summary>
         public void RefreshReligionDropdown()
@@ -83,29 +124,25 @@ namespace TWK.UI
 
             // Store current selection
             int currentIndex = religionDropdown.value;
-            ReligionData currentlySelected = null;
+            string currentlySelectedName = null;
 
             if (currentIndex >= 0 && currentIndex < religionDropdown.options.Count)
             {
-                string currentName = religionDropdown.options[currentIndex].text;
-                if (ReligionManager.Instance != null)
-                {
-                    var religions = ReligionManager.Instance.GetAllReligions();
-                    currentlySelected = religions.FirstOrDefault(r => r.ReligionName == currentName);
-                }
+                currentlySelectedName = religionDropdown.options[currentIndex].text;
             }
 
             // Clear and rebuild dropdown
             religionDropdown.ClearOptions();
 
-            if (ReligionManager.Instance == null)
+            if (ViewModelService.Instance == null)
             {
-                Debug.LogWarning("[ReligionDataUIController] ReligionManager instance not found");
+                Debug.LogWarning("[ReligionDataUIController] ViewModelService instance not found");
                 return;
             }
 
-            var allReligions = ReligionManager.Instance.GetAllReligions();
-            var options = allReligions.Select(r => new TMP_Dropdown.OptionData(r.ReligionName)).ToList();
+            // Get religion ViewModels from ViewModelService
+            var allReligionViewModels = ViewModelService.Instance.GetAllReligionViewModels().ToList();
+            var options = allReligionViewModels.Select(vm => new TMP_Dropdown.OptionData(vm.ReligionName)).ToList();
 
             religionDropdown.AddOptions(options);
 
@@ -113,9 +150,9 @@ namespace TWK.UI
             int indexToSelect = 0;
 
             // Restore selection if the religion still exists
-            if (currentlySelected != null)
+            if (!string.IsNullOrEmpty(currentlySelectedName))
             {
-                int newIndex = allReligions.IndexOf(currentlySelected);
+                int newIndex = allReligionViewModels.FindIndex(vm => vm.ReligionName == currentlySelectedName);
                 if (newIndex >= 0)
                 {
                     indexToSelect = newIndex;
@@ -123,7 +160,7 @@ namespace TWK.UI
             }
 
             // Set the value and trigger display update
-            if (allReligions.Count > 0)
+            if (allReligionViewModels.Count > 0)
             {
                 religionDropdown.SetValueWithoutNotify(indexToSelect);
                 OnReligionChanged(indexToSelect); // Manually trigger to update display
