@@ -44,6 +44,9 @@ namespace TWK.Modifiers
 
         private WorldTimeManager worldTimeManager;
 
+        // Global day counter for tracking modifier expiration
+        private int globalDayCounter = 0;
+
         // ========== INITIALIZATION ==========
 
         private void Awake()
@@ -68,19 +71,19 @@ namespace TWK.Modifiers
 
         public void AdvanceDay()
         {
-            int currentDay = worldTimeManager.CurrentDay;
+            globalDayCounter++;
 
             // Clean up expired city modifiers
-            CleanupExpiredModifiers(cityTimedModifiers, currentDay);
+            CleanupExpiredModifiers(cityTimedModifiers, globalDayCounter);
 
             // Clean up expired pop group modifiers
-            CleanupExpiredModifiers(popGroupTimedModifiers, currentDay);
+            CleanupExpiredModifiers(popGroupTimedModifiers, globalDayCounter);
 
             // Clean up expired building modifiers
-            CleanupExpiredModifiers(buildingTimedModifiers, currentDay);
+            CleanupExpiredModifiers(buildingTimedModifiers, globalDayCounter);
 
             // Clean up expired global modifiers
-            globalTimedModifiers.RemoveAll(m => !m.IsActive(currentDay));
+            globalTimedModifiers.RemoveAll(m => !m.IsActive(globalDayCounter));
         }
 
         public void AdvanceSeason() { }
@@ -100,7 +103,7 @@ namespace TWK.Modifiers
             }
 
             var instance = modifier.Clone();
-            instance.AppliedOnDay = worldTimeManager.CurrentDay;
+            instance.AppliedOnDay = globalDayCounter;
 
             if (!cityTimedModifiers.ContainsKey(cityID))
                 cityTimedModifiers[cityID] = new List<Modifier>();
@@ -122,7 +125,7 @@ namespace TWK.Modifiers
             }
 
             var instance = modifier.Clone();
-            instance.AppliedOnDay = worldTimeManager.CurrentDay;
+            instance.AppliedOnDay = globalDayCounter;
 
             if (!popGroupTimedModifiers.ContainsKey(popGroupID))
                 popGroupTimedModifiers[popGroupID] = new List<Modifier>();
@@ -144,7 +147,7 @@ namespace TWK.Modifiers
             }
 
             var instance = modifier.Clone();
-            instance.AppliedOnDay = worldTimeManager.CurrentDay;
+            instance.AppliedOnDay = globalDayCounter;
 
             globalTimedModifiers.Add(instance);
 

@@ -361,7 +361,7 @@ namespace TWK.UI
             if (selectedNode.Modifiers.Count > 0)
             {
                 var modifierDescriptions = selectedNode.Modifiers.Select(m =>
-                    $"• {m.Name}: {FormatModifierValue(m)}").ToList();
+                    $"• {m.Name}: {m.GetFullDescription()}").ToList();
                 nodeModifiersText.text = string.Join("\n", modifierDescriptions);
             }
             else
@@ -373,6 +373,7 @@ namespace TWK.UI
             RefreshUnlockButton();
         }
 
+        // Legacy method for old modifier format
         private string FormatModifierValue(CultureModifier modifier)
         {
             if (modifier.ValueType == ModifierValueType.Percentage)

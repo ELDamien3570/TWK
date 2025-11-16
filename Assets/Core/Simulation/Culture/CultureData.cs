@@ -145,11 +145,11 @@ namespace TWK.Cultures
         }
 
         /// <summary>
-        /// Get all active modifiers from pillars and unlocked tech nodes.
+        /// Get all active modifiers from pillars and unlocked tech nodes (unified modifier system).
         /// </summary>
-        public List<CultureModifier> GetAllModifiers()
+        public List<TWK.Modifiers.Modifier> GetAllModifiers()
         {
-            var modifiers = new List<CultureModifier>();
+            var modifiers = new List<TWK.Modifiers.Modifier>();
 
             // Add modifiers from cultural pillars
             foreach (var pillar in Pillars)
@@ -161,6 +161,29 @@ namespace TWK.Cultures
             foreach (var tree in TechTrees)
             {
                 modifiers.AddRange(tree.GetActiveModifiers());
+            }
+
+            return modifiers;
+        }
+
+        /// <summary>
+        /// Get all active legacy modifiers from pillars and unlocked tech nodes.
+        /// For backwards compatibility during migration.
+        /// </summary>
+        public List<CultureModifier> GetAllLegacyModifiers()
+        {
+            var modifiers = new List<CultureModifier>();
+
+            // Add legacy modifiers from cultural pillars
+            foreach (var pillar in Pillars)
+            {
+                modifiers.AddRange(pillar.LegacyModifiers);
+            }
+
+            // Add legacy modifiers from tech trees
+            foreach (var tree in TechTrees)
+            {
+                modifiers.AddRange(tree.GetActiveLegacyModifiers());
             }
 
             return modifiers;
