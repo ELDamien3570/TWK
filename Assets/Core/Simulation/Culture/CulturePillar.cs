@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TWK.Economy;
+using TWK.Modifiers;
 
 namespace TWK.Cultures
 {
@@ -20,8 +21,12 @@ namespace TWK.Cultures
 
         // ========== MODIFIERS ==========
         [Header("Powerful Modifiers")]
-        [Tooltip("Pillars grant more powerful modifiers than regular tech nodes")]
-        public List<CultureModifier> Modifiers = new List<CultureModifier>();
+        [Tooltip("Pillars grant powerful permanent modifiers using the unified modifier system")]
+        public List<Modifier> Modifiers = new List<Modifier>();
+
+        // Legacy support - will be migrated to new system
+        [HideInInspector]
+        public List<CultureModifier> LegacyModifiers = new List<CultureModifier>();
 
         // ========== BUILDING UNLOCKS ==========
         [Header("Building Unlocks")]
@@ -32,10 +37,19 @@ namespace TWK.Cultures
 
         /// <summary>
         /// Get unique ID for this pillar (uses Unity's instance ID).
+        /// NOTE: For persistence, consider using a stable hash instead (see BuildingDefinition).
         /// </summary>
         public int GetPillarID()
         {
             return GetInstanceID();
+        }
+
+        /// <summary>
+        /// Get all modifiers provided by this pillar.
+        /// </summary>
+        public List<Modifier> GetModifiers()
+        {
+            return new List<Modifier>(Modifiers);
         }
     }
 }
