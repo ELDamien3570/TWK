@@ -173,6 +173,21 @@ MonoBehaviour:
     HasSpecialRules: 0
     SpecialRulesDescription: 
     Icon: {fileID: 21300000, guid: 9c63d6a9ca485ec489eb598b0edc441f, type: 3}
+  - Name: Hubris
+    Description: Characters of this faith will look down on arrogant agents
+    Category: 1
+    Modifiers: []
+    HasSpecialRules: 0
+    SpecialRulesDescription: 
+    Icon: {fileID: 21300000, guid: e8e00495370d7a9479493d1a56c190c9, type: 3}
+  - Name: Elysium
+    Description: Characters are more likely to die in battle but are generally better
+      soldiers.
+    Category: 6
+    Modifiers: []
+    HasSpecialRules: 0
+    SpecialRulesDescription: 
+    Icon: {fileID: 21300000, guid: e600b90ad40b15f4386bf18e9dcee3bc, type: 3}
   ConversionResistance: 50
   ConversionSpeed: 1
   BaseFervor: 50
