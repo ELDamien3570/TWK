@@ -57,19 +57,14 @@ namespace TWK.UI
         private void Start()
         {
             SetupReligionDropdown();
+        }
 
-            // Add listener to refresh dropdown when clicked
-            if (religionDropdown != null)
-            {
-                // Get the dropdown's button component and add listener to refresh on click
-                var button = religionDropdown.GetComponent<Button>();
-                if (button != null)
-                {
-                    button.onClick.AddListener(RefreshReligionDropdown);
-                }
-            }
+        private void OnEnable()
+        {
+            // Refresh dropdown every time the panel becomes active
+            RefreshReligionDropdown();
 
-            if (religionDropdown != null && religionDropdown.options.Count > 0)
+            if (religionDropdown != null && religionDropdown.options.Count > 0 && currentReligion == null)
             {
                 OnReligionChanged(0);
             }
@@ -78,14 +73,13 @@ namespace TWK.UI
         private void SetupReligionDropdown()
         {
             religionDropdown?.onValueChanged.AddListener(OnReligionChanged);
-            RefreshReligionDropdown();
         }
 
         /// <summary>
         /// Refresh the religion dropdown options from ReligionManager.
-        /// Called on start and when the dropdown is clicked.
+        /// Called automatically on OnEnable, or can be called manually/via button.
         /// </summary>
-        private void RefreshReligionDropdown()
+        public void RefreshReligionDropdown()
         {
             if (religionDropdown == null)
                 return;
