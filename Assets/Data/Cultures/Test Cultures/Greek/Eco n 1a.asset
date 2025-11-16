@@ -20,4 +20,21 @@ MonoBehaviour:
   Prerequisites: []
   UnlockedBuildings:
   - {fileID: 11400000, guid: d766d6aae93351b41b4c46660e9bec26, type: 2}
-  Modifiers: []
+  Modifiers:
+  - Name: Greek Farm Resilience
+    Description: 'Greek farms have added resilience to the element and will produce
+      more food. '
+    Duration: 2
+    DurationDays: 0
+    Effects:
+    - Target: 3
+      EffectType: 9
+      Value: 5
+      IsPercentage: 1
+      ResourceType: 0
+      BuildingFilter: 1
+      PopGroupFilter: 0
+      FilterByPopArchetype: 0
+      TechTreeFilter: 3
+      FilterByTechTree: 1
+  LegacyModifiers: []

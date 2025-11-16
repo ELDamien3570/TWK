@@ -55,14 +55,14 @@ MonoBehaviour:
     BaseNodeCost: 500
     CostIncreasePerNode: 500
   - TreeType: 3
-    AccumulatedXP: 87000
-    TotalXPEarned: 100000
+    AccumulatedXP: 86101.92
+    TotalXPEarned: 100101.92
     AllNodes:
     - {fileID: 11400000, guid: 43dadef9a74ef84408ff690cdcaa0c63, type: 2}
     - {fileID: 11400000, guid: 2ebd0144710994d47be46b3a73e4d448, type: 2}
     - {fileID: 11400000, guid: cfd7e34476dbe164ab640f32fcf40331, type: 2}
     - {fileID: 11400000, guid: 1f4a10e148ad96943aaf52b6eaec97b2, type: 2}
-    UnlockedNodeIDs: b6ab0000c4ab0000ceab0000
+    UnlockedNodeIDs: b6ab0000
     OwnerRealmID: 0
     BaseNodeCost: 1000
     CostIncreasePerNode: 500

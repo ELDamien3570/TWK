@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94752516ec062e24794575afafbdff50, type: 3}
   m_Name: Slave Farms
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Economy.BuildingDefinition
+  stableDefinitionID: 1171937031
   BuildingName: Slave Farms
   BuildingCategory: 3
   Icon: {fileID: 21300000, guid: 51857a42e5544c54caccaca7b1b743ac, type: 3}
@@ -45,7 +46,7 @@ MonoBehaviour:
   - Archetype: 2
     MinCount: 5
     MaxCount: 25
-    EfficiencyMultiplier: 0.5
+    EfficiencyMultiplier: 1
     IsRequired: 1
     EducationGrowthPerWorker: 0
     WealthGrowthPerWorker: 1
