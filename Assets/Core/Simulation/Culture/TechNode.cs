@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TWK.Cultures;
 using TWK.Economy;
+using TWK.Modifiers;
 
 namespace TWK.Cultures
 {
@@ -40,8 +41,12 @@ namespace TWK.Cultures
         public List<BuildingDefinition> UnlockedBuildings = new List<BuildingDefinition>();
 
         [Header("Modifiers")]
-        [Tooltip("Modifiers granted when this node is unlocked")]
-        public List<CultureModifier> Modifiers = new List<CultureModifier>();
+        [Tooltip("Modifiers granted when this node is unlocked (using unified modifier system)")]
+        public List<Modifier> Modifiers = new List<Modifier>();
+
+        // Legacy support - will be migrated to new system
+        [HideInInspector]
+        public List<CultureModifier> LegacyModifiers = new List<CultureModifier>();
 
         // ========== STATE (Runtime) ==========
         [System.NonSerialized]
@@ -64,10 +69,19 @@ namespace TWK.Cultures
 
         /// <summary>
         /// Get unique ID for this node (uses Unity's instance ID).
+        /// NOTE: For persistence, consider using a stable hash instead (see BuildingDefinition).
         /// </summary>
         public int GetNodeID()
         {
             return GetInstanceID();
+        }
+
+        /// <summary>
+        /// Get all modifiers provided by this tech node.
+        /// </summary>
+        public List<Modifier> GetModifiers()
+        {
+            return new List<Modifier>(Modifiers);
         }
     }
 }

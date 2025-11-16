@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using TWK.Cultures;
 using TWK.Economy;
+using TWK.Modifiers;
 
 namespace TWK.Cultures
 {
@@ -190,14 +191,28 @@ namespace TWK.Cultures
         }
 
         /// <summary>
-        /// Get all modifiers from unlocked nodes.
+        /// Get all modifiers from unlocked nodes (unified modifier system).
         /// </summary>
-        public List<CultureModifier> GetActiveModifiers()
+        public List<Modifier> GetActiveModifiers()
+        {
+            var modifiers = new List<Modifier>();
+            foreach (var node in GetUnlockedNodes())
+            {
+                modifiers.AddRange(node.Modifiers);
+            }
+            return modifiers;
+        }
+
+        /// <summary>
+        /// Get all legacy modifiers from unlocked nodes.
+        /// For backwards compatibility during migration.
+        /// </summary>
+        public List<CultureModifier> GetActiveLegacyModifiers()
         {
             var modifiers = new List<CultureModifier>();
             foreach (var node in GetUnlockedNodes())
             {
-                modifiers.AddRange(node.Modifiers);
+                modifiers.AddRange(node.LegacyModifiers);
             }
             return modifiers;
         }
