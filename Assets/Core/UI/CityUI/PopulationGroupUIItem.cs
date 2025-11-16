@@ -34,7 +34,10 @@ namespace TWK.UI
             if (archetypeNameText != null)
             {
                 string cultureName = viewModel.Culture.ToString().Split("(").First();
-                archetypeNameText.text = $"<b><color=green>{cultureName}</color> {viewModel.ArchetypeName}</b> (ID: {viewModel.ID})";
+                string religionText = !string.IsNullOrEmpty(viewModel.ReligionName) && viewModel.ReligionName != "None"
+                    ? $" - <color=yellow>{viewModel.ReligionName}</color>"
+                    : "";
+                archetypeNameText.text = $"<b><color=green>{cultureName}</color> {viewModel.ArchetypeName}{religionText}</b>";
             }
 
             // Population
