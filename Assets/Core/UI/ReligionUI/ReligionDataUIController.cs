@@ -413,6 +413,11 @@ namespace TWK.UI
             }
 
             holyLandsText.text = text;
+            VerticalLayoutGroup layoutGroup = holyLandsText.GetComponentInParent<VerticalLayoutGroup>();
+            if (layoutGroup != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(layoutGroup.GetComponent<RectTransform>());
+            }
         }
 
         // ========== FESTIVALS ==========

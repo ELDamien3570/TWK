@@ -52,7 +52,10 @@ namespace TWK.UI
                 deityIcon.enabled = deityIcon.sprite != null;
 
                 // Set icon color to deity's color
-                deityIcon.color = currentDeity.DeityColor;
+                Color cDietyColor = currentDeity.DeityColor;
+                cDietyColor.a = .2f; // Ensure full opacity
+
+                deityIcon.color = cDietyColor;
             }
 
             // Set name (with title if available)
