@@ -429,7 +429,7 @@ namespace TWK.Government
             var allPops = PopulationManager.Instance.GetAllPopulationGroups();
             var realmPops = allPops.Where(p =>
             {
-                var city = PopulationManager.Instance.GetCityByID(p.CityID);
+                var city = PopulationManager.Instance.GetCityByID(p.OwnerCityID);
                 return city != null && city.GetComponent<TWK.Realms.Realm>()?.RealmID == realmID;
             }).ToList();
 
