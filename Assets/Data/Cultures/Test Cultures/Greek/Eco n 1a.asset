@@ -24,15 +24,17 @@ MonoBehaviour:
   - Name: Greek Farm Resilience
     Description: 'Greek farms have added resilience to the element and will produce
       more food. '
-    Duration: 0
+    Duration: 2
     DurationDays: 0
     Effects:
-    - Target: 3
-      EffectType: 9
+    - Target: 4
+      EffectType: 7
       Value: 5
       IsPercentage: 1
       ResourceType: 0
       BuildingFilter: 1
+      SpecificBuildings: []
+      FilterBySpecificBuildings: 0
       PopGroupFilter: 0
       FilterByPopArchetype: 0
       TechTreeFilter: 3

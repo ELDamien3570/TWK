@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94752516ec062e24794575afafbdff50, type: 3}
   m_Name: Early Greek Farm
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Economy.BuildingDefinition
+  stableDefinitionID: 248284319
   BuildingName: Early Greek Farm
   BuildingCategory: 3
   Icon: {fileID: 21300000, guid: 51857a42e5544c54caccaca7b1b743ac, type: 3}
@@ -31,6 +32,11 @@ MonoBehaviour:
   MaxProduction:
   - ResourceType: 0
     Amount: 1000
+  seasonalProductionModifiers:
+  - 0.1
+  - 1
+  - 0.1
+  - 0
   BaseMonthlyXP: 5
   MaxMonthlyXP: 25
   RequiresWorkers: 1
