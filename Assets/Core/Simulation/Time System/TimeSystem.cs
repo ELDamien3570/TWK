@@ -17,6 +17,7 @@ namespace TWK.Simulation
         private float currentMultiplier = 1f;
 
         public string CurrentSeason => config.seasonNames[currentSeasonIndex];
+        public int CurrentSeasonIndex => currentSeasonIndex;
         public int CurrentDay => dayOfSeason;
         public GameYear CurrentYear => currentYear;
 

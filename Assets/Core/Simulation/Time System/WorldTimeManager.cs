@@ -7,7 +7,7 @@ namespace TWK.Simulation
     {
         public static WorldTimeManager Instance { get; private set; }
 
-        TimeSystem timeSystem;
+        public TimeSystem timeSystem;
 
         // Events that subsystems can subscribe to
         public event Action OnDayTick;

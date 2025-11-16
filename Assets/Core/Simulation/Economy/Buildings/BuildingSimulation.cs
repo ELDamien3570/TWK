@@ -3,6 +3,7 @@ using UnityEngine;
 using TWK.Realms.Demographics;
 using TWK.Modifiers;
 using TWK.Cultures;
+using TWK.Simulation;
 
 namespace TWK.Economy
 {
@@ -73,13 +74,45 @@ namespace TWK.Economy
                 production = definition.CalculateProduction(instance.TotalWorkers, averageEfficiency);
             }
 
-            // Apply modifiers to production
+            // Apply seasonal production modifier
+            production = ApplySeasonalModifier(production, definition);
+
+            // Apply culture/religion/event modifiers to production
             if (modifiers != null && modifiers.Count > 0)
             {
                 production = ApplyProductionModifiers(production, definition, modifiers);
             }
 
             return production;
+        }
+
+        /// <summary>
+        /// Apply seasonal production modifier to building production.
+        /// </summary>
+        private static Dictionary<ResourceType, int> ApplySeasonalModifier(
+            Dictionary<ResourceType, int> baseProduction,
+            BuildingDefinition definition)
+        {
+            // Get current season from TimeSystem
+            if (WorldTimeManager.Instance?.timeSystem == null)
+                return baseProduction; // No time system available, return unmodified
+
+            int currentSeason = WorldTimeManager.Instance.timeSystem.CurrentSeasonIndex;
+            float seasonalMultiplier = definition.GetSeasonalProductionModifier(currentSeason);
+
+            // If seasonal multiplier is 1.0, no need to modify
+            if (Mathf.Approximately(seasonalMultiplier, 1f))
+                return baseProduction;
+
+            // Apply seasonal multiplier to all production
+            var modifiedProduction = new Dictionary<ResourceType, int>();
+            foreach (var kvp in baseProduction)
+            {
+                int modifiedValue = Mathf.RoundToInt(kvp.Value * seasonalMultiplier);
+                modifiedProduction[kvp.Key] = modifiedValue;
+            }
+
+            return modifiedProduction;
         }
 
         /// <summary>

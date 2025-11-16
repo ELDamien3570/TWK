@@ -43,6 +43,31 @@ namespace TWK.Economy
         [Tooltip("Max production when fully staffed")]
         public List<ResourceAmount> MaxProduction = new List<ResourceAmount>();
 
+        [Header("Seasonal Production Modifiers")]
+        [Tooltip("Production multiplier per season: Spring (0), Summer (1), Fall (2), Winter (3). Default 1.0 = normal production. 0.0 = no production.")]
+        [SerializeField] private float[] seasonalProductionModifiers = new float[] { 1f, 1f, 1f, 1f };
+
+        /// <summary>
+        /// Get the production multiplier for a specific season.
+        /// </summary>
+        /// <param name="season">Season index (0=Spring, 1=Summer, 2=Fall, 3=Winter)</param>
+        public float GetSeasonalProductionModifier(int season)
+        {
+            if (seasonalProductionModifiers == null || seasonalProductionModifiers.Length != 4)
+            {
+                Debug.LogWarning($"[BuildingDefinition] {BuildingName} has invalid seasonal modifiers, defaulting to 1.0");
+                return 1f;
+            }
+
+            if (season < 0 || season > 3)
+            {
+                Debug.LogWarning($"[BuildingDefinition] Invalid season {season}, defaulting to 1.0");
+                return 1f;
+            }
+
+            return seasonalProductionModifiers[season];
+        }
+
         [Header("Culture Tech XP")]
         [Tooltip("Base culture tech XP generated per month (varies with worker count like production)")]
         public float BaseMonthlyXP = 0f;
