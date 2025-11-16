@@ -24,7 +24,7 @@ MonoBehaviour:
   - Name: Greek Farm Resilience
     Description: 'Greek farms have added resilience to the element and will produce
       more food. '
-    Duration: 2
+    Duration: 0
     DurationDays: 0
     Effects:
     - Target: 3
