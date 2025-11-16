@@ -128,7 +128,7 @@ namespace TWK.UI.ViewModels
             // Cultural
             Fervor = _source.Fervor;
             FervorFormatted = $"{Fervor:F1}";
-            ReligionName = _source.CurrentReligion?.Name ?? "None";
+            ReligionName = _source.CurrentReligion?.ReligionName ?? "None";
             Loyalty = _source.Loyalty;
             LoyaltyFormatted = $"{Loyalty:F1}";
 

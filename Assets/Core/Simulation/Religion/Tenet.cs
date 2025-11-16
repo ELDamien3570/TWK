@@ -49,9 +49,8 @@ namespace TWK.Religion
             // Tag modifiers with their source
             foreach (var mod in mods)
             {
-                if (string.IsNullOrEmpty(mod.SourceName))
+                if (string.IsNullOrEmpty(mod.SourceType))
                 {
-                    mod.SourceName = Name;
                     mod.SourceType = "Tenet";
                 }
             }

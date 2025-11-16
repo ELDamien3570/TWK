@@ -113,9 +113,9 @@ namespace TWK.Religion
             // Tag all modifiers with religion source
             foreach (var mod in allModifiers)
             {
-                if (string.IsNullOrEmpty(mod.SourceID))
+                if (mod.SourceID == -1)
                 {
-                    mod.SourceID = GetStableReligionID().ToString();
+                    mod.SourceID = GetStableReligionID();
                 }
             }
 
