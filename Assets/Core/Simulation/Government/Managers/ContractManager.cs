@@ -70,6 +70,15 @@ namespace TWK.Government
             Debug.Log("[ContractManager] Initialized");
         }
 
+        private void OnDestroy()
+        {
+            if (worldTimeManager != null)
+            {
+                worldTimeManager.OnSeasonTick -= AdvanceSeason;
+                worldTimeManager.OnYearTick -= AdvanceYear;
+            }
+        }
+
         // ========== CONTRACT CREATION ==========
 
         /// <summary>

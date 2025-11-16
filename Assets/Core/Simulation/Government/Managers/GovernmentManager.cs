@@ -91,6 +91,37 @@ namespace TWK.Government
             Debug.Log("[GovernmentManager] Initialized");
         }
 
+        private void OnDestroy()
+        {
+            if (worldTimeManager != null)
+            {
+                worldTimeManager.OnDayTick -= AdvanceDay;
+                worldTimeManager.OnSeasonTick -= AdvanceSeason;
+                worldTimeManager.OnYearTick -= AdvanceYear;
+            }
+        }
+
+        // ========== HELPER METHODS ==========
+
+        /// <summary>
+        /// Get all population groups belonging to a realm.
+        /// </summary>
+        private List<PopulationGroup> GetRealmPopulations(int realmID)
+        {
+            if (PopulationManager.Instance == null)
+                return new List<PopulationGroup>();
+
+            var allPops = PopulationManager.Instance.GetAllPopulationGroups();
+            return allPops.Where(p =>
+            {
+                var city = PopulationManager.Instance.GetCityByID(p.OwnerCityID);
+                if (city == null)
+                    return false;
+                var realm = city.GetComponent<TWK.Realms.Realm>();
+                return realm != null && realm.RealmID == realmID;
+            }).ToList();
+        }
+
         // ========== GOVERNMENT REGISTRATION ==========
 
         /// <summary>
@@ -353,13 +384,14 @@ namespace TWK.Government
                 return;
             }
 
-            // Get slave populations in target city
             if (PopulationManager.Instance == null)
                 return;
 
             var popGroups = PopulationManager.Instance.GetPopulationsByCity(office.TargetCityID);
-            var slavePops = popGroups.Where(p => p.Archetype == PopulationArchetypes.Slave).ToList();
+            if (popGroups == null)
+                return;
 
+            var slavePops = popGroups.Where(p => p.Archetype == PopulationArchetypes.Slave).ToList();
             if (slavePops.Count == 0)
                 return;
 
@@ -464,16 +496,7 @@ namespace TWK.Government
         /// </summary>
         private void ApplyEdictLoyaltyEffects(int realmID, Edict edict)
         {
-            if (PopulationManager.Instance == null)
-                return;
-
-            // Get all population groups in the realm
-            var allPops = PopulationManager.Instance.GetAllPopulationGroups();
-            var realmPops = allPops.Where(p =>
-            {
-                var city = PopulationManager.Instance.GetCityByID(p.OwnerCityID);
-                return city != null && city.GetComponent<TWK.Realms.Realm>()?.RealmID == realmID;
-            }).ToList();
+            var realmPops = GetRealmPopulations(realmID);
 
             foreach (var pop in realmPops)
             {
@@ -517,11 +540,12 @@ namespace TWK.Government
         /// </summary>
         private void ProcessEdictExpiration()
         {
-            foreach (var kvp in realmEdicts.ToList())
+            foreach (var kvp in realmEdicts)
             {
                 int realmID = kvp.Key;
                 var edicts = kvp.Value;
 
+                // ToList() needed here because we're removing from the collection
                 var expiredEdicts = edicts.Where(e => !e.IsActive(currentMonthCounter)).ToList();
 
                 foreach (var edict in expiredEdicts)
@@ -659,7 +683,7 @@ namespace TWK.Government
         /// </summary>
         private float CalculateCultureLegitimacyBonus(int realmID)
         {
-            if (TWK.Cultures.CultureManager.Instance == null || PopulationManager.Instance == null)
+            if (TWK.Cultures.CultureManager.Instance == null)
                 return 0f;
 
             // Get realm leader's culture
@@ -668,21 +692,15 @@ namespace TWK.Government
                 return 0f;
 
             // Get all population groups in realm
-            var allPops = PopulationManager.Instance.GetAllPopulationGroups();
-            var realmPops = allPops.Where(p =>
-            {
-                var city = PopulationManager.Instance.GetCityByID(p.OwnerCityID);
-                return city != null && city.GetComponent<TWK.Realms.Realm>()?.RealmID == realmID;
-            }).ToList();
-
+            var realmPops = GetRealmPopulations(realmID);
             if (realmPops.Count == 0)
                 return 0f;
 
             // Calculate culture match percentage
-            int totalPops = realmPops.Sum(p => p.PopulationCount);
-            int matchingPops = realmPops
+            long totalPops = realmPops.Sum(p => (long)p.PopulationCount);
+            long matchingPops = realmPops
                 .Where(p => p.CultureID == leaderCultureID)
-                .Sum(p => p.PopulationCount);
+                .Sum(p => (long)p.PopulationCount);
 
             float matchPercentage = totalPops > 0 ? (float)matchingPops / totalPops : 0f;
 
@@ -697,27 +715,19 @@ namespace TWK.Government
         /// </summary>
         private float CalculateClergyLegitimacyBonus(int realmID)
         {
-            if (PopulationManager.Instance == null)
-                return 0f;
-
             var government = GetRealmGovernment(realmID);
             if (government == null)
                 return 0f;
 
             // Check if this is a theocratic government
             bool isTheocracy = government.RegimeForm == RegimeForm.Autocratic &&
-                              government.Institutions.Any(i => i != null && i.InstitutionName.Contains("Theocracy"));
+                              government.Institutions.Any(i => i != null &&
+                                  !string.IsNullOrEmpty(i.InstitutionName) &&
+                                  i.InstitutionName.Contains("Theocracy"));
 
-            // Get clergy population groups
-            var allPops = PopulationManager.Instance.GetAllPopulationGroups();
-            var clergyPops = allPops.Where(p =>
-            {
-                var city = PopulationManager.Instance.GetCityByID(p.OwnerCityID);
-                if (city == null)
-                    return false;
-                var realm = city.GetComponent<TWK.Realms.Realm>();
-                return realm != null && realm.RealmID == realmID && p.Archetype == PopulationArchetypes.Clergy;
-            }).ToList();
+            // Get clergy population groups in realm
+            var realmPops = GetRealmPopulations(realmID);
+            var clergyPops = realmPops.Where(p => p.Archetype == PopulationArchetypes.Clergy).ToList();
 
             if (clergyPops.Count == 0)
                 return 0f;
@@ -740,7 +750,7 @@ namespace TWK.Government
         /// </summary>
         private void ApplyCultureAndReligionLegitimacy()
         {
-            foreach (var realmID in activeGovernments.Keys.ToList())
+            foreach (var realmID in activeGovernments.Keys)
             {
                 float cultureBonus = CalculateCultureLegitimacyBonus(realmID);
                 float clergyBonus = CalculateClergyLegitimacyBonus(realmID);
@@ -928,7 +938,7 @@ namespace TWK.Government
         /// </summary>
         private void ProcessRevoltChecks()
         {
-            foreach (var realmID in activeGovernments.Keys.ToList())
+            foreach (var realmID in activeGovernments.Keys)
             {
                 float risk = CalculateRevoltRisk(realmID);
 
@@ -1007,6 +1017,7 @@ namespace TWK.Government
             ApplyCultureAndReligionLegitimacy();
 
             // Yearly legitimacy decay
+            // ToList() needed because ModifyLegitimacy could potentially add new keys
             foreach (var realmID in realmLegitimacy.Keys.ToList())
             {
                 ModifyLegitimacy(realmID, -2f); // Slow natural decay

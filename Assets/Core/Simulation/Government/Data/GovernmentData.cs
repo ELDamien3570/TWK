@@ -96,6 +96,12 @@ namespace TWK.Government
             if (cachedStableID.HasValue)
                 return cachedStableID.Value;
 
+            if (string.IsNullOrEmpty(GovernmentName))
+            {
+                Debug.LogError("[GovernmentData] Cannot get ID - GovernmentName is null or empty");
+                return 0;
+            }
+
             cachedStableID = GovernmentName.GetHashCode();
             return cachedStableID.Value;
         }
@@ -115,12 +121,15 @@ namespace TWK.Government
                 if (institution != null)
                 {
                     var institutionModifiers = institution.GetTaggedModifiers();
-                    foreach (var modifier in institutionModifiers)
+                    if (institutionModifiers != null)
                     {
-                        // Re-tag with government ID as primary source
-                        modifier.SourceID = governmentID;
-                        modifier.SourceType = "Government";
-                        allModifiers.Add(modifier);
+                        foreach (var modifier in institutionModifiers)
+                        {
+                            // Re-tag with government ID as primary source
+                            modifier.SourceID = governmentID;
+                            modifier.SourceType = "Government";
+                            allModifiers.Add(modifier);
+                        }
                     }
                 }
             }
