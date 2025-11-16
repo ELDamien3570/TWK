@@ -1,5 +1,6 @@
 using UnityEngine;
 using TWK.Cultures;
+using TWK.Religion;
 
 namespace TWK.Realms.Demographics
 {
@@ -84,14 +85,15 @@ namespace TWK.Realms.Demographics
         public CultureData Culture { get; set; }
 
         /// <summary>
-        /// Religious fervor - resistance to religious conversion (0-100)
+        /// Religious fervor - affects resistance to religious conversion and modifier strength (0-100)
+        /// Higher fervor = stronger religious modifiers, harder to convert away
         /// </summary>
         public float Fervor { get; set; }
 
         /// <summary>
         /// Current religion of this population group
         /// </summary>
-        public Religion CurrentReligion { get; set; }
+        public ReligionData CurrentReligion { get; set; }
 
         /// <summary>
         /// Loyalty to the state (-100 to 100)
@@ -211,20 +213,17 @@ namespace TWK.Realms.Demographics
         {
             Demographics.Scale(growthMultiplier);
         }
-    }
 
-    /// <summary>
-    /// Placeholder for Religion system (to be implemented)
-    /// </summary>
-    public class Religion
-    {
-        public string Name { get; set; }
-        public int ID { get; set; }
-
-        public Religion(int id, string name)
+        /// <summary>
+        /// Get all religion modifiers affecting this population group.
+        /// Modifiers may be scaled by fervor in the future.
+        /// </summary>
+        public List<TWK.Modifiers.Modifier> GetReligionModifiers()
         {
-            ID = id;
-            Name = name;
+            if (CurrentReligion == null)
+                return new List<TWK.Modifiers.Modifier>();
+
+            return CurrentReligion.GetAllModifiers();
         }
     }
 }

@@ -69,26 +69,86 @@ namespace TWK.Realms
         }
 
         /// <summary>
-        /// Get all active modifiers for a city from its culture (pillars + tech nodes).
+        /// Get all active modifiers for a city from culture, religion, and timed events.
         /// </summary>
         private static List<TWK.Modifiers.Modifier> GetCityModifiers(int cityID)
         {
             var modifiers = new List<TWK.Modifiers.Modifier>();
 
-            // Get the city's culture
+            // Get the city's culture modifiers
             int cultureID = CultureManager.Instance.GetCityCulture(cityID);
-            if (cultureID == -1)
-                return modifiers; // No culture, no modifiers
+            if (cultureID != -1)
+            {
+                var culture = CultureManager.Instance.GetCulture(cultureID);
+                if (culture != null)
+                {
+                    modifiers.AddRange(culture.GetAllModifiers());
+                }
+            }
 
-            var culture = CultureManager.Instance.GetCulture(cultureID);
-            if (culture == null)
+            // Get religion modifiers from the city's dominant religion
+            // We collect modifiers from all population groups and use the most common religion
+            var religionModifiers = GetCityReligionModifiers(cityID);
+            modifiers.AddRange(religionModifiers);
+
+            // Get timed modifiers from ModifierManager
+            if (TWK.Modifiers.ModifierManager.Instance != null)
+            {
+                modifiers.AddRange(TWK.Modifiers.ModifierManager.Instance.GetCityTimedModifiers(cityID));
+                modifiers.AddRange(TWK.Modifiers.ModifierManager.Instance.GetGlobalTimedModifiers());
+            }
+
+            return modifiers;
+        }
+
+        /// <summary>
+        /// Get religion modifiers for a city based on its population's dominant religion.
+        /// </summary>
+        private static List<TWK.Modifiers.Modifier> GetCityReligionModifiers(int cityID)
+        {
+            var modifiers = new List<TWK.Modifiers.Modifier>();
+
+            // Get all population groups in the city
+            var populations = PopulationManager.Instance.GetPopulationsByCity(cityID);
+            if (populations == null)
                 return modifiers;
 
-            // Get all modifiers from the culture (pillars + tech nodes)
-            modifiers.AddRange(culture.GetAllModifiers());
+            // Find the dominant religion (religion with the most population)
+            var religionPopCounts = new Dictionary<TWK.Religion.ReligionData, int>();
 
-            // TODO: Add religion modifiers when religion system is implemented
-            // TODO: Add timed modifiers from ModifierManager
+            foreach (var pop in populations)
+            {
+                if (pop.CurrentReligion != null)
+                {
+                    if (!religionPopCounts.ContainsKey(pop.CurrentReligion))
+                        religionPopCounts[pop.CurrentReligion] = 0;
+
+                    religionPopCounts[pop.CurrentReligion] += pop.PopulationCount;
+                }
+            }
+
+            // If no religion found, return empty
+            if (religionPopCounts.Count == 0)
+                return modifiers;
+
+            // Find the dominant religion
+            TWK.Religion.ReligionData dominantReligion = null;
+            int maxPopulation = 0;
+
+            foreach (var kvp in religionPopCounts)
+            {
+                if (kvp.Value > maxPopulation)
+                {
+                    maxPopulation = kvp.Value;
+                    dominantReligion = kvp.Key;
+                }
+            }
+
+            // Get modifiers from the dominant religion
+            if (dominantReligion != null)
+            {
+                modifiers.AddRange(dominantReligion.GetAllModifiers());
+            }
 
             return modifiers;
         }
