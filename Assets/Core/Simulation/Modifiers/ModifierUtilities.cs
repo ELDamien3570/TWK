@@ -18,9 +18,48 @@ namespace TWK.Modifiers
         /// </summary>
         /// <param name="baseProduction">Base production value</param>
         /// <param name="resourceType">Type of resource being produced</param>
-        /// <param name="buildingCategory">Category of the building</param>
+        /// <param name="buildingDef">The building definition to check for specific targeting</param>
         /// <param name="modifiers">List of applicable modifiers</param>
         /// <returns>Modified production value</returns>
+        public static int CalculateModifiedProduction(
+            int baseProduction,
+            ResourceType resourceType,
+            BuildingDefinition buildingDef,
+            List<Modifier> modifiers)
+        {
+            float flatBonus = 0f;
+            float percentageMultiplier = 1f;
+
+            foreach (var modifier in modifiers)
+            {
+                var effects = modifier.GetEffectsOfType(ModifierEffectType.ResourceProduction);
+                foreach (var effect in effects)
+                {
+                    // Check if this effect applies to this resource
+                    if (effect.ResourceType != resourceType)
+                        continue;
+
+                    // Check if this effect applies to this specific building or category
+                    if (!effect.AppliesTo(buildingDef))
+                        continue;
+
+                    if (effect.IsPercentage)
+                    {
+                        percentageMultiplier += effect.Value / 100f;
+                    }
+                    else
+                    {
+                        flatBonus += effect.Value;
+                    }
+                }
+            }
+
+            return UnityEngine.Mathf.RoundToInt((baseProduction + flatBonus) * percentageMultiplier);
+        }
+
+        /// <summary>
+        /// Calculate modified resource production from a building (legacy overload using TreeType).
+        /// </summary>
         public static int CalculateModifiedProduction(
             int baseProduction,
             ResourceType resourceType,

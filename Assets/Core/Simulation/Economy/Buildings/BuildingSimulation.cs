@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TWK.Realms.Demographics;
+using TWK.Modifiers;
+using TWK.Cultures;
 
 namespace TWK.Economy
 {
@@ -16,14 +18,14 @@ namespace TWK.Economy
         /// <summary>
         /// Simulate one day for a building (production, maintenance, population effects).
         /// </summary>
-        public static void SimulateDay(BuildingInstanceData instance, BuildingDefinition definition, ResourceLedger ledger, int cityId)
+        public static void SimulateDay(BuildingInstanceData instance, BuildingDefinition definition, ResourceLedger ledger, int cityId, List<Modifier> modifiers = null)
         {
             // Only simulate if completed and active
             if (!instance.IsActive || instance.ConstructionState != BuildingConstructionState.Completed)
                 return;
 
-            // Production
-            var production = CalculateProduction(instance, definition);
+            // Production (with modifiers)
+            var production = CalculateProduction(instance, definition, modifiers);
             foreach (var kvp in production)
                 ledger.Add(kvp.Key, kvp.Value);
 
@@ -37,34 +39,77 @@ namespace TWK.Economy
         }
 
         /// <summary>
-        /// Calculate production based on workers and efficiency.
+        /// Calculate production based on workers, efficiency, and modifiers.
         /// </summary>
-        public static Dictionary<ResourceType, int> CalculateProduction(BuildingInstanceData instance, BuildingDefinition definition)
+        public static Dictionary<ResourceType, int> CalculateProduction(BuildingInstanceData instance, BuildingDefinition definition, List<Modifier> modifiers = null)
         {
+            // Get base production from definition
+            Dictionary<ResourceType, int> production;
+
             if (!definition.RequiresWorkers)
             {
                 // Buildings that don't require workers produce at base rate
-                return definition.BaseProduction.ToDictionary();
+                production = definition.BaseProduction.ToDictionary();
             }
-
-            // Calculate average worker efficiency
-            float totalEfficiency = 0f;
-            int totalWorkers = 0;
-
-            foreach (var kvp in instance.AssignedWorkers)
+            else
             {
-                PopulationArchetypes archetype = kvp.Key;
-                int workerCount = kvp.Value;
+                // Calculate average worker efficiency
+                float totalEfficiency = 0f;
+                int totalWorkers = 0;
 
-                float archetypeEfficiency = definition.GetWorkerEfficiency(archetype);
-                totalEfficiency += archetypeEfficiency * workerCount;
-                totalWorkers += workerCount;
+                foreach (var kvp in instance.AssignedWorkers)
+                {
+                    PopulationArchetypes archetype = kvp.Key;
+                    int workerCount = kvp.Value;
+
+                    float archetypeEfficiency = definition.GetWorkerEfficiency(archetype);
+                    totalEfficiency += archetypeEfficiency * workerCount;
+                    totalWorkers += workerCount;
+                }
+
+                float averageEfficiency = totalWorkers > 0 ? totalEfficiency / totalWorkers : 0f;
+
+                // Use definition's calculation method
+                production = definition.CalculateProduction(instance.TotalWorkers, averageEfficiency);
             }
 
-            float averageEfficiency = totalWorkers > 0 ? totalEfficiency / totalWorkers : 0f;
+            // Apply modifiers to production
+            if (modifiers != null && modifiers.Count > 0)
+            {
+                production = ApplyProductionModifiers(production, definition, modifiers);
+            }
 
-            // Use definition's calculation method
-            return definition.CalculateProduction(instance.TotalWorkers, averageEfficiency);
+            return production;
+        }
+
+        /// <summary>
+        /// Apply production modifiers from culture/religion/events to building production.
+        /// </summary>
+        private static Dictionary<ResourceType, int> ApplyProductionModifiers(
+            Dictionary<ResourceType, int> baseProduction,
+            BuildingDefinition definition,
+            List<Modifier> modifiers)
+        {
+            var modifiedProduction = new Dictionary<ResourceType, int>(baseProduction);
+
+            // For each resource type in production
+            foreach (var kvp in baseProduction)
+            {
+                ResourceType resourceType = kvp.Key;
+                int baseValue = kvp.Value;
+
+                // Use ModifierUtilities to calculate modified value
+                int modifiedValue = ModifierUtilities.CalculateModifiedProduction(
+                    baseValue,
+                    resourceType,
+                    definition,
+                    modifiers
+                );
+
+                modifiedProduction[resourceType] = modifiedValue;
+            }
+
+            return modifiedProduction;
         }
 
         /// <summary>

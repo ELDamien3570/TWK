@@ -42,6 +42,9 @@ namespace TWK.Realms
 
         private static void SimulateBuildings(CityData city, ResourceLedger ledger)
         {
+            // Get culture modifiers for this city
+            var modifiers = GetCityModifiers(city.CityID);
+
             // Get buildings from BuildingManager and simulate them
             foreach (int buildingId in city.BuildingIDs)
             {
@@ -54,8 +57,8 @@ namespace TWK.Realms
 
                     if (definition != null)
                     {
-                        // Use BuildingSimulation for production/maintenance/population effects
-                        BuildingSimulation.SimulateDay(instanceData, definition, ledger, city.CityID);
+                        // Use BuildingSimulation for production/maintenance/population effects (with modifiers)
+                        BuildingSimulation.SimulateDay(instanceData, definition, ledger, city.CityID, modifiers);
                     }
                     else
                     {
@@ -63,6 +66,31 @@ namespace TWK.Realms
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Get all active modifiers for a city from its culture (pillars + tech nodes).
+        /// </summary>
+        private static List<TWK.Modifiers.Modifier> GetCityModifiers(int cityID)
+        {
+            var modifiers = new List<TWK.Modifiers.Modifier>();
+
+            // Get the city's culture
+            int cultureID = CultureManager.Instance.GetCityCulture(cityID);
+            if (cultureID == -1)
+                return modifiers; // No culture, no modifiers
+
+            var culture = CultureManager.Instance.GetCulture(cultureID);
+            if (culture == null)
+                return modifiers;
+
+            // Get all modifiers from the culture (pillars + tech nodes)
+            modifiers.AddRange(culture.GetAllModifiers());
+
+            // TODO: Add religion modifiers when religion system is implemented
+            // TODO: Add timed modifiers from ModifierManager
+
+            return modifiers;
         }
 
         // ========== POPULATION SIMULATION ==========

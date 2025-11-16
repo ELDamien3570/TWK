@@ -34,6 +34,12 @@ namespace TWK.Modifiers
         [Tooltip("Filter by building category (Only for Building target)")]
         public BuildingCategoryFilter BuildingFilter = BuildingCategoryFilter.All;
 
+        [Tooltip("Filter by specific building definitions (Only for Building target)")]
+        public List<BuildingDefinition> SpecificBuildings = new List<BuildingDefinition>();
+
+        [Tooltip("Should this filter by specific buildings? If true, only affects buildings in SpecificBuildings list")]
+        public bool FilterBySpecificBuildings = false;
+
         [Tooltip("Filter by population archetype (Only for PopulationGroup target)")]
         public PopulationArchetypes PopGroupFilter = PopulationArchetypes.Laborer;
 
@@ -126,6 +132,10 @@ namespace TWK.Modifiers
             if (Target != ModifierTarget.Building)
                 return false;
 
+            // If filtering by specific buildings, category filter doesn't apply
+            if (FilterBySpecificBuildings)
+                return false;
+
             if (BuildingFilter == BuildingCategoryFilter.All)
                 return true;
 
@@ -139,6 +149,32 @@ namespace TWK.Modifiers
                 TreeType.Religion => BuildingFilter == BuildingCategoryFilter.Religious,
                 _ => false
             };
+        }
+
+        /// <summary>
+        /// Does this effect apply to the given specific building definition?
+        /// </summary>
+        public bool AppliesTo(BuildingDefinition buildingDef)
+        {
+            if (Target != ModifierTarget.Building)
+                return false;
+
+            // If filtering by specific buildings, check if this building is in the list
+            if (FilterBySpecificBuildings)
+            {
+                if (buildingDef == null)
+                    return false;
+
+                foreach (var specificBuilding in SpecificBuildings)
+                {
+                    if (specificBuilding != null && specificBuilding.GetStableDefinitionID() == buildingDef.GetStableDefinitionID())
+                        return true;
+                }
+                return false;
+            }
+
+            // Otherwise, check category filter
+            return AppliesTo(buildingDef.BuildingCategory);
         }
 
         /// <summary>
