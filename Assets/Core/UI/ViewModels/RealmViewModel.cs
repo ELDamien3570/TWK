@@ -553,8 +553,50 @@ namespace TWK.UI.ViewModels
             StablePopulations.Clear();
             UnstablePopulations.Clear();
 
-            // TODO: Get population data from PopulationManager when available
-            // For now, placeholder
+            if (_realmData.DirectlyOwnedCityIDs == null || PopulationManager.Instance == null)
+                return;
+
+            // Collect all populations from all cities
+            Dictionary<string, (int totalPop, float avgLoyalty, string archetype)> populationGroups = new Dictionary<string, (int, float, string)>();
+
+            foreach (int cityID in _realmData.DirectlyOwnedCityIDs)
+            {
+                var populations = PopulationManager.Instance.GetPopulationsByCity(cityID);
+                foreach (var pop in populations)
+                {
+                    string key = $"{pop.Culture.CultureName} - {pop.Archetype}";
+
+                    if (!populationGroups.ContainsKey(key))
+                        populationGroups[key] = (0, 0f, pop.Archetype.ToString());
+
+                    var existing = populationGroups[key];
+                    int newTotal = existing.totalPop + pop.PopulationCount;
+                    float newAvgLoyalty = ((existing.avgLoyalty * existing.totalPop) + (pop.Loyalty * pop.PopulationCount)) / newTotal;
+
+                    populationGroups[key] = (newTotal, newAvgLoyalty, existing.archetype);
+                }
+            }
+
+            // Sort by loyalty and split into stable (>= 50%) and unstable (< 50%)
+            var sortedByLoyalty = populationGroups.OrderByDescending(kvp => kvp.Value.avgLoyalty);
+
+            foreach (var kvp in sortedByLoyalty)
+            {
+                var display = new PopulationGroupDisplay
+                {
+                    GroupName = kvp.Key,
+                    Population = kvp.Value.totalPop,
+                    Loyalty = kvp.Value.avgLoyalty,
+                    Archetype = kvp.Value.archetype
+                };
+
+                if (kvp.Value.avgLoyalty >= 50f)
+                    StablePopulations.Add(display);
+                else
+                    UnstablePopulations.Add(display);
+            }
+
+            Debug.Log($"[RealmViewModel] Populated population groups - Stable: {StablePopulations.Count}, Unstable: {UnstablePopulations.Count}");
         }
 
         private void RefreshVassalLoyalty()

@@ -605,6 +605,7 @@ namespace TWK.UI
                 officeStatsText.text = $"Offices: {viewModel.FilledOffices}/{viewModel.TotalOffices} filled";
 
             RefreshOfficers();
+            RefreshPopulationStability();
             RefreshVassalLoyalty();
         }
 
@@ -663,6 +664,69 @@ namespace TWK.UI
             }
 
             Debug.Log($"[RealmUIController] Finished spawning officers. Container child count: {officersContainer.childCount}, SpawnedItems list count: {spawnedItems.Count}, true amount: {officersContainer.childCount}");
+        }
+
+        private void RefreshPopulationStability()
+        {
+            // Refresh stable populations
+            if (stablePopulationsContainer != null && populationItemPrefab != null)
+            {
+                ClearContainer(stablePopulationsContainer);
+
+                Debug.Log($"[RealmUIController] Spawning {viewModel.StablePopulations.Count} stable population items");
+
+                foreach (var pop in viewModel.StablePopulations)
+                {
+                    var item = Instantiate(populationItemPrefab, stablePopulationsContainer);
+
+                    var nameText = item.transform.Find("GroupName")?.GetComponent<TextMeshProUGUI>();
+                    if (nameText != null)
+                        nameText.text = pop.GroupName;
+
+                    var loyaltyText = item.transform.Find("Loyalty")?.GetComponent<TextMeshProUGUI>();
+                    if (loyaltyText != null)
+                    {
+                        loyaltyText.text = $"Loyalty: {pop.Loyalty:F0}%";
+                        loyaltyText.color = new Color(0.2f, 0.8f, 0.2f); // Green for stable
+                    }
+
+                    var popText = item.transform.Find("Population")?.GetComponent<TextMeshProUGUI>();
+                    if (popText != null)
+                        popText.text = $"Pop: {pop.Population:N0}";
+
+                    spawnedItems.Add(item);
+                }
+            }
+
+            // Refresh unstable populations
+            if (unstablePopulationsContainer != null && populationItemPrefab != null)
+            {
+                ClearContainer(unstablePopulationsContainer);
+
+                Debug.Log($"[RealmUIController] Spawning {viewModel.UnstablePopulations.Count} unstable population items");
+
+                foreach (var pop in viewModel.UnstablePopulations)
+                {
+                    var item = Instantiate(populationItemPrefab, unstablePopulationsContainer);
+
+                    var nameText = item.transform.Find("GroupName")?.GetComponent<TextMeshProUGUI>();
+                    if (nameText != null)
+                        nameText.text = pop.GroupName;
+
+                    var loyaltyText = item.transform.Find("Loyalty")?.GetComponent<TextMeshProUGUI>();
+                    if (loyaltyText != null)
+                    {
+                        loyaltyText.text = $"Loyalty: {pop.Loyalty:F0}%";
+                        loyaltyText.color = new Color(0.9f, 0.2f, 0.2f); // Red for unstable
+                    }
+
+                    var popText = item.transform.Find("Population")?.GetComponent<TextMeshProUGUI>();
+                    if (popText != null)
+                        popText.text = $"Pop: {pop.Population:N0}";
+
+                    spawnedItems.Add(item);
+                }
+            }
         }
 
         private void RefreshVassalLoyalty()
