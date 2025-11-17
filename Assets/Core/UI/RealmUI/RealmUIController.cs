@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using TWK.UI.ViewModels;
 using TWK.Realms;
+using TWK.Simulation;
 
 namespace TWK.UI
 {
@@ -122,6 +123,7 @@ namespace TWK.UI
         private List<GameObject> spawnedItems = new List<GameObject>();
         private float timeSinceLastRefresh = 0f;
         private bool isRefreshing = false;
+        private WorldTimeManager WorldTimeManager => WorldTimeManager.Instance;
 
         // ========== LIFECYCLE ==========
 
@@ -147,6 +149,8 @@ namespace TWK.UI
 
             // Initial refresh
             RefreshUI();
+            WorldTimeManager.OnDayTick += OnDayAdvance;
+
         }
 
         private void SetupTabButtons()
@@ -206,6 +210,11 @@ namespace TWK.UI
                 timeSinceLastRefresh = 0f;
                 RefreshDataOnly();
             }
+        }
+
+        private void OnDayAdvance()
+        {
+            //RefreshDataOnly();
         }
 
         /// <summary>
@@ -653,7 +662,7 @@ namespace TWK.UI
                 Debug.Log($"[RealmUIController] Spawned officer UI item #{spawnedCount}: {officer.OfficeName}, Active: {item.activeSelf}, Parent: {item.transform.parent.name}");
             }
 
-            Debug.Log($"[RealmUIController] Finished spawning officers. Container child count: {officersContainer.childCount}, SpawnedItems list count: {spawnedItems.Count}");
+            Debug.Log($"[RealmUIController] Finished spawning officers. Container child count: {officersContainer.childCount}, SpawnedItems list count: {spawnedItems.Count}, true amount: {officersContainer.childCount}");
         }
 
         private void RefreshVassalLoyalty()
