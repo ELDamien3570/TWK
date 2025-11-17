@@ -6098,6 +6098,14 @@ PrefabInstance:
       value: Kingdom of Macedonia
       objectReference: {fileID: 0}
     - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
+      propertyPath: cultureID
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
+      propertyPath: realmName
+      value: Macedonia
+      objectReference: {fileID: 0}
+    - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
       propertyPath: RealmCulture
       value: 
       objectReference: {fileID: 11400000, guid: eb5d54655effc004784bfa80ca820175, type: 2}
@@ -8047,7 +8055,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 475674485f4ed3e48b5f7add79c5d767, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Realm.City
-  parentRealm: {fileID: 0}
+  parentRealm: {fileID: 498449676}
   cityData:
     Name: 
     CityID: 0
@@ -15929,7 +15937,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TWK.UI.RealmUIController
   targetRealmID: 0
-  targetRealm: {fileID: 0}
+  targetRealm: {fileID: 271857533}
   mainTab: {fileID: 794651081}
   landsTab: {fileID: 471101511}
   economicsTab: {fileID: 1531624199}
@@ -18265,8 +18273,20 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
+      propertyPath: realmID
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
       propertyPath: RealmName
       value: Thebans
+      objectReference: {fileID: 0}
+    - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
+      propertyPath: cultureID
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
+      propertyPath: realmName
+      value: Thebes
       objectReference: {fileID: 0}
     - target: {fileID: 1003301357830191443, guid: 0dcc821e7fd6a154ba310ad2de1587c8, type: 3}
       propertyPath: RealmCulture
@@ -19441,7 +19461,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1309599665
 Transform:
   m_ObjectHideFlags: 0
@@ -30782,6 +30802,8 @@ GameObject:
   - component: {fileID: 2059557219}
   - component: {fileID: 2059557221}
   - component: {fileID: 2059557222}
+  - component: {fileID: 2059557224}
+  - component: {fileID: 2059557223}
   m_Layer: 0
   m_Name: Game Management
   m_TagString: Untagged
@@ -31016,6 +31038,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aea3636d666545d44b031f1b3710be6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TWK.Realms.RealmManager
+--- !u!114 &2059557223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2059557206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e36203a734d1d7d479380cacac2f58a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TWK.Modifiers.ModifierManager
+--- !u!114 &2059557224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2059557206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d58f113e22c1d6943bce0715340fd879, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TWK.Agents.AgentManager
 --- !u!1 &2070390943
 GameObject:
   m_ObjectHideFlags: 0
@@ -32761,11 +32807,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6862739456561946671, guid: a5a60d5fa768f2c499f888c9037466c2, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0.00016338252
+      value: 0.0000031392988
       objectReference: {fileID: 0}
     - target: {fileID: 6862739456561946671, guid: a5a60d5fa768f2c499f888c9037466c2, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.00015484344
+      value: 0.000052207786
       objectReference: {fileID: 0}
     - target: {fileID: 6874213423658399636, guid: a5a60d5fa768f2c499f888c9037466c2, type: 3}
       propertyPath: m_AnchorMax.x
