@@ -57,9 +57,7 @@ namespace TWK.UI
         [SerializeField] private TextMeshProUGUI institutionCountText;
 
         [Header("Modifiers")]
-        [SerializeField] private Transform modifiersContainer;
-        [SerializeField] private GameObject modifierItemPrefab;
-        [SerializeField] private TextMeshProUGUI modifierCountText;
+        [SerializeField] private TWK.UI.Common.ModifierDisplayPanel modifierDisplayPanel;
 
         [Header("Actions")]
         [SerializeField] private Button reformButton;
@@ -71,7 +69,6 @@ namespace TWK.UI
 
         private GovernmentViewModel viewModel;
         private List<GameObject> institutionItems = new List<GameObject>();
-        private List<GameObject> modifierItems = new List<GameObject>();
         private float timeSinceLastRefresh = 0f;
 
         private void Start()
@@ -333,45 +330,38 @@ namespace TWK.UI
 
         private void RefreshModifiers()
         {
-            // Clear existing items
-            foreach (var item in modifierItems)
-            {
-                if (item != null)
-                    Destroy(item);
-            }
-            modifierItems.Clear();
-
-            if (modifiersContainer == null || modifierItemPrefab == null)
+            if (modifierDisplayPanel == null)
                 return;
 
-            // Create new items
-            foreach (var modifier in viewModel.ActiveModifiers)
+            // Get all active modifiers for this government
+            var allModifiers = new List<TWK.Modifiers.Modifier>(viewModel.ActiveModifiers);
+
+            // Tag modifiers with their source type for better display
+            foreach (var modifier in allModifiers)
             {
-                var item = Instantiate(modifierItemPrefab, modifiersContainer);
-
-                // Set modifier name
-                var nameText = item.transform.Find("ModifierName")?.GetComponent<TextMeshProUGUI>();
-                if (nameText != null)
-                    nameText.text = modifier.Name;
-
-                // Set description
-                var descText = item.transform.Find("Description")?.GetComponent<TextMeshProUGUI>();
-                if (descText != null)
-                    descText.text = modifier.Description ?? "";
-
-                // Set source
-                var sourceText = item.transform.Find("Source")?.GetComponent<TextMeshProUGUI>();
-                if (sourceText != null)
-                    sourceText.text = $"Source: {modifier.Source}";
-
-                modifierItems.Add(item);
+                // The viewModel already has source info, use it if available
+                if (string.IsNullOrEmpty(modifier.SourceType))
+                {
+                    modifier.SourceType = modifier.Source;
+                }
             }
 
-            // Update count
-            if (modifierCountText != null)
-            {
-                modifierCountText.text = $"Active Modifiers: {viewModel.ActiveModifierCount}";
-            }
+            // Display modifiers grouped by category
+            // Separate modifiers by source for better organization
+            var edictModifiers = allModifiers.FindAll(m => m.Source?.Contains("Edict") == true || m.SourceType?.Contains("Edict") == true);
+            var buildingModifiers = allModifiers.FindAll(m => m.Source?.Contains("Building") == true || m.SourceType?.Contains("Building") == true);
+            var cultureModifiers = allModifiers.FindAll(m => m.Source?.Contains("Culture") == true || m.SourceType?.Contains("Culture") == true);
+            var otherModifiers = allModifiers.FindAll(m =>
+                !edictModifiers.Contains(m) &&
+                !buildingModifiers.Contains(m) &&
+                !cultureModifiers.Contains(m));
+
+            modifierDisplayPanel.DisplayModifiersByCategory(
+                cultureModifiers: cultureModifiers.Count > 0 ? cultureModifiers : null,
+                religionModifiers: null, // Religion modifiers could be added later
+                eventModifiers: edictModifiers.Count > 0 ? edictModifiers : null,
+                buildingModifiers: buildingModifiers.Count > 0 ? buildingModifiers : otherModifiers.Count > 0 ? otherModifiers : buildingModifiers
+            );
         }
 
         // ========== EVENT HANDLERS ==========
