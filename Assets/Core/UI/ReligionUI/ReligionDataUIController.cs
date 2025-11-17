@@ -190,7 +190,7 @@ namespace TWK.UI
             }
 
             currentReligion = religions[index];
-            Debug.Log($"[ReligionDataUIController] Selected religion: {currentReligion.ReligionName}");
+           // Debug.Log($"[ReligionDataUIController] Selected religion: {currentReligion.ReligionName}");
             RefreshReligionDisplay();
         }
 
@@ -202,7 +202,7 @@ namespace TWK.UI
                 return;
             }
 
-            Debug.Log($"[ReligionDataUIController] Refreshing display for {currentReligion.ReligionName}");
+           // Debug.Log($"[ReligionDataUIController] Refreshing display for {currentReligion.ReligionName}");
             RefreshBasicInfo();
             RefreshIdentityInfo();
             RefreshDeities();

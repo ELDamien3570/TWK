@@ -113,12 +113,14 @@ namespace TWK.Realms
             if (GovernmentManager.Instance != null)
             {
                 var government = GovernmentManager.Instance.GetRealmGovernment(_realmData.RealmID);
-                if (government != null && government.Offices != null)
+                var offices = GovernmentManager.Instance.GetRealmOffices(_realmData.RealmID);
+
+                if (government != null && offices != null)
                 {
-                    foreach (var office in government.Offices)
+                    foreach (var office in offices)
                     {
                         // Treasurer has access
-                        if (office.OfficeName == "Treasurer" && office.HolderAgentID == agentID)
+                        if (office.OfficeName == "Treasurer" && office.AssignedAgentID == agentID)
                             return true;
                     }
                 }
@@ -181,23 +183,16 @@ namespace TWK.Realms
 
         /// <summary>
         /// Get tax rate from taxation law.
+        /// Test for logic concerning different taxation laws. Will add more laws later
         /// </summary>
         private float GetTaxRate(TaxationLaw taxLaw)
         {
             switch (taxLaw)
             {
-                case TaxationLaw.NoTaxes:
-                    return 0f;
-                case TaxationLaw.LightTaxation:
-                    return 0.05f; // 5%
-                case TaxationLaw.ModerateTaxation:
-                    return 0.10f; // 10%
-                case TaxationLaw.HeavyTaxation:
-                    return 0.20f; // 20%
-                case TaxationLaw.Extortion:
-                    return 0.35f; // 35%
+                case TaxationLaw.Tribute:
+                    return .9f;
                 default:
-                    return 0.10f;
+                    return 1f;
             }
         }
 
@@ -253,10 +248,10 @@ namespace TWK.Realms
         /// </summary>
         public bool PayForEdict(Edict edict, int enactorAgentID)
         {
-            if (edict == null || edict.GoldCost <= 0)
+            if (edict == null || edict.EnactmentCost <= 0)
                 return true;
 
-            return SpendResource(ResourceType.Gold, edict.GoldCost, enactorAgentID);
+            return SpendResource(ResourceType.Gold, edict.EnactedOnMonth, enactorAgentID);
         }
 
         /// <summary>
@@ -280,18 +275,20 @@ namespace TWK.Realms
                 return;
 
             var government = GovernmentManager.Instance.GetRealmGovernment(_realmData.RealmID);
-            if (government == null || government.Offices == null)
+            var offices = GovernmentManager.Instance.GetRealmOffices(_realmData.RealmID);
+
+            if (government == null || offices == null)
                 return;
 
-            foreach (var office in government.Offices)
+            foreach (var office in offices)
             {
-                if (office.HolderAgentID != -1 && office.Salary > 0)
+                if (office.AssignedAgentID != -1 && office.MonthlySalary > 0)
                 {
                     // Try to pay salary from realm treasury
-                    if (SpendResource(ResourceType.Gold, office.Salary, -1))
+                    if (SpendResource(ResourceType.Gold, office.MonthlySalary, -1))
                     {
                         // TODO: Add to agent's personal ledger when Phase 7B is implemented
-                        Debug.Log($"[RealmTreasury] Paid {office.Salary} gold salary to office holder {office.HolderAgentID} for {office.OfficeName}");
+                        Debug.Log($"[RealmTreasury] Paid {office.MonthlySalary} gold salary to office holder {office.AssignedAgentID} for {office.OfficeName}");
                     }
                     else
                     {

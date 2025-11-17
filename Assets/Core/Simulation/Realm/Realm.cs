@@ -88,7 +88,7 @@ namespace TWK.Realms
             {
                 if (value != null)
                 {
-                    realmData.RealmCultureID = value.CultureID;
+                    realmData.RealmCultureID = value.GetCultureID();
                 }
             }
         }
