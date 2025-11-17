@@ -1,0 +1,304 @@
+using System.Collections.Generic;
+using UnityEngine;
+using TWK.Economy;
+using TWK.Government;
+
+namespace TWK.Realms
+{
+    /// <summary>
+    /// Manages a realm's treasury - the institutional wealth of the realm.
+    /// Handles tax collection, tribute, and spending.
+    /// Access controlled by government positions.
+    /// </summary>
+    public class RealmTreasury
+    {
+        private RealmData _realmData;
+        private Dictionary<ResourceType, int> _resources;
+
+        // ========== EVENTS ==========
+        public event System.Action<int, ResourceType, int> OnTreasuryChanged; // realmID, resourceType, newAmount
+
+        // ========== CONSTRUCTOR ==========
+        public RealmTreasury(RealmData realmData)
+        {
+            _realmData = realmData;
+            _resources = realmData.TreasuryResources;
+        }
+
+        // ========== RESOURCE ACCESS ==========
+
+        /// <summary>
+        /// Get amount of a resource in treasury.
+        /// </summary>
+        public int GetResource(ResourceType resourceType)
+        {
+            return _resources.ContainsKey(resourceType) ? _resources[resourceType] : 0;
+        }
+
+        /// <summary>
+        /// Add resources to treasury.
+        /// </summary>
+        public void AddResource(ResourceType resourceType, int amount)
+        {
+            if (amount <= 0) return;
+
+            if (!_resources.ContainsKey(resourceType))
+                _resources[resourceType] = 0;
+
+            _resources[resourceType] += amount;
+            OnTreasuryChanged?.Invoke(_realmData.RealmID, resourceType, _resources[resourceType]);
+        }
+
+        /// <summary>
+        /// Remove resources from treasury.
+        /// Returns true if successful, false if insufficient funds.
+        /// </summary>
+        public bool SpendResource(ResourceType resourceType, int amount, int spenderAgentID = -1)
+        {
+            if (amount <= 0) return false;
+
+            // Check if realm has enough
+            if (!HasResource(resourceType, amount))
+                return false;
+
+            // Check access control
+            if (!CanAccessTreasury(spenderAgentID))
+            {
+                Debug.LogWarning($"[RealmTreasury] Agent {spenderAgentID} denied treasury access for realm {_realmData.RealmID}");
+                return false;
+            }
+
+            _resources[resourceType] -= amount;
+            OnTreasuryChanged?.Invoke(_realmData.RealmID, resourceType, _resources[resourceType]);
+            return true;
+        }
+
+        /// <summary>
+        /// Check if treasury has enough of a resource.
+        /// </summary>
+        public bool HasResource(ResourceType resourceType, int amount)
+        {
+            return GetResource(resourceType) >= amount;
+        }
+
+        /// <summary>
+        /// Get all resources in treasury.
+        /// </summary>
+        public Dictionary<ResourceType, int> GetAllResources()
+        {
+            return new Dictionary<ResourceType, int>(_resources);
+        }
+
+        // ========== ACCESS CONTROL ==========
+
+        /// <summary>
+        /// Check if an agent can access the treasury.
+        /// Access granted to:
+        /// - Realm leaders (rulers)
+        /// - Treasurer office holder
+        /// - Autocratic rulers have unlimited access
+        /// - Pluralist rulers may have restricted access
+        /// </summary>
+        public bool CanAccessTreasury(int agentID)
+        {
+            // -1 means system access (always allowed for tax collection, etc.)
+            if (agentID == -1)
+                return true;
+
+            // Check if agent is a realm leader
+            if (_realmData.LeaderIDs.Contains(agentID))
+                return true;
+
+            // Check government offices for treasurer
+            if (GovernmentManager.Instance != null)
+            {
+                var government = GovernmentManager.Instance.GetRealmGovernment(_realmData.RealmID);
+                if (government != null && government.Offices != null)
+                {
+                    foreach (var office in government.Offices)
+                    {
+                        // Treasurer has access
+                        if (office.OfficeName == "Treasurer" && office.HolderAgentID == agentID)
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        // ========== TAX COLLECTION ==========
+
+        /// <summary>
+        /// Collect taxes from all directly owned cities.
+        /// 100% flows to realm treasury (no leakage).
+        /// Called daily by RealmManager.
+        /// </summary>
+        public void CollectCityTaxes()
+        {
+            if (_realmData.DirectlyOwnedCityIDs == null || _realmData.DirectlyOwnedCityIDs.Count == 0)
+                return;
+
+            foreach (int cityID in _realmData.DirectlyOwnedCityIDs)
+            {
+                // Get city tax based on government taxation law
+                int taxAmount = CalculateCityTax(cityID);
+
+                if (taxAmount > 0)
+                {
+                    // Deduct from city
+                    if (ResourceManager.Instance.SpendResource(cityID, ResourceType.Gold, taxAmount))
+                    {
+                        // Add to realm treasury (100%, no leakage)
+                        AddResource(ResourceType.Gold, taxAmount);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Calculate tax amount for a city based on government taxation law.
+        /// </summary>
+        private int CalculateCityTax(int cityID)
+        {
+            // Get government taxation law
+            if (GovernmentManager.Instance == null)
+                return 0;
+
+            var government = GovernmentManager.Instance.GetRealmGovernment(_realmData.RealmID);
+            if (government == null)
+                return 0;
+
+            // Get city gold
+            int cityGold = ResourceManager.Instance.GetResource(cityID, ResourceType.Gold);
+
+            // Calculate tax based on taxation law
+            float taxRate = GetTaxRate(government.TaxationLaw);
+            int taxAmount = Mathf.FloorToInt(cityGold * taxRate);
+
+            return taxAmount;
+        }
+
+        /// <summary>
+        /// Get tax rate from taxation law.
+        /// </summary>
+        private float GetTaxRate(TaxationLaw taxLaw)
+        {
+            switch (taxLaw)
+            {
+                case TaxationLaw.NoTaxes:
+                    return 0f;
+                case TaxationLaw.LightTaxation:
+                    return 0.05f; // 5%
+                case TaxationLaw.ModerateTaxation:
+                    return 0.10f; // 10%
+                case TaxationLaw.HeavyTaxation:
+                    return 0.20f; // 20%
+                case TaxationLaw.Extortion:
+                    return 0.35f; // 35%
+                default:
+                    return 0.10f;
+            }
+        }
+
+        // ========== TRIBUTE COLLECTION ==========
+
+        /// <summary>
+        /// Collect tribute from all vassal realms.
+        /// Amount based on contract percentage (tax leakage).
+        /// Called daily by RealmManager.
+        /// </summary>
+        public void CollectVassalTribute()
+        {
+            if (_realmData.VassalContractIDs == null || _realmData.VassalContractIDs.Count == 0)
+                return;
+
+            if (ContractManager.Instance == null)
+                return;
+
+            foreach (int contractID in _realmData.VassalContractIDs)
+            {
+                var contract = ContractManager.Instance.GetContract(contractID);
+                if (contract == null)
+                    continue;
+
+                // Get subject realm
+                var subjectRealm = RealmManager.Instance?.GetRealm(contract.SubjectRealmID);
+                if (subjectRealm == null)
+                    continue;
+
+                // Calculate tribute amount (percentage of subject's gold)
+                int subjectGold = subjectRealm.Treasury.GetResource(ResourceType.Gold);
+                float tributePercentage = contract.TaxRate / 100f; // Contract stores as percentage (0-100)
+                int tributeAmount = Mathf.FloorToInt(subjectGold * tributePercentage);
+
+                if (tributeAmount > 0)
+                {
+                    // Deduct from subject treasury
+                    if (subjectRealm.Treasury.SpendResource(ResourceType.Gold, tributeAmount, -1))
+                    {
+                        // Add to overlord treasury
+                        AddResource(ResourceType.Gold, tributeAmount);
+
+                        Debug.Log($"[RealmTreasury] Realm {_realmData.RealmID} collected {tributeAmount} gold tribute from vassal {contract.SubjectRealmID} (rate: {contract.TaxRate}%)");
+                    }
+                }
+            }
+        }
+
+        // ========== SPENDING ==========
+
+        /// <summary>
+        /// Pay for an edict from realm treasury.
+        /// </summary>
+        public bool PayForEdict(Edict edict, int enactorAgentID)
+        {
+            if (edict == null || edict.GoldCost <= 0)
+                return true;
+
+            return SpendResource(ResourceType.Gold, edict.GoldCost, enactorAgentID);
+        }
+
+        /// <summary>
+        /// Pay for a government reform from realm treasury.
+        /// </summary>
+        public bool PayForReform(int goldCost, int enactorAgentID)
+        {
+            if (goldCost <= 0)
+                return true;
+
+            return SpendResource(ResourceType.Gold, goldCost, enactorAgentID);
+        }
+
+        /// <summary>
+        /// Pay office salaries to all office holders.
+        /// Called monthly.
+        /// </summary>
+        public void PayOfficeSalaries()
+        {
+            if (GovernmentManager.Instance == null)
+                return;
+
+            var government = GovernmentManager.Instance.GetRealmGovernment(_realmData.RealmID);
+            if (government == null || government.Offices == null)
+                return;
+
+            foreach (var office in government.Offices)
+            {
+                if (office.HolderAgentID != -1 && office.Salary > 0)
+                {
+                    // Try to pay salary from realm treasury
+                    if (SpendResource(ResourceType.Gold, office.Salary, -1))
+                    {
+                        // TODO: Add to agent's personal ledger when Phase 7B is implemented
+                        Debug.Log($"[RealmTreasury] Paid {office.Salary} gold salary to office holder {office.HolderAgentID} for {office.OfficeName}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[RealmTreasury] Insufficient funds to pay salary for {office.OfficeName}");
+                    }
+                }
+            }
+        }
+    }
+}
