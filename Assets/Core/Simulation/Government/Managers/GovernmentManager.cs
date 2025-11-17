@@ -567,10 +567,21 @@ namespace TWK.Government
             if (cost <= 0)
                 return true;
 
-            // TODO: Implement proper realm treasury system
-            // For now, get the capital city's gold (requires realm->city mapping)
-            // Placeholder: always allow for testing
-            return true;
+            // Check realm treasury via RealmManager
+            if (TWK.Realms.RealmManager.Instance == null)
+            {
+                Debug.LogWarning("[GovernmentManager] RealmManager not available to check edict cost");
+                return false;
+            }
+
+            var realm = TWK.Realms.RealmManager.Instance.GetRealm(realmID);
+            if (realm == null || realm.Treasury == null)
+            {
+                Debug.LogWarning($"[GovernmentManager] Realm {realmID} or its treasury not found");
+                return false;
+            }
+
+            return realm.Treasury.HasResource(TWK.Economy.ResourceType.Gold, cost);
         }
 
         /// <summary>
@@ -581,20 +592,29 @@ namespace TWK.Government
             if (amount <= 0)
                 return;
 
-            // TODO: Implement proper realm treasury system
-            // Expected implementation:
-            // 1. Get realm's capital city ID
-            // 2. Use ResourceManager to deduct gold from that city
-            // Example:
-            // int capitalCityID = RealmManager.Instance.GetCapitalCity(realmID);
-            // if (ResourceManager.Instance != null)
-            // {
-            //     var ledger = new ResourceLedger(capitalCityID);
-            //     ledger.DailyChange[ResourceType.Gold] = -amount;
-            //     ResourceManager.Instance.ApplyLedger(capitalCityID, ledger);
-            // }
+            // Deduct from realm treasury via RealmManager
+            if (TWK.Realms.RealmManager.Instance == null)
+            {
+                Debug.LogWarning("[GovernmentManager] RealmManager not available to deduct gold");
+                return;
+            }
 
-            Debug.Log($"[GovernmentManager] Deducted {amount} gold from realm {realmID} for {reason}");
+            var realm = TWK.Realms.RealmManager.Instance.GetRealm(realmID);
+            if (realm == null || realm.Treasury == null)
+            {
+                Debug.LogWarning($"[GovernmentManager] Realm {realmID} or its treasury not found");
+                return;
+            }
+
+            // System deduction (agentID = -1) for government expenses
+            if (!realm.Treasury.SpendResource(TWK.Economy.ResourceType.Gold, amount, -1))
+            {
+                Debug.LogWarning($"[GovernmentManager] Failed to deduct {amount} gold from realm {realmID} for: {reason}");
+            }
+            else
+            {
+                Debug.Log($"[GovernmentManager] Deducted {amount} gold from realm {realmID} for {reason}");
+            }
         }
 
         /// <summary>
@@ -879,8 +899,15 @@ namespace TWK.Government
 
             int cost = CalculateReformCost(realmID, targetGovernment);
 
-            // TODO: Check if realm has enough resources
-            // TODO: Deduct resources
+            // Check if realm can afford reform cost
+            if (!CanAffordEdictCost(realmID, cost))
+            {
+                Debug.LogWarning($"[GovernmentManager] Realm {realmID} cannot afford reform to {targetGovernment.GovernmentName} (Cost: {cost})");
+                return false;
+            }
+
+            // Deduct reform cost from realm treasury
+            DeductRealmGold(realmID, cost, $"Reform to {targetGovernment.GovernmentName}");
 
             SetRealmGovernment(realmID, targetGovernment);
 
@@ -892,20 +919,78 @@ namespace TWK.Government
 
         /// <summary>
         /// Calculate revolt risk for a realm (0-100).
+        /// Factors: legitimacy, population loyalty, capacity, harsh edicts, vassal exploitation.
         /// </summary>
         public float CalculateRevoltRisk(int realmID)
         {
             float risk = 0f;
 
-            // Low legitimacy increases risk
+            // 1. Low legitimacy increases risk (max 40%)
             float legitimacy = GetRealmLegitimacy(realmID);
-            risk += (100f - legitimacy) * 0.5f; // Max 50% from legitimacy
+            risk += (100f - legitimacy) * 0.4f;
 
-            // TODO: Add more factors:
-            // - Low population loyalty
-            // - Cultural/religious mismatch
-            // - Harsh edicts
-            // - Exploitative contracts
+            // 2. Low capacity increases risk (max 15%)
+            float capacity = GetRealmCapacity(realmID);
+            if (capacity < 50f)
+            {
+                risk += (50f - capacity) * 0.3f; // Max 15% if capacity is 0
+            }
+
+            // 3. Population loyalty (max 25%)
+            var populations = GetRealmPopulations(realmID);
+            if (populations.Count > 0)
+            {
+                float avgLoyalty = 0f;
+                foreach (var pop in populations)
+                {
+                    avgLoyalty += pop.Loyalty;
+                }
+                avgLoyalty /= populations.Count;
+
+                risk += (100f - avgLoyalty) * 0.25f;
+            }
+
+            // 4. Harsh edicts increase risk (max 10%)
+            if (realmEdicts.TryGetValue(realmID, out var edicts))
+            {
+                foreach (var edict in edicts)
+                {
+                    if (edict.IsActive(currentMonthCounter))
+                    {
+                        // Negative loyalty edicts increase risk
+                        float avgEdictLoyaltyImpact = edict.GetAverageLoyaltyImpact();
+                        if (avgEdictLoyaltyImpact < 0)
+                        {
+                            risk += Math.Abs(avgEdictLoyaltyImpact) * 2f; // Harsh edicts = more risk
+                        }
+                    }
+                }
+            }
+
+            // 5. If realm is a vassal with exploitative contract (max 10%)
+            if (TWK.Realms.RealmManager.Instance != null)
+            {
+                var realm = TWK.Realms.RealmManager.Instance.GetRealm(realmID);
+                if (realm != null && !realm.Data.IsIndependent && ContractManager.Instance != null)
+                {
+                    var contract = ContractManager.Instance.GetContract(realm.Data.OverlordContractID);
+                    if (contract != null)
+                    {
+                        // High tribute rates increase risk
+                        float totalBurden = contract.GetTotalResourceBurden();
+                        if (totalBurden > 25f)
+                        {
+                            risk += (totalBurden - 25f) * 0.133f; // Max ~10% if 100% tribute
+                        }
+
+                        // Disloyal vassals are at higher risk
+                        if (contract.IsDisloyal())
+                        {
+                            risk += 10f;
+                        }
+                    }
+                }
+            }
 
             return Mathf.Clamp(risk, 0f, 100f);
         }
