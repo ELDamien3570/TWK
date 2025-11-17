@@ -121,6 +121,7 @@ namespace TWK.UI
         private RealmViewModel viewModel;
         private List<GameObject> spawnedItems = new List<GameObject>();
         private float timeSinceLastRefresh = 0f;
+        private bool isRefreshing = false;
 
         // ========== LIFECYCLE ==========
 
@@ -203,7 +204,85 @@ namespace TWK.UI
             if (timeSinceLastRefresh >= refreshInterval)
             {
                 timeSinceLastRefresh = 0f;
-                RefreshUI();
+                RefreshDataOnly();
+            }
+        }
+
+        /// <summary>
+        /// Refreshes only the ViewModel data and updates text fields.
+        /// Does NOT rebuild lists or spawn new UI elements.
+        /// </summary>
+        private void RefreshDataOnly()
+        {
+            if (viewModel == null || isRefreshing) return;
+
+            isRefreshing = true;
+            viewModel.Refresh();
+
+            // Update text fields only, no list rebuilding
+            UpdateTextFieldsForActiveTab();
+
+            isRefreshing = false;
+        }
+
+        /// <summary>
+        /// Updates only text fields for the currently active tab.
+        /// Does NOT clear containers or spawn items.
+        /// </summary>
+        private void UpdateTextFieldsForActiveTab()
+        {
+            GameObject activeTab = GetActiveTab();
+
+            if (activeTab == mainTab)
+                UpdateMainTabText();
+            else if (activeTab == governmentTab)
+                UpdateGovernmentTabText();
+            else if (activeTab == cultureReligionTab)
+                UpdateCultureReligionTabText();
+            // Other tabs don't need frequent text updates
+        }
+
+        private void UpdateMainTabText()
+        {
+            if (realmNameText != null)
+                realmNameText.text = viewModel.RealmName;
+            if (leaderNamesText != null)
+                leaderNamesText.text = viewModel.LeaderNamesDisplay;
+            if (stabilityText != null)
+                stabilityText.text = $"Stability: {viewModel.StabilityDisplay}";
+            if (stabilitySlider != null)
+                stabilitySlider.value = viewModel.Stability / 100f;
+            if (stabilityFillImage != null)
+                stabilityFillImage.color = viewModel.StabilityColor;
+            if (treasuryGoldText != null)
+                treasuryGoldText.text = viewModel.TreasuryGoldDisplay;
+        }
+
+        private void UpdateGovernmentTabText()
+        {
+            if (stabilityBreakdownText != null)
+                stabilityBreakdownText.text = viewModel.StabilityBreakdown;
+            if (officeStatsText != null)
+                officeStatsText.text = $"Offices: {viewModel.FilledOffices}/{viewModel.TotalOffices} filled";
+        }
+
+        private void UpdateCultureReligionTabText()
+        {
+            bool showingCulture = cultureReligionToggle == null || cultureReligionToggle.value == 0;
+
+            if (showingCulture)
+            {
+                if (dominantCultureReligionText != null)
+                    dominantCultureReligionText.text = $"<b>Dominant Culture:</b> {viewModel.DominantCulture}";
+                if (unityText != null)
+                    unityText.text = $"<b>Cultural Unity:</b> {viewModel.CulturalUnity:F0}%";
+            }
+            else
+            {
+                if (dominantCultureReligionText != null)
+                    dominantCultureReligionText.text = $"<b>Dominant Religion:</b> {viewModel.DominantReligion}";
+                if (unityText != null)
+                    unityText.text = $"<b>Religious Unity:</b> {viewModel.ReligiousUnity:F0}%";
             }
         }
 
@@ -282,12 +361,20 @@ namespace TWK.UI
 
         // ========== REFRESH UI ==========
 
+        /// <summary>
+        /// Full UI refresh - rebuilds all lists and UI elements.
+        /// Should only be called on tab switch or manual refresh, NOT in Update loop.
+        /// </summary>
         public void RefreshUI()
         {
-            if (viewModel == null) return;
+            if (viewModel == null || isRefreshing) return;
 
+            Debug.Log($"[RealmUIController] Full UI refresh requested");
+
+            isRefreshing = true;
             viewModel.Refresh();
             RefreshCurrentTab(GetActiveTab());
+            isRefreshing = false;
         }
 
         // ========== TAB 1: MAIN INFO ==========
@@ -520,10 +607,12 @@ namespace TWK.UI
                 return;
             }
 
+            Debug.Log($"[RealmUIController] ===== REBUILDING OFFICERS LIST (this should only happen on tab switch, not every second) =====");
+
             ClearContainer(officersContainer);
 
             Debug.Log($"[RealmUIController] Spawning {viewModel.Officers.Count} officer UI items into container: {officersContainer.name}");
-            Debug.Log($"[RealmUIController] Container active: {officersContainer.gameObject.activeInHierarchy}, Child count before spawn: {officersContainer.childCount}");
+            Debug.Log($"[RealmUIController] Container active: {officersContainer.gameObject.activeInHierarchy}, Child count after clear: {officersContainer.childCount}");
 
             int spawnedCount = 0;
             foreach (var officer in viewModel.Officers)
