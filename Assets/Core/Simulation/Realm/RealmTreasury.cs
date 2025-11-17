@@ -229,7 +229,7 @@ namespace TWK.Realms
 
                 // Calculate tribute amount (percentage of subject's gold)
                 int subjectGold = subjectRealm.Treasury.GetResource(ResourceType.Gold);
-                float tributePercentage = contract.TaxRate / 100f; // Contract stores as percentage (0-100)
+                float tributePercentage = contract.GoldPercentage / 100f; // Contract stores as percentage (0-100)
                 int tributeAmount = Mathf.FloorToInt(subjectGold * tributePercentage);
 
                 if (tributeAmount > 0)
@@ -240,7 +240,7 @@ namespace TWK.Realms
                         // Add to overlord treasury
                         AddResource(ResourceType.Gold, tributeAmount);
 
-                        Debug.Log($"[RealmTreasury] Realm {_realmData.RealmID} collected {tributeAmount} gold tribute from vassal {contract.SubjectRealmID} (rate: {contract.TaxRate}%)");
+                        Debug.Log($"[RealmTreasury] Realm {_realmData.RealmID} collected {tributeAmount} gold tribute from vassal {contract.SubjectRealmID} (rate: {contract.GoldPercentage}%)");
                     }
                 }
             }

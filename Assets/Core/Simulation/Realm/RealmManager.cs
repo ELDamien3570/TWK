@@ -166,7 +166,7 @@ namespace TWK.Realms
             if (contract == null)
                 return null;
 
-            return GetRealm(contract.OverlordRealmID);
+            return GetRealm(contract.ParentRealmID);
         }
 
         // ========== REALM PROPERTIES ==========

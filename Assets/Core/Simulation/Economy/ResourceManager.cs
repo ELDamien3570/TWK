@@ -55,6 +55,39 @@ namespace TWK.Economy
                 ? val : 0;
         }
 
+        /// <summary>
+        /// Spend (deduct) resources from a city.
+        /// Returns true if successful, false if insufficient resources.
+        /// </summary>
+        public bool SpendResource(int cityId, ResourceType type, int amount)
+        {
+            if (!cityResources.TryGetValue(cityId, out var resources))
+                return false;
+
+            if (!resources.ContainsKey(type))
+                resources[type] = 0;
+
+            if (resources[type] < amount)
+                return false;
+
+            resources[type] -= amount;
+            return true;
+        }
+
+        /// <summary>
+        /// Add resources to a city.
+        /// </summary>
+        public void AddResource(int cityId, ResourceType type, int amount)
+        {
+            if (!cityResources.TryGetValue(cityId, out var resources))
+                return;
+
+            if (!resources.ContainsKey(type))
+                resources[type] = 0;
+
+            resources[type] += amount;
+        }
+
         private void GetCityResources(int cityID)
         {
             if (cityResources.TryGetValue(cityID, out var resources))
