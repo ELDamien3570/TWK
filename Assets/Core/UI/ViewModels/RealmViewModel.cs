@@ -253,7 +253,7 @@ namespace TWK.UI.ViewModels
                     // Get city production (would need city economic snapshot)
                     int cityGold = ResourceManager.Instance?.GetResource(cityID, ResourceType.Gold) ?? 0;
                     int taxRate = GetTaxRate();
-                    int tax = Mathf.FloorToInt(cityGold * taxRate / 100f);
+                    int tax = Mathf.FloorToInt(cityGold * (taxRate / 100f));
 
                     AddToResourceDict(TotalIncome, ResourceType.Gold, tax);
                 }
@@ -297,7 +297,7 @@ namespace TWK.UI.ViewModels
             // Expenses: Edict maintenance
             if (GovernmentManager.Instance != null)
             {
-                var edicts = GovernmentManager.Instance.GetRealmEdicts(_realmID);
+                var edicts = GovernmentManager.Instance.GetActiveEdicts(_realmID);
                 if (edicts != null)
                 {
                     foreach (var edict in edicts)
@@ -330,15 +330,13 @@ namespace TWK.UI.ViewModels
             if (government == null)
                 return 10;
 
-            return government.TaxationLaw switch
+            switch (government.TaxationLaw)
             {
-                TaxationLaw.NoTaxes => 0,
-                TaxationLaw.LightTaxation => 5,
-                TaxationLaw.ModerateTaxation => 10,
-                TaxationLaw.HeavyTaxation => 20,
-                TaxationLaw.Extortion => 35,
-                _ => 10
-            };
+                case TaxationLaw.Tribute:
+                    return 90;
+                default:
+                    return 100;
+            }
         }
 
         // ========== TAB 2: LANDS REFRESH ==========
@@ -706,7 +704,7 @@ namespace TWK.UI.ViewModels
             if (GovernmentManager.Instance == null)
                 return total;
 
-            var edicts = GovernmentManager.Instance.GetRealmEdicts(_realmID);
+            var edicts = GovernmentManager.Instance.GetActiveEdicts(_realmID);
             if (edicts == null)
                 return total;
 
