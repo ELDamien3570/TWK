@@ -117,8 +117,10 @@ namespace TWK.Government
     /// </summary>
     public enum InstitutionCategory
     {
-        Diplomacy,      // Foreign relations, vassals, contracts
+        Politics,      // Foreign relations, vassals, contracts
         Warfare,        // Military organization and logistics
+        Religion,
+        Science,
         Economics       // Trade, taxation, resource management
     }
 

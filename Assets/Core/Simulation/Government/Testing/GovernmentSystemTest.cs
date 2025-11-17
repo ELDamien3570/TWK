@@ -62,7 +62,7 @@ namespace TWK.Testing
             var bureaucracy = ScriptableObject.CreateInstance<Institution>();
             bureaucracy.InstitutionName = "Bureaucratic Administration";
             bureaucracy.Description = "A professional civil service that handles day-to-day governance.";
-            bureaucracy.Category = InstitutionCategory.Administration;
+            bureaucracy.Category = InstitutionCategory.Economics;
             bureaucracy.ReformCost = 500;
             bureaucracy.Modifiers = new List<Modifier>
             {
@@ -74,7 +74,7 @@ namespace TWK.Testing
             var standingArmy = ScriptableObject.CreateInstance<Institution>();
             standingArmy.InstitutionName = "Standing Army";
             standingArmy.Description = "Professional soldiers maintained year-round.";
-            standingArmy.Category = InstitutionCategory.Military;
+            standingArmy.Category = InstitutionCategory.Warfare;
             standingArmy.ReformCost = 800;
             standingArmy.Modifiers = new List<Modifier>
             {
@@ -86,7 +86,7 @@ namespace TWK.Testing
             var theocracy = ScriptableObject.CreateInstance<Institution>();
             theocracy.InstitutionName = "Divine Theocracy";
             theocracy.Description = "Religious leaders hold political power.";
-            theocracy.Category = InstitutionCategory.Religious;
+            theocracy.Category = InstitutionCategory.Religion;
             theocracy.ReformCost = 1000;
             theocracy.Modifiers = new List<Modifier>
             {
@@ -125,14 +125,14 @@ namespace TWK.Testing
             tribalChiefdom.GovernmentName = "Tribal Chiefdom";
             tribalChiefdom.Description = "Led by a chief with tribal assemblies making decisions.";
             tribalChiefdom.RegimeForm = RegimeForm.Chiefdom;
-            tribalChiefdom.StateStructure = StateStructure.Tribal;
-            tribalChiefdom.SuccessionLaw = SuccessionLaw.Election;
-            tribalChiefdom.Administration = Administration.Tribal;
+            tribalChiefdom.StateStructure = StateStructure.Territorial;
+            tribalChiefdom.SuccessionLaw = SuccessionLaw.Kinship;
+            tribalChiefdom.Administration = Administration.Rational;
             tribalChiefdom.Mobility = Mobility.Nomadic;
             tribalChiefdom.MilitaryService = MilitaryServiceLaw.Warbands;
             tribalChiefdom.TaxationLaw = TaxationLaw.Tribute;
             tribalChiefdom.TradeLaw = TradeLaw.NoControl;
-            tribalChiefdom.JusticeLaw = JusticeLaw.Harsh;
+            tribalChiefdom.JusticeLaw = JusticeLaw.Severe;
             tribalChiefdom.BaseCapacity = 20f;
             tribalChiefdom.BaseLegitimacy = 50f;
             tribalChiefdom.MinimumProvinces = 1;
@@ -145,13 +145,13 @@ namespace TWK.Testing
             theocraticEmpire.Description = "A divine ruler governs through religious authority.";
             theocraticEmpire.RegimeForm = RegimeForm.Autocratic;
             theocraticEmpire.StateStructure = StateStructure.Territorial;
-            theocraticEmpire.SuccessionLaw = SuccessionLaw.Appointment;
-            theocraticEmpire.Administration = Administration.Bureaucratic;
+            theocraticEmpire.SuccessionLaw = SuccessionLaw.Divinity;
+            theocraticEmpire.Administration = Administration.Patrimonial;
             theocraticEmpire.Mobility = Mobility.Sedentary;
             theocraticEmpire.MilitaryService = MilitaryServiceLaw.Levies | MilitaryServiceLaw.ProfessionalArmies;
             theocraticEmpire.TaxationLaw = TaxationLaw.TaxCollectors;
             theocraticEmpire.TradeLaw = TradeLaw.StateMonopoly;
-            theocraticEmpire.JusticeLaw = JusticeLaw.Strict;
+            theocraticEmpire.JusticeLaw = JusticeLaw.Severe;
             theocraticEmpire.BaseCapacity = 50f;
             theocraticEmpire.BaseLegitimacy = 70f;
             theocraticEmpire.MinimumProvinces = 5;

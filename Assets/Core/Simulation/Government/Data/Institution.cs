@@ -23,7 +23,7 @@ namespace TWK.Government
         public string Description;
 
         [Tooltip("Category for organization")]
-        public InstitutionCategory Category = InstitutionCategory.Diplomacy;
+        public InstitutionCategory Category = InstitutionCategory.Politics;
 
         [Tooltip("Icon representing this institution")]
         public Sprite Icon;

@@ -526,7 +526,7 @@ namespace TWK.UI
             RefreshContractList();
         }
 
-        private void OnContractLoyaltyChanged(TWK.Government.Contract contract, float newLoyalty)
+        private void OnContractLoyaltyChanged(Contract contract, float oldLoyalty, float newLoyalty)
         {
             if (contract.ContractID == selectedContractID)
             {

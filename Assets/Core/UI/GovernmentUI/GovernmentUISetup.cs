@@ -24,7 +24,7 @@ namespace TWK.UI
         {
             if (targetCanvas == null)
             {
-                targetCanvas = FindObjectOfType<Canvas>();
+                targetCanvas = FindFirstObjectByType<Canvas>();
             }
         }
 
@@ -215,7 +215,7 @@ namespace TWK.UI
         public void CreateTestCanvas()
         {
             // Check if canvas already exists
-            Canvas existingCanvas = FindObjectOfType<Canvas>();
+            Canvas existingCanvas = FindFirstObjectByType<Canvas>();
             if (existingCanvas != null)
             {
                 targetCanvas = existingCanvas;
@@ -238,7 +238,7 @@ namespace TWK.UI
             canvasObj.AddComponent<GraphicRaycaster>();
 
             // Create EventSystem if it doesn't exist
-            if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 GameObject eventSystemObj = new GameObject("EventSystem");
                 eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();

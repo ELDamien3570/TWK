@@ -15,8 +15,8 @@ namespace TWK.UI.Common
         [Header("Display Settings")]
         [SerializeField] private TextMeshProUGUI modifierListText;
 
-        [Tooltip("If true, groups modifiers by source (culture, religion, events)")]
-        [SerializeField] private bool groupBySource = true;
+      //  [Tooltip("If true, groups modifiers by source (culture, religion, events)")]  
+       // [SerializeField] private bool groupBySource = true;
 
         [Tooltip("If true, shows the source of each modifier")]
         [SerializeField] private bool showSource = true;
