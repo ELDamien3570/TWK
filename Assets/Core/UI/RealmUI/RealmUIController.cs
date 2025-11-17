@@ -522,15 +522,28 @@ namespace TWK.UI
 
             ClearContainer(officersContainer);
 
-            Debug.Log($"[RealmUIController] Spawning {viewModel.Officers.Count} officer UI items");
+            Debug.Log($"[RealmUIController] Spawning {viewModel.Officers.Count} officer UI items into container: {officersContainer.name}");
+            Debug.Log($"[RealmUIController] Container active: {officersContainer.gameObject.activeInHierarchy}, Child count before spawn: {officersContainer.childCount}");
 
+            int spawnedCount = 0;
             foreach (var officer in viewModel.Officers)
             {
                 var item = Instantiate(officerItemPrefab, officersContainer);
 
+                if (item == null)
+                {
+                    Debug.LogError($"[RealmUIController] Failed to instantiate officer item prefab!");
+                    continue;
+                }
+
+                item.SetActive(true);
+                spawnedCount++;
+
                 var nameText = item.transform.Find("OfficeName")?.GetComponent<TextMeshProUGUI>();
                 if (nameText != null)
                     nameText.text = officer.OfficeName;
+                else
+                    Debug.LogWarning($"[RealmUIController] Could not find 'OfficeName' TextMeshProUGUI in officer item prefab");
 
                 var holderText = item.transform.Find("Holder")?.GetComponent<TextMeshProUGUI>();
                 if (holderText != null)
@@ -538,14 +551,20 @@ namespace TWK.UI
                     holderText.text = officer.IsFilled ? officer.HolderName : "<i>Vacant</i>";
                     holderText.color = officer.IsFilled ? Color.white : Color.gray;
                 }
+                else
+                    Debug.LogWarning($"[RealmUIController] Could not find 'Holder' TextMeshProUGUI in officer item prefab");
 
                 var salaryText = item.transform.Find("Salary")?.GetComponent<TextMeshProUGUI>();
                 if (salaryText != null)
                     salaryText.text = $"Salary: {officer.Salary:N0}g";
+                else
+                    Debug.LogWarning($"[RealmUIController] Could not find 'Salary' TextMeshProUGUI in officer item prefab");
 
                 spawnedItems.Add(item);
-                Debug.Log($"[RealmUIController] Spawned officer UI: {officer.OfficeName}, Holder: {officer.HolderName}");
+                Debug.Log($"[RealmUIController] Spawned officer UI item #{spawnedCount}: {officer.OfficeName}, Active: {item.activeSelf}, Parent: {item.transform.parent.name}");
             }
+
+            Debug.Log($"[RealmUIController] Finished spawning officers. Container child count: {officersContainer.childCount}, SpawnedItems list count: {spawnedItems.Count}");
         }
 
         private void RefreshVassalLoyalty()
@@ -642,19 +661,20 @@ namespace TWK.UI
                 }
             }
 
-            // Spawn demographic items for cultures by population size
+            // Spawn demographic items for cultures by population (total counts)
             if (byPopulationContainer != null && demographicItemPrefab != null && viewModel.CulturesByPopulation != null)
             {
+                Debug.Log($"[RealmUIController] Spawning {viewModel.CulturesByPopulation.Count} culture by population items");
                 foreach (var item in viewModel.CulturesByPopulation)
                 {
-                    string classMame = ""; // Need to add helpper method to get population class name when searching culture by population size
-                    SpawnDemographicItem(byPopulationContainer, item.CultureName, classMame, item.TotalPopulation, item.Percentage);
+                    SpawnDemographicItem(byPopulationContainer, item.CultureName, $"{item.TotalPopulation:N0} people", item.TotalPopulation, item.Percentage);
                 }
             }
 
             // Spawn demographic items for cultures by class
             if (byClassContainer != null && demographicItemPrefab != null && viewModel.CulturesByClass != null)
             {
+                Debug.Log($"[RealmUIController] Spawning {viewModel.CulturesByClass.Count} culture by class items");
                 foreach (var item in viewModel.CulturesByClass)
                 {
                     SpawnDemographicItem(byClassContainer, item.CultureName, item.ClassName, item.Population, item.Percentage);
@@ -689,19 +709,20 @@ namespace TWK.UI
                 }
             }
 
-            // Spawn demographic items for religions by population size
+            // Spawn demographic items for religions by population (total counts)
             if (byPopulationContainer != null && demographicItemPrefab != null && viewModel.ReligionsByPopulation != null)
             {
+                Debug.Log($"[RealmUIController] Spawning {viewModel.ReligionsByPopulation.Count} religion by population items");
                 foreach (var item in viewModel.ReligionsByPopulation)
                 {
-                    string popClass = ""; // Need to add helpper method to get population class name when searching religion by population size
-                    SpawnDemographicItem(byPopulationContainer, item.ReligionName, popClass, item.TotalPopulation, item.Percentage);
+                    SpawnDemographicItem(byPopulationContainer, item.ReligionName, $"{item.TotalPopulation:N0} people", item.TotalPopulation, item.Percentage);
                 }
             }
 
             // Spawn demographic items for religions by class
             if (byClassContainer != null && demographicItemPrefab != null && viewModel.ReligionsByClass != null)
             {
+                Debug.Log($"[RealmUIController] Spawning {viewModel.ReligionsByClass.Count} religion by class items");
                 foreach (var item in viewModel.ReligionsByClass)
                 {
                     SpawnDemographicItem(byClassContainer, item.ReligionName, item.ClassName, item.Population, item.Percentage);

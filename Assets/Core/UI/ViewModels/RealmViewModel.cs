@@ -614,54 +614,115 @@ namespace TWK.UI.ViewModels
             Debug.Log($"[RealmViewModel] Refreshing culture data for realm {_realmID} with {_realmData.DirectlyOwnedCityIDs.Count} cities");
 
             // Aggregate culture data from all cities
-            Dictionary<CultureData, int> cultureCounts = new Dictionary<CultureData, int>();
-            int totalPop = 0;
+            Dictionary<CultureData, int> cultureTotalCounts = new Dictionary<CultureData, int>();
+            Dictionary<CultureData, Dictionary<string, int>> cultureByClass = new Dictionary<CultureData, Dictionary<string, int>>();
+            int totalRealmPop = 0;
 
             foreach (int cityID in _realmData.DirectlyOwnedCityIDs)
             {
                 var city = FindCity(cityID);
-                if (city != null)
-                {
-                    var mainCulture = city.GetMainCulture();
-                    var breakdown = city.GetCultureBreakdown();
-
-                    Debug.Log($"[RealmViewModel] City {city.Name} ({cityID}): Main culture = {mainCulture?.CultureName ?? "null"}, Breakdown count = {breakdown?.Count ?? 0}");
-
-                    if (breakdown != null)
-                    {
-                        foreach (var kvp in breakdown)
-                        {
-                            var culture = kvp.Key;
-                            var (count, percentage) = kvp.Value;
-
-                            if (!cultureCounts.ContainsKey(culture))
-                                cultureCounts[culture] = 0;
-                            cultureCounts[culture] += count;
-                            totalPop += count;
-
-                            Debug.Log($"[RealmViewModel]   - Culture: {culture.CultureName}, Count: {count}, Percentage: {percentage}%");
-                        }
-                    }
-                }
-                else
+                if (city == null)
                 {
                     Debug.LogWarning($"[RealmViewModel] City {cityID} not found");
+                    continue;
+                }
+
+                var breakdown = city.GetCultureBreakdown();
+                Debug.Log($"[RealmViewModel] City {city.Name} ({cityID}): Breakdown count = {breakdown?.Count ?? 0}");
+
+                if (breakdown != null)
+                {
+                    foreach (var kvp in breakdown)
+                    {
+                        var culture = kvp.Key;
+                        var (count, percentage) = kvp.Value;
+
+                        // Add to "By City" list
+                        CulturesByCity.Add(new CultureDemographicDisplay
+                        {
+                            CityName = city.Name,
+                            CultureName = culture.CultureName,
+                            Population = count,
+                            Percentage = percentage
+                        });
+
+                        // Aggregate for "By Population" (total counts)
+                        if (!cultureTotalCounts.ContainsKey(culture))
+                            cultureTotalCounts[culture] = 0;
+                        cultureTotalCounts[culture] += count;
+                        totalRealmPop += count;
+
+                        // Get class breakdown for this culture in this city
+                        if (PopulationManager.Instance != null)
+                        {
+                            var populations = PopulationManager.Instance.GetPopulationsInCity(cityID);
+                            foreach (var pop in populations)
+                            {
+                                if (pop.Culture == culture)
+                                {
+                                    string className = pop.Archetype.ToString();
+
+                                    if (!cultureByClass.ContainsKey(culture))
+                                        cultureByClass[culture] = new Dictionary<string, int>();
+
+                                    if (!cultureByClass[culture].ContainsKey(className))
+                                        cultureByClass[culture][className] = 0;
+
+                                    cultureByClass[culture][className] += pop.Count;
+                                }
+                            }
+                        }
+
+                        Debug.Log($"[RealmViewModel]   - Culture: {culture.CultureName}, Count: {count}, Percentage: {percentage}%");
+                    }
+                }
+            }
+
+            // Populate "By Population" list (sorted by total count)
+            foreach (var kvp in cultureTotalCounts.OrderByDescending(x => x.Value))
+            {
+                float percentage = totalRealmPop > 0 ? (kvp.Value / (float)totalRealmPop) * 100f : 0f;
+                CulturesByPopulation.Add(new CulturePopulationDisplay
+                {
+                    CultureName = kvp.Key.CultureName,
+                    TotalPopulation = kvp.Value,
+                    Percentage = percentage
+                });
+            }
+
+            // Populate "By Class" list
+            foreach (var cultureKvp in cultureByClass)
+            {
+                var culture = cultureKvp.Key;
+                int cultureTotalPop = cultureTotalCounts[culture];
+
+                foreach (var classKvp in cultureKvp.Value.OrderByDescending(x => x.Value))
+                {
+                    float percentage = cultureTotalPop > 0 ? (classKvp.Value / (float)cultureTotalPop) * 100f : 0f;
+                    CulturesByClass.Add(new CultureClassDisplay
+                    {
+                        CultureName = culture.CultureName,
+                        ClassName = classKvp.Key,
+                        Population = classKvp.Value,
+                        Percentage = percentage
+                    });
                 }
             }
 
             // Find dominant culture
-            if (cultureCounts.Count > 0)
+            if (cultureTotalCounts.Count > 0)
             {
-                var dominant = cultureCounts.OrderByDescending(kvp => kvp.Value).First();
+                var dominant = cultureTotalCounts.OrderByDescending(kvp => kvp.Value).First();
                 DominantCulture = dominant.Key.CultureName;
-                CulturalUnity = totalPop > 0 ? (dominant.Value / (float)totalPop) * 100f : 0f;
-                Debug.Log($"[RealmViewModel] Dominant culture: {DominantCulture}, Unity: {CulturalUnity}%, Total Pop: {totalPop}");
+                CulturalUnity = totalRealmPop > 0 ? (dominant.Value / (float)totalRealmPop) * 100f : 0f;
+                Debug.Log($"[RealmViewModel] Dominant culture: {DominantCulture}, Unity: {CulturalUnity}%, Total Pop: {totalRealmPop}");
+                Debug.Log($"[RealmViewModel] Populated lists - By City: {CulturesByCity.Count}, By Population: {CulturesByPopulation.Count}, By Class: {CulturesByClass.Count}");
             }
             else
             {
                 DominantCulture = "No Population";
                 CulturalUnity = 0f;
-                Debug.LogWarning($"[RealmViewModel] No culture data found (total pop = {totalPop})");
+                Debug.LogWarning($"[RealmViewModel] No culture data found");
             }
         }
 
@@ -678,42 +739,118 @@ namespace TWK.UI.ViewModels
                 return;
             }
 
+            Debug.Log($"[RealmViewModel] Refreshing religion data for realm {_realmID} with {_realmData.DirectlyOwnedCityIDs.Count} cities");
+
             // Aggregate religion data from all cities
-            Dictionary<TWK.Religion.ReligionData, int> religionCounts = new Dictionary<TWK.Religion.ReligionData, int>();
-            int totalPop = 0;
+            Dictionary<TWK.Religion.ReligionData, int> religionTotalCounts = new Dictionary<TWK.Religion.ReligionData, int>();
+            Dictionary<TWK.Religion.ReligionData, Dictionary<string, int>> religionByClass = new Dictionary<TWK.Religion.ReligionData, Dictionary<string, int>>();
+            int totalRealmPop = 0;
 
             foreach (int cityID in _realmData.DirectlyOwnedCityIDs)
             {
                 var city = FindCity(cityID);
-                if (city != null)
+                if (city == null)
                 {
-                    var mainReligion = city.GetMainReligion();
-                    var breakdown = city.GetReligionBreakdown();
+                    Debug.LogWarning($"[RealmViewModel] City {cityID} not found");
+                    continue;
+                }
 
+                var breakdown = city.GetReligionBreakdown();
+                Debug.Log($"[RealmViewModel] City {city.Name} ({cityID}): Religion breakdown count = {breakdown?.Count ?? 0}");
+
+                if (breakdown != null)
+                {
                     foreach (var kvp in breakdown)
                     {
                         var religion = kvp.Key;
                         var (count, percentage) = kvp.Value;
 
-                        if (!religionCounts.ContainsKey(religion))
-                            religionCounts[religion] = 0;
-                        religionCounts[religion] += count;
-                        totalPop += count;
+                        // Add to "By City" list
+                        ReligionsByCity.Add(new ReligionDemographicDisplay
+                        {
+                            CityName = city.Name,
+                            ReligionName = religion.ReligionName,
+                            Population = count,
+                            Percentage = percentage
+                        });
+
+                        // Aggregate for "By Population" (total counts)
+                        if (!religionTotalCounts.ContainsKey(religion))
+                            religionTotalCounts[religion] = 0;
+                        religionTotalCounts[religion] += count;
+                        totalRealmPop += count;
+
+                        // Get class breakdown for this religion in this city
+                        if (PopulationManager.Instance != null)
+                        {
+                            var populations = PopulationManager.Instance.GetPopulationsInCity(cityID);
+                            foreach (var pop in populations)
+                            {
+                                if (pop.Religion == religion)
+                                {
+                                    string className = pop.Archetype.ToString();
+
+                                    if (!religionByClass.ContainsKey(religion))
+                                        religionByClass[religion] = new Dictionary<string, int>();
+
+                                    if (!religionByClass[religion].ContainsKey(className))
+                                        religionByClass[religion][className] = 0;
+
+                                    religionByClass[religion][className] += pop.Count;
+                                }
+                            }
+                        }
+
+                        Debug.Log($"[RealmViewModel]   - Religion: {religion.ReligionName}, Count: {count}, Percentage: {percentage}%");
                     }
                 }
             }
 
-            // Find dominant religion
-            if (religionCounts.Count > 0)
+            // Populate "By Population" list (sorted by total count)
+            foreach (var kvp in religionTotalCounts.OrderByDescending(x => x.Value))
             {
-                var dominant = religionCounts.OrderByDescending(kvp => kvp.Value).First();
+                float percentage = totalRealmPop > 0 ? (kvp.Value / (float)totalRealmPop) * 100f : 0f;
+                ReligionsByPopulation.Add(new ReligionPopulationDisplay
+                {
+                    ReligionName = kvp.Key.ReligionName,
+                    TotalPopulation = kvp.Value,
+                    Percentage = percentage
+                });
+            }
+
+            // Populate "By Class" list
+            foreach (var religionKvp in religionByClass)
+            {
+                var religion = religionKvp.Key;
+                int religionTotalPop = religionTotalCounts[religion];
+
+                foreach (var classKvp in religionKvp.Value.OrderByDescending(x => x.Value))
+                {
+                    float percentage = religionTotalPop > 0 ? (classKvp.Value / (float)religionTotalPop) * 100f : 0f;
+                    ReligionsByClass.Add(new ReligionClassDisplay
+                    {
+                        ReligionName = religion.ReligionName,
+                        ClassName = classKvp.Key,
+                        Population = classKvp.Value,
+                        Percentage = percentage
+                    });
+                }
+            }
+
+            // Find dominant religion
+            if (religionTotalCounts.Count > 0)
+            {
+                var dominant = religionTotalCounts.OrderByDescending(kvp => kvp.Value).First();
                 DominantReligion = dominant.Key.ReligionName;
-                ReligiousUnity = totalPop > 0 ? (dominant.Value / (float)totalPop) * 100f : 0f;
+                ReligiousUnity = totalRealmPop > 0 ? (dominant.Value / (float)totalRealmPop) * 100f : 0f;
+                Debug.Log($"[RealmViewModel] Dominant religion: {DominantReligion}, Unity: {ReligiousUnity}%, Total Pop: {totalRealmPop}");
+                Debug.Log($"[RealmViewModel] Populated lists - By City: {ReligionsByCity.Count}, By Population: {ReligionsByPopulation.Count}, By Class: {ReligionsByClass.Count}");
             }
             else
             {
                 DominantReligion = "No Population";
                 ReligiousUnity = 0f;
+                Debug.LogWarning($"[RealmViewModel] No religion data found");
             }
         }
 
