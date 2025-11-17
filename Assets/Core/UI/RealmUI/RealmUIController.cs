@@ -931,12 +931,25 @@ namespace TWK.UI
 
         private void ClearContainer(Transform container)
         {
-            foreach (var item in spawnedItems)
+            if (container == null) return;
+
+            // Only destroy items that are children of this specific container
+            List<GameObject> itemsToRemove = new List<GameObject>();
+
+            for (int i = container.childCount - 1; i >= 0; i--)
             {
-                if (item != null)
-                    Destroy(item);
+                var child = container.GetChild(i).gameObject;
+                Destroy(child);
+                itemsToRemove.Add(child);
             }
-            spawnedItems.Clear();
+
+            // Remove destroyed items from tracking list
+            foreach (var item in itemsToRemove)
+            {
+                spawnedItems.Remove(item);
+            }
+
+            Debug.Log($"[RealmUIController] Cleared container {container.name}, destroyed {itemsToRemove.Count} items, {spawnedItems.Count} total items remaining");
         }
 
         /// <summary>
