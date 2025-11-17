@@ -180,6 +180,7 @@ namespace TWK.UI
             timeSinceLastRefresh += Time.deltaTime;
             if (timeSinceLastRefresh >= refreshInterval)
             {
+                viewModel = ViewModelService.Instance.GetCityViewModel(targetCity.CityID);
                 timeSinceLastRefresh = 0f;
                 RefreshUI();
             }
