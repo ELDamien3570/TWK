@@ -146,7 +146,7 @@ namespace TWK.UI.ViewModels
             _realm = RealmManager.Instance.GetRealm(_realmID);
             if (_realm == null)
             {
-                Debug.LogWarning($"[RealmViewModel] Realm {_realmID} not found");
+                //Debug.LogWarning($"[RealmViewModel] Realm {_realmID} not found");
                 return;
             }
 

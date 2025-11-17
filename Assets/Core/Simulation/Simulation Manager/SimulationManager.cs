@@ -72,8 +72,6 @@ namespace TWK.Core
             TestStart();
 
 
-            worldTimeManager.OnDayTick += AdvanceDayDebug; //Temporary debug hook to show population stats
-
         }
 
         #region Test Setup
