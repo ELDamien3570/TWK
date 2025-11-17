@@ -528,7 +528,7 @@ namespace TWK.UI
             int spawnedCount = 0;
             foreach (var officer in viewModel.Officers)
             {
-                var item = Instantiate(officerItemPrefab, officersContainer);
+                GameObject item = Instantiate(officerItemPrefab, officersContainer);
 
                 if (item == null)
                 {

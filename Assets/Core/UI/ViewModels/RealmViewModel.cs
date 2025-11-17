@@ -7,6 +7,7 @@ using TWK.Government;
 using TWK.Economy;
 using TWK.Cultures;
 using TWK.Agents;
+using TWK.Realms.Demographics;
 
 namespace TWK.UI.ViewModels
 {
@@ -655,7 +656,7 @@ namespace TWK.UI.ViewModels
                         // Get class breakdown for this culture in this city
                         if (PopulationManager.Instance != null)
                         {
-                            var populations = PopulationManager.Instance.GetPopulationsInCity(cityID);
+                            var populations = PopulationManager.Instance.GetPopulationsByCity(cityID);
                             foreach (var pop in populations)
                             {
                                 if (pop.Culture == culture)
@@ -668,7 +669,7 @@ namespace TWK.UI.ViewModels
                                     if (!cultureByClass[culture].ContainsKey(className))
                                         cultureByClass[culture][className] = 0;
 
-                                    cultureByClass[culture][className] += pop.Count;
+                                    cultureByClass[culture][className] += pop.PopulationCount;
                                 }
                             }
                         }
@@ -783,10 +784,10 @@ namespace TWK.UI.ViewModels
                         // Get class breakdown for this religion in this city
                         if (PopulationManager.Instance != null)
                         {
-                            var populations = PopulationManager.Instance.GetPopulationsInCity(cityID);
+                            var populations = PopulationManager.Instance.GetPopulationsByCity(cityID);
                             foreach (var pop in populations)
                             {
-                                if (pop.Religion == religion)
+                                if (pop.CurrentReligion == religion)
                                 {
                                     string className = pop.Archetype.ToString();
 
@@ -796,7 +797,7 @@ namespace TWK.UI.ViewModels
                                     if (!religionByClass[religion].ContainsKey(className))
                                         religionByClass[religion][className] = 0;
 
-                                    religionByClass[religion][className] += pop.Count;
+                                    religionByClass[religion][className] += pop.PopulationCount;
                                 }
                             }
                         }
