@@ -591,8 +591,8 @@ namespace TWK.UI.ViewModels
 
         private City FindCity(int cityID)
         {
-            var cities = GameObject.FindAnyObjectByType<City>();
-            foreach (var city in cities)
+            City[] cities = GameObject.FindObjectsByType<City>(FindObjectsSortMode.None);
+            foreach (City city in cities)
             {
                 if (city.CityID == cityID)
                     return city;

@@ -94,26 +94,22 @@ namespace TWK.Realms
                     ? $"Government of {config.RealmName}"
                     : config.GovernmentName;
 
-                var government = GovernmentManager.Instance.CreateGovernment(
-                    realm.RealmID,
-                    config.RegimeForm,
-                    config.StateStructure,
-                    govName
-                );
+                // Create government data instance
+                var government = ScriptableObject.CreateInstance<GovernmentData>();
+                government.GovernmentName = govName;
+                government.RegimeForm = config.RegimeForm;
+                government.StateStructure = config.StateStructure;
+                government.TaxationLaw = config.TaxationLaw;
+                government.BaseLegitimacy = 50f;
+                government.BaseCapacity = 30f;
 
-                if (government != null)
-                {
-                    // Set taxation law
-                    government.TaxationLaw = config.TaxationLaw;
+                // Register and assign government
+                GovernmentManager.Instance.RegisterGovernment(government);
+                GovernmentManager.Instance.SetRealmGovernment(realm.RealmID, government);
 
-                    realm.Data.GovernmentID = government.GovernmentID;
-                    Debug.Log($"[RealmSetupUtility]   - Created government: {govName} ({config.RegimeForm} {config.StateStructure})");
-                    Debug.Log($"[RealmSetupUtility]   - Set taxation law: {config.TaxationLaw}");
-                }
-                else
-                {
-                    Debug.LogWarning($"[RealmSetupUtility]   - Failed to create government");
-                }
+                realm.Data.GovernmentID = government.GetStableGovernmentID();
+                Debug.Log($"[RealmSetupUtility]   - Created government: {govName} ({config.RegimeForm} {config.StateStructure})");
+                Debug.Log($"[RealmSetupUtility]   - Set taxation law: {config.TaxationLaw}");
             }
             else
             {
@@ -186,15 +182,29 @@ namespace TWK.Realms
 
             var contract = ContractManager.Instance.CreateContract(
                 overlordRealmID,
-                vassalRealmID,
                 contractType
             );
 
             if (contract != null)
             {
+                contract.SubjectRealmID = vassalRealmID;
                 contract.GoldPercentage = goldPercentage;
                 contract.ManpowerPercentage = levyPercentage;
                 contract.CurrentLoyalty = initialLoyalty;
+
+                // Update the vassal realm's overlord contract reference
+                var vassalRealm = RealmManager.Instance?.GetRealm(vassalRealmID);
+                if (vassalRealm != null)
+                {
+                    vassalRealm.Data.OverlordContractID = contract.ContractID;
+                }
+
+                // Add contract to overlord's vassal list
+                var overlordRealm = RealmManager.Instance?.GetRealm(overlordRealmID);
+                if (overlordRealm != null)
+                {
+                    overlordRealm.Data.AddVassalContract(contract.ContractID);
+                }
 
                 Debug.Log($"[RealmSetupUtility] Created {contractType} contract: Realm {vassalRealmID} -> Realm {overlordRealmID} " +
                     $"(Gold: {goldPercentage}%, Levy: {levyPercentage}%, Loyalty: {initialLoyalty}%)");
