@@ -268,6 +268,11 @@ namespace TWK.Agents
             return agentData.CurrentOfficeID;
         }
 
+
+        public int GetAgentId()
+        {
+            return agentData.AgentID;
+        }   
         // ========== DEBUG ==========
 
         [ContextMenu("Print Agent Info")]

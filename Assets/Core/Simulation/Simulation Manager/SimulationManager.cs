@@ -105,7 +105,7 @@ namespace TWK.Core
             int[] leaderIDs = new int[testAgents.Length];
             for (int i = 0; i < testAgents.Length; i++)
             {
-                leaderIDs[i] = testAgents[i].AgentID;
+                leaderIDs[i] = testAgents[i].GetAgentId();
             }
 
             // Create setup configuration
@@ -114,8 +114,8 @@ namespace TWK.Core
                 RealmName = "Test Kingdom",
                 CityIDs = cityIDs,
                 LeaderIDs = leaderIDs,
-                RegimeForm = Government.RegimeForm.Monarchy,
-                StateStructure = Government.StateStructure.Unitary,
+                RegimeForm = Government.RegimeForm.Autocratic,
+                StateStructure = Government.StateStructure.Territorial,
                 GovernmentName = "Royal Government",
                 TaxationLaw = Government.TaxationLaw.Tribute,
                 StartingGold = startingGold,
@@ -123,9 +123,10 @@ namespace TWK.Core
             };
 
             // Add starting resources
-            config.StartingResources[ResourceType.Food] = 5000;
-            config.StartingResources[ResourceType.Wood] = 2000;
-            config.StartingResources[ResourceType.Stone] = 1000;
+            config.StartingResources[ResourceType.Food] = 500000;
+            config.StartingResources[ResourceType.Gold] = 2000;
+            config.StartingResources[ResourceType.Piety] = 1000;
+            config.StartingResources[ResourceType.Prestige] = 10000;
 
             // Setup the realm
             RealmSetupUtility.SetupRealm(realm, config);
@@ -255,8 +256,8 @@ namespace TWK.Core
                 RealmName = "Duchy of Vassal",
                 CityIDs = new int[0], // Give it specific cities if needed
                 LeaderIDs = new int[0],
-                RegimeForm = Government.RegimeForm.Monarchy,
-                StateStructure = Government.StateStructure.Unitary,
+                RegimeForm = Government.RegimeForm.Pluralist,
+                StateStructure = Government.StateStructure.CityState,
                 GovernmentName = "Ducal Government",
                 StartingGold = 5000
             };

@@ -21,8 +21,8 @@ namespace TWK.Realms
             public int[] LeaderIDs;
 
             // Government settings
-            public RegimeForm RegimeForm = RegimeForm.Monarchy;
-            public StateStructure StateStructure = StateStructure.Unitary;
+            public RegimeForm RegimeForm = RegimeForm.Chiefdom;
+            public StateStructure StateStructure = StateStructure.Territorial;
             public string GovernmentName;
 
             // Economic settings
@@ -150,8 +150,8 @@ namespace TWK.Realms
             string realmName,
             int[] cityIDs = null,
             int[] leaderIDs = null,
-            RegimeForm regimeForm = RegimeForm.Monarchy,
-            StateStructure stateStructure = StateStructure.Unitary,
+            RegimeForm regimeForm = RegimeForm.Autocratic,
+            StateStructure stateStructure = StateStructure.Territorial,
             int startingGold = 1000)
         {
             var config = new RealmSetupConfig
@@ -193,7 +193,7 @@ namespace TWK.Realms
             if (contract != null)
             {
                 contract.GoldPercentage = goldPercentage;
-                contract.LevyPercentage = levyPercentage;
+                contract.ManpowerPercentage = levyPercentage;
                 contract.CurrentLoyalty = initialLoyalty;
 
                 Debug.Log($"[RealmSetupUtility] Created {contractType} contract: Realm {vassalRealmID} -> Realm {overlordRealmID} " +
@@ -225,7 +225,7 @@ namespace TWK.Realms
 
             foreach (string officeName in officeNames)
             {
-                var office = GovernmentManager.Instance.CreateOffice(realmID, officeName);
+                var office = GovernmentManager.Instance.CreateOffice(realmID, officeName, Cultures.TreeType.Economics, OfficePurpose.ManageTaxCollection);
                 if (office != null)
                 {
                     Debug.Log($"[RealmSetupUtility]   - Created office: {officeName}");

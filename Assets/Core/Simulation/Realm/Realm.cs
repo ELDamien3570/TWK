@@ -46,7 +46,7 @@ namespace TWK.Realms
                 {
                     // Find city GameObject (this is a temporary solution)
                     // TODO: Replace with proper city lookup via CityManager
-                    var cityObjects = FindObjectsOfType<City>();
+                    var cityObjects = FindFirstObjectByType<City>();
                     foreach (var city in cityObjects)
                     {
                         if (city.CityID == cityID)
