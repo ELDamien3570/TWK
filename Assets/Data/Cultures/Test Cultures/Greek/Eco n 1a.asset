@@ -28,7 +28,7 @@ MonoBehaviour:
     DurationDays: 0
     Effects:
     - Target: 4
-      EffectType: 7
+      EffectType: 0
       Value: 5
       IsPercentage: 1
       ResourceType: 0
