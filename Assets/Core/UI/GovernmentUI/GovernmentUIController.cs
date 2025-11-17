@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using TWK.UI.ViewModels;
 using TWK.Government;
+using System;
 
 namespace TWK.UI
 {
@@ -342,7 +343,7 @@ namespace TWK.UI
                 // The viewModel already has source info, use it if available
                 if (string.IsNullOrEmpty(modifier.SourceType))
                 {
-                    modifier.SourceType = modifier.Source;
+                    modifier.SourceType = modifier.SourceType.ToString();
                 }
             }
 
