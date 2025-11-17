@@ -619,6 +619,15 @@ namespace TWK.Government
         }
 
         // ========== LEGITIMACY & CAPACITY ==========
+        // DESIGN NOTE: Legitimacy and Capacity are NOT directly purchasable by the player!
+        // They change through gameplay mechanics:
+        // - Buildings provide permanent modifiers
+        // - Edicts provide temporary modifiers (cost gold to enact)
+        // - Culture/religion alignment affects legitimacy automatically
+        // - Office efficiency affects capacity
+        // - Reforms change base values but cost gold and may reduce legitimacy
+        // - Wars, events, and policies all indirectly affect these stats
+        // ModifyLegitimacy/ModifyCapacity are INTERNAL methods called by game systems only!
 
         /// <summary>
         /// Get a realm's legitimacy (0-100).

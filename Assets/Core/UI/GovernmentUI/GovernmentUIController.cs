@@ -417,23 +417,38 @@ namespace TWK.UI
         }
 
         // ========== BUTTON HANDLERS ==========
+        // DESIGN NOTE: Legitimacy, Capacity, and Revolt Risk are READ-ONLY stats.
+        // They are NOT directly purchasable - they change through gameplay:
+        // - Buildings provide modifiers
+        // - Edicts cost gold and affect stats/loyalty
+        // - Culture/religion alignment affects legitimacy
+        // - Contracts and policies affect capacity
+        // - Reforms change government structure
+        // The UI displays these stats for information only, no direct modification!
 
         private void OnReformButtonClicked()
         {
             Debug.Log($"[GovernmentUIController] Reform button clicked for realm {targetRealmID}");
-            // TODO: Open reform selection panel
+            // TODO: Open reform selection panel with dropdown selectors for:
+            // - RegimeForm (Autocratic, Pluralist, Chiefdom, Confederation)
+            // - StateStructure (Territorial, Tribal, CityState)
+            // - SuccessionLaw (Hereditary, Election, Appointment, etc.)
+            // - Administration, Mobility, etc.
+            // All as dropdowns, not text fields
         }
 
         private void OnEnactEdictClicked()
         {
             Debug.Log($"[GovernmentUIController] Enact edict button clicked for realm {targetRealmID}");
             // TODO: Open edict selection panel
+            // Edicts modify stats indirectly through modifiers and loyalty effects
         }
 
         private void OnManageBureaucracyClicked()
         {
             Debug.Log($"[GovernmentUIController] Manage bureaucracy button clicked for realm {targetRealmID}");
             // TODO: Open bureaucracy management panel
+            // Offices increase capacity through efficiency, not direct purchase
         }
 
         // ========== PUBLIC METHODS ==========
