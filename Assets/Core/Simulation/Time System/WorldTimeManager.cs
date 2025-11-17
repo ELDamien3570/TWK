@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using TWK.Realms;
 
 namespace TWK.Simulation
 {
@@ -68,17 +69,25 @@ namespace TWK.Simulation
 
         private void ProcessDailyWorldUpdates()
         {
-
+            // Collect realm taxes and tribute daily
+            if (RealmManager.Instance != null)
+            {
+                RealmManager.Instance.CollectAllRealmRevenue();
+            }
         }
 
         private void ProcessSeasonalUpdates()
         {
-
+            // Pay office salaries quarterly (4 seasons per year)
+            if (RealmManager.Instance != null)
+            {
+                RealmManager.Instance.PayAllOfficeSalaries();
+            }
         }
 
         private void ProcessYearlyUpdates()
         {
-
+            // Yearly world updates can go here
         }
     }
 }
