@@ -267,7 +267,7 @@ namespace TWK.Realms
 
         /// <summary>
         /// Pay office salaries to all office holders.
-        /// Called monthly.
+        /// Called seasonally (4 times per year).
         /// </summary>
         public void PayOfficeSalaries()
         {
@@ -287,12 +287,23 @@ namespace TWK.Realms
                     // Try to pay salary from realm treasury
                     if (SpendResource(ResourceType.Gold, office.MonthlySalary, -1))
                     {
-                        // TODO: Add to agent's personal ledger when Phase 7B is implemented
-                        Debug.Log($"[RealmTreasury] Paid {office.MonthlySalary} gold salary to office holder {office.AssignedAgentID} for {office.OfficeName}");
+                        // Transfer to agent's personal ledger via AgentManager
+                        if (TWK.Agents.AgentManager.Instance != null)
+                        {
+                            var ledger = TWK.Agents.AgentManager.Instance.GetAgentLedger(office.AssignedAgentID);
+                            if (ledger != null)
+                            {
+                                ledger.ReceiveSalary(office.MonthlySalary);
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"[RealmTreasury] Could not find ledger for agent {office.AssignedAgentID} to pay salary for {office.OfficeName}");
+                            }
+                        }
                     }
                     else
                     {
-                        Debug.LogWarning($"[RealmTreasury] Insufficient funds to pay salary for {office.OfficeName}");
+                        Debug.LogWarning($"[RealmTreasury] Insufficient funds to pay salary for {office.OfficeName} (agent {office.AssignedAgentID})");
                     }
                 }
             }
