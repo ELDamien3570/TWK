@@ -334,24 +334,28 @@ namespace TWK.UI
             if (modifierDisplayPanel == null)
                 return;
 
-            // Get all active modifiers for this government
-            var allModifiers = new List<TWK.Modifiers.Modifier>(viewModel.ActiveModifiers);
+            // Get all active modifiers directly from GovernmentManager (not from ViewModel)
+            // ViewModel has ModifierDisplay objects which are simplified DTOs
+            if (GovernmentManager.Instance == null)
+                return;
+
+            var allModifiers = GovernmentManager.Instance.GetGovernmentModifiers(targetRealmID);
 
             // Tag modifiers with their source type for better display
             foreach (var modifier in allModifiers)
             {
-                // The viewModel already has source info, use it if available
+                // Ensure SourceType is set for display
                 if (string.IsNullOrEmpty(modifier.SourceType))
                 {
-                    modifier.SourceType = modifier.SourceType.ToString();
+                    modifier.SourceType = "Government";
                 }
             }
 
             // Display modifiers grouped by category
             // Separate modifiers by source for better organization
-            var edictModifiers = allModifiers.FindAll(m => m.Source?.Contains("Edict") == true || m.SourceType?.Contains("Edict") == true);
-            var buildingModifiers = allModifiers.FindAll(m => m.Source?.Contains("Building") == true || m.SourceType?.Contains("Building") == true);
-            var cultureModifiers = allModifiers.FindAll(m => m.Source?.Contains("Culture") == true || m.SourceType?.Contains("Culture") == true);
+            var edictModifiers = allModifiers.FindAll(m => m.SourceType?.Contains("Edict") == true);
+            var buildingModifiers = allModifiers.FindAll(m => m.SourceType?.Contains("Building") == true);
+            var cultureModifiers = allModifiers.FindAll(m => m.SourceType?.Contains("Culture") == true);
             var otherModifiers = allModifiers.FindAll(m =>
                 !edictModifiers.Contains(m) &&
                 !buildingModifiers.Contains(m) &&
@@ -361,7 +365,7 @@ namespace TWK.UI
                 cultureModifiers: cultureModifiers.Count > 0 ? cultureModifiers : null,
                 religionModifiers: null, // Religion modifiers could be added later
                 eventModifiers: edictModifiers.Count > 0 ? edictModifiers : null,
-                buildingModifiers: buildingModifiers.Count > 0 ? buildingModifiers : otherModifiers.Count > 0 ? otherModifiers : buildingModifiers
+                buildingModifiers: buildingModifiers.Count > 0 ? buildingModifiers : otherModifiers.Count > 0 ? otherModifiers : null
             );
         }
 
