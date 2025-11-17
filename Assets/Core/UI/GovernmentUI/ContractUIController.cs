@@ -172,7 +172,7 @@ namespace TWK.UI
             {
                 ContractManager.Instance.OnContractCreated += OnContractCreated;
                 ContractManager.Instance.OnContractTerminated += OnContractTerminated;
-                ContractManager.Instance.OnLoyaltyChanged += OnContractLoyaltyChanged;
+                ContractManager.Instance.OnLoyaltyChanged += OnLoyaltyChanged;
             }
         }
 
@@ -198,7 +198,7 @@ namespace TWK.UI
             {
                 ContractManager.Instance.OnContractCreated -= OnContractCreated;
                 ContractManager.Instance.OnContractTerminated -= OnContractTerminated;
-                ContractManager.Instance.OnLoyaltyChanged -= OnContractLoyaltyChanged;
+                ContractManager.Instance.OnLoyaltyChanged -= OnLoyaltyChanged;
             }
 
             // Clean up listeners
@@ -526,7 +526,7 @@ namespace TWK.UI
             RefreshContractList();
         }
 
-        private void OnContractLoyaltyChanged(Contract contract, float oldLoyalty, float newLoyalty)
+        private void OnLoyaltyChanged(TWK.Government.Contract contract, float newLoyalty)
         {
             if (contract.ContractID == selectedContractID)
             {

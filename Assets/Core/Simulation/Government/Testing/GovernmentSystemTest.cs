@@ -277,11 +277,11 @@ namespace TWK.Testing
 
             // Create test contracts
             var vassalContract = ContractManager.Instance.CreateContract(testRealmID, ContractType.Vassal);
-            vassalContract.SetSubjectRealm(testRealmID + 1);
+            ContractManager.Instance.SetContractSubject(vassalContract, subjectRealmID: testRealmID + 1);
             Log($"Created Vassal contract {vassalContract.ContractID} for realm {testRealmID}");
 
             var governorContract = ContractManager.Instance.CreateContract(testRealmID, ContractType.Governor);
-            governorContract.SetSubjectAgent(100); // Test agent ID
+            ContractManager.Instance.SetContractSubject(governorContract, subjectAgentID: 100); // Test agent ID
             Log($"Created Governor contract {governorContract.ContractID} for realm {testRealmID}");
 
             // Test contract retrieval
