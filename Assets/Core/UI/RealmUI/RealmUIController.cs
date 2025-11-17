@@ -9,7 +9,7 @@ namespace TWK.UI
 {
     /// <summary>
     /// Main controller for realm management UI.
-    /// Displays realm information using RealmViewModel across 6 tabs.
+    /// Displays realm information using RealmViewModel across 7 tabs.
     /// </summary>
     public class RealmUIController : MonoBehaviour
     {
@@ -24,6 +24,7 @@ namespace TWK.UI
         [SerializeField] private GameObject economicsTab;
         [SerializeField] private GameObject governmentTab;
         [SerializeField] private GameObject cultureReligionTab;
+        [SerializeField] private GameObject militaryTab;
         [SerializeField] private GameObject diplomacyTab;
 
         [Header("Tab Buttons")]
@@ -32,6 +33,7 @@ namespace TWK.UI
         [SerializeField] private Button economicsTabButton;
         [SerializeField] private Button governmentTabButton;
         [SerializeField] private Button cultureReligionTabButton;
+        [SerializeField] private Button militaryTabButton;
         [SerializeField] private Button diplomacyTabButton;
 
         // ========== TAB 1: MAIN INFO ==========
@@ -102,7 +104,13 @@ namespace TWK.UI
         [SerializeField] private Transform byPopulationContainer;
         [SerializeField] private Transform byClassContainer;
 
-        // ========== TAB 6: DIPLOMACY ==========
+        // ========== TAB 6: MILITARY ==========
+        [Header("Military Tab")]
+        [SerializeField] private TextMeshProUGUI militarySummaryText;
+        [SerializeField] private Transform warPartiesContainer;
+        [SerializeField] private GameObject warPartyItemPrefab;
+
+        // ========== TAB 7: DIPLOMACY ==========
         [Header("Diplomacy Tab")]
         [SerializeField] private TextMeshProUGUI diplomacyPlaceholderText;
 
@@ -147,6 +155,7 @@ namespace TWK.UI
             economicsTabButton?.onClick.RemoveAllListeners();
             governmentTabButton?.onClick.RemoveAllListeners();
             cultureReligionTabButton?.onClick.RemoveAllListeners();
+            militaryTabButton?.onClick.RemoveAllListeners();
             diplomacyTabButton?.onClick.RemoveAllListeners();
 
             mainTabButton?.onClick.AddListener(() => ShowTab(mainTab));
@@ -154,6 +163,7 @@ namespace TWK.UI
             economicsTabButton?.onClick.AddListener(() => ShowTab(economicsTab));
             governmentTabButton?.onClick.AddListener(() => ShowTab(governmentTab));
             cultureReligionTabButton?.onClick.AddListener(() => ShowTab(cultureReligionTab));
+            militaryTabButton?.onClick.AddListener(() => ShowTab(militaryTab));
             diplomacyTabButton?.onClick.AddListener(() => ShowTab(diplomacyTab));
         }
 
@@ -205,6 +215,7 @@ namespace TWK.UI
             economicsTabButton?.onClick.RemoveAllListeners();
             governmentTabButton?.onClick.RemoveAllListeners();
             cultureReligionTabButton?.onClick.RemoveAllListeners();
+            militaryTabButton?.onClick.RemoveAllListeners();
             diplomacyTabButton?.onClick.RemoveAllListeners();
 
             bureaucracyButton?.onClick.RemoveAllListeners();
@@ -229,6 +240,7 @@ namespace TWK.UI
             economicsTab?.SetActive(false);
             governmentTab?.SetActive(false);
             cultureReligionTab?.SetActive(false);
+            militaryTab?.SetActive(false);
             diplomacyTab?.SetActive(false);
 
             // Show selected tab
@@ -250,6 +262,8 @@ namespace TWK.UI
                 RefreshGovernmentTab();
             else if (activeTab == cultureReligionTab)
                 RefreshCultureReligionTab();
+            else if (activeTab == militaryTab)
+                RefreshMilitaryTab();
             else if (activeTab == diplomacyTab)
                 RefreshDiplomacyTab();
         }
@@ -261,6 +275,7 @@ namespace TWK.UI
             if (economicsTab != null && economicsTab.activeSelf) return economicsTab;
             if (governmentTab != null && governmentTab.activeSelf) return governmentTab;
             if (cultureReligionTab != null && cultureReligionTab.activeSelf) return cultureReligionTab;
+            if (militaryTab != null && militaryTab.activeSelf) return militaryTab;
             if (diplomacyTab != null && diplomacyTab.activeSelf) return diplomacyTab;
             return null;
         }
@@ -632,7 +647,33 @@ namespace TWK.UI
             RefreshCultureReligionTab();
         }
 
-        // ========== TAB 6: DIPLOMACY ==========
+        // ========== TAB 6: MILITARY ==========
+
+        private void RefreshMilitaryTab()
+        {
+            // Summary text
+            if (militarySummaryText != null)
+            {
+                militarySummaryText.text = "<b>Military Overview</b>\n\n" +
+                    "War Parties: Coming Soon\n" +
+                    "Total Forces: TBD\n" +
+                    "Active Campaigns: TBD";
+            }
+
+            // War parties list (placeholder - will be implemented when war party system exists)
+            if (warPartiesContainer != null && warPartyItemPrefab != null)
+            {
+                ClearContainer(warPartiesContainer);
+
+                // TODO: When war party system is implemented:
+                // 1. Get war parties from realm/military manager
+                // 2. Instantiate warPartyItemPrefab for each party
+                // 3. Display party name, size, location, status, commander, etc.
+                // 4. Add click handlers to view/manage parties
+            }
+        }
+
+        // ========== TAB 7: DIPLOMACY ==========
 
         private void RefreshDiplomacyTab()
         {
