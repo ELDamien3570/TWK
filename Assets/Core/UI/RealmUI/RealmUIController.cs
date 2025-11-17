@@ -642,12 +642,13 @@ namespace TWK.UI
                 }
             }
 
-            // Spawn demographic items for cultures by population archetype
+            // Spawn demographic items for cultures by population size
             if (byPopulationContainer != null && demographicItemPrefab != null && viewModel.CulturesByPopulation != null)
             {
                 foreach (var item in viewModel.CulturesByPopulation)
                 {
-                    SpawnDemographicItem(byPopulationContainer, item.CultureName, item.PopulationArchetype, item.Count, item.Percentage);
+                    string classMame = ""; // Need to add helpper method to get population class name when searching culture by population size
+                    SpawnDemographicItem(byPopulationContainer, item.CultureName, classMame, item.TotalPopulation, item.Percentage);
                 }
             }
 
@@ -688,12 +689,13 @@ namespace TWK.UI
                 }
             }
 
-            // Spawn demographic items for religions by population archetype
+            // Spawn demographic items for religions by population size
             if (byPopulationContainer != null && demographicItemPrefab != null && viewModel.ReligionsByPopulation != null)
             {
                 foreach (var item in viewModel.ReligionsByPopulation)
                 {
-                    SpawnDemographicItem(byPopulationContainer, item.ReligionName, item.PopulationArchetype, item.Count, item.Percentage);
+                    string popClass = ""; // Need to add helpper method to get population class name when searching religion by population size
+                    SpawnDemographicItem(byPopulationContainer, item.ReligionName, popClass, item.TotalPopulation, item.Percentage);
                 }
             }
 
