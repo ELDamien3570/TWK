@@ -151,30 +151,15 @@ namespace TWK.Core
             Debug.Log("[SimulationManager] Test realm setup complete!");
         }
 
-        public void AdvanceDayDebug() //Test Method
-        {
-            foreach (var city in testCities)
-            {
-                int totalPop = city.GetTotalPopulation();
-               // Debug.Log($"City: {city.Name} | Total Population: {totalPop}");
-
-                var breakdown = city.GetPopulationBreakdown();
-
-                string breakdownString = $"City: {city.Name} | Population Breakdown: ";    
-                foreach (var kvp in breakdown)
-                {
-                    breakdownString += $"{kvp.Key}: {kvp.Value}, ";
-                    
-                }
-                //Debug.Log(breakdownString);
-            }
-        }
-        
-        
         private void TestStart()
         {
-            
+            // Initialize test religion
+            if (testReligion != null)
+            {
+                ReligionManager.Instance.RegisterReligion(testReligion);
+            }
 
+            // Initialize realms
             if (testRealms.Length > 0)
             {
                 foreach (var realm in testRealms)
@@ -183,33 +168,28 @@ namespace TWK.Core
                 }
             }
 
-            if (testReligion != null)
-            {
-                ReligionManager.Instance.RegisterReligion(testReligion);
-            }
-
+            // Initialize cities
             if (testCities.Length > 0)
             {
                 foreach (var city in testCities)
                 {
                     city.Initialize(worldTimeManager);
-                    //city.BuildFarm(testFarmData, Vector3.zero);
 
-                   
-
-                    // Register a few population groups per city
-                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Laborer, 14671, testCulture, testReligion, 25 );
-                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Artisan, 142, testCulture, testReligion, 32);
-                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Noble, 68, testCulture, testReligion, 43);
-                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Merchant, 24, testCulture, testReligion, 38);
-                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Clergy, 38, testCulture, testReligion, 29);
-                    PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Slave, 1483, testCulture, testReligion, 21);
-
-                    // Explicitly recalculate city culture after populations are registered
-                    // This ensures culture is calculated even if event subscription timing is off
-                    if (CultureManager.Instance != null)
+                    // Register test populations per city
+                    if (PopulationManager.Instance != null && testCulture != null && testReligion != null)
                     {
-                        CultureManager.Instance.CalculateCityCulture(city.CityID);
+                        PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Laborer, 14671, testCulture, testReligion, 25);
+                        PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Artisan, 142, testCulture, testReligion, 32);
+                        PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Noble, 68, testCulture, testReligion, 43);
+                        PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Merchant, 24, testCulture, testReligion, 38);
+                        PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Clergy, 38, testCulture, testReligion, 29);
+                        PopulationManager.Instance.RegisterPopulationWithReligion(city.CityID, PopulationArchetypes.Slave, 1483, testCulture, testReligion, 21);
+
+                        // Recalculate city culture after populations are registered
+                        if (CultureManager.Instance != null)
+                        {
+                            CultureManager.Instance.CalculateCityCulture(city.CityID);
+                        }
                     }
 
                     // Register city with ViewModelService
@@ -218,7 +198,7 @@ namespace TWK.Core
                 }
             }
 
-
+            // Initialize agents
             if (testAgents.Length > 0)
             {
                 foreach (var agent in testAgents)
@@ -227,7 +207,7 @@ namespace TWK.Core
                 }
             }
 
-            // Auto-setup realms if enabled
+            // Auto-setup realms if enabled (assigns cities, creates government, etc.)
             if (autoSetupRealms && testRealms.Length > 0)
             {
                 SetupTestRealm();

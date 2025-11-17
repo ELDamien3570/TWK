@@ -404,6 +404,8 @@ namespace TWK.UI.ViewModels
         {
             TopEarningCities.Clear();
             TopEarningBuildings.Clear();
+            TotalProduction.Clear();
+            TotalConsumption.Clear();
 
             // Calculate city incomes
             if (_realmData.DirectlyOwnedCityIDs != null)
@@ -425,6 +427,20 @@ namespace TWK.UI.ViewModels
                             GoldProduction = production,
                             Population = GetCityPopulation(cityID)
                         });
+
+                        // Aggregate production and consumption
+                        if (city.Data?.EconomySnapshot != null)
+                        {
+                            foreach (var kvp in city.Data.EconomySnapshot.Production)
+                            {
+                                AddToResourceDict(TotalProduction, kvp.Key, kvp.Value);
+                            }
+
+                            foreach (var kvp in city.Data.EconomySnapshot.Consumption)
+                            {
+                                AddToResourceDict(TotalConsumption, kvp.Key, kvp.Value);
+                            }
+                        }
                     }
                 }
 
@@ -569,10 +585,50 @@ namespace TWK.UI.ViewModels
             CulturesByPopulation.Clear();
             CulturesByClass.Clear();
 
-            // TODO: Implement when culture demographics are available
-            // Placeholder values
-            DominantCulture = "Unknown";
-            CulturalUnity = 50f;
+            if (_realmData.DirectlyOwnedCityIDs == null || _realmData.DirectlyOwnedCityIDs.Count == 0)
+            {
+                DominantCulture = "No Cities";
+                CulturalUnity = 0f;
+                return;
+            }
+
+            // Aggregate culture data from all cities
+            Dictionary<CultureData, int> cultureCounts = new Dictionary<CultureData, int>();
+            int totalPop = 0;
+
+            foreach (int cityID in _realmData.DirectlyOwnedCityIDs)
+            {
+                var city = FindCity(cityID);
+                if (city != null)
+                {
+                    var mainCulture = city.GetMainCulture();
+                    var breakdown = city.GetCultureBreakdown();
+
+                    foreach (var kvp in breakdown)
+                    {
+                        var culture = kvp.Key;
+                        var (count, percentage) = kvp.Value;
+
+                        if (!cultureCounts.ContainsKey(culture))
+                            cultureCounts[culture] = 0;
+                        cultureCounts[culture] += count;
+                        totalPop += count;
+                    }
+                }
+            }
+
+            // Find dominant culture
+            if (cultureCounts.Count > 0)
+            {
+                var dominant = cultureCounts.OrderByDescending(kvp => kvp.Value).First();
+                DominantCulture = dominant.Key.CultureName;
+                CulturalUnity = totalPop > 0 ? (dominant.Value / (float)totalPop) * 100f : 0f;
+            }
+            else
+            {
+                DominantCulture = "No Population";
+                CulturalUnity = 0f;
+            }
         }
 
         private void RefreshReligionData()
@@ -581,10 +637,50 @@ namespace TWK.UI.ViewModels
             ReligionsByPopulation.Clear();
             ReligionsByClass.Clear();
 
-            // TODO: Implement when religion demographics are available
-            // Placeholder values
-            DominantReligion = "Unknown";
-            ReligiousUnity = 50f;
+            if (_realmData.DirectlyOwnedCityIDs == null || _realmData.DirectlyOwnedCityIDs.Count == 0)
+            {
+                DominantReligion = "No Cities";
+                ReligiousUnity = 0f;
+                return;
+            }
+
+            // Aggregate religion data from all cities
+            Dictionary<TWK.Religion.ReligionData, int> religionCounts = new Dictionary<TWK.Religion.ReligionData, int>();
+            int totalPop = 0;
+
+            foreach (int cityID in _realmData.DirectlyOwnedCityIDs)
+            {
+                var city = FindCity(cityID);
+                if (city != null)
+                {
+                    var mainReligion = city.GetMainReligion();
+                    var breakdown = city.GetReligionBreakdown();
+
+                    foreach (var kvp in breakdown)
+                    {
+                        var religion = kvp.Key;
+                        var (count, percentage) = kvp.Value;
+
+                        if (!religionCounts.ContainsKey(religion))
+                            religionCounts[religion] = 0;
+                        religionCounts[religion] += count;
+                        totalPop += count;
+                    }
+                }
+            }
+
+            // Find dominant religion
+            if (religionCounts.Count > 0)
+            {
+                var dominant = religionCounts.OrderByDescending(kvp => kvp.Value).First();
+                DominantReligion = dominant.Key.ReligionName;
+                ReligiousUnity = totalPop > 0 ? (dominant.Value / (float)totalPop) * 100f : 0f;
+            }
+            else
+            {
+                DominantReligion = "No Population";
+                ReligiousUnity = 0f;
+            }
         }
 
         // ========== HELPER METHODS ==========
