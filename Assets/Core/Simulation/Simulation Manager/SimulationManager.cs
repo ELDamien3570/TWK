@@ -27,6 +27,12 @@ namespace TWK.Core
         [SerializeField] private CultureData testCulture;
         [SerializeField] private ReligionData testReligion;
 
+        [Header("Realm Setup Options")]
+        [Tooltip("Automatically setup realms with government, cities, and treasury on start")]
+        [SerializeField] private bool autoSetupRealms = false;
+        [SerializeField] private int startingGold = 10000;
+        [SerializeField] private bool createTestOffices = true;
+
         private void Start()
         {
             if (worldTimeManager == null)
@@ -71,6 +77,79 @@ namespace TWK.Core
         }
 
         #region Test Setup
+
+        /// <summary>
+        /// Setup a test realm with government, cities, and treasury.
+        /// Call this after realms and cities are initialized.
+        /// Example usage in TestStart() or via Context Menu.
+        /// </summary>
+        [ContextMenu("Setup Test Realm")]
+        public void SetupTestRealm()
+        {
+            if (testRealms.Length == 0)
+            {
+                Debug.LogWarning("[SimulationManager] No test realms available");
+                return;
+            }
+
+            var realm = testRealms[0];
+
+            // Collect city IDs
+            int[] cityIDs = new int[testCities.Length];
+            for (int i = 0; i < testCities.Length; i++)
+            {
+                cityIDs[i] = testCities[i].CityID;
+            }
+
+            // Collect leader IDs
+            int[] leaderIDs = new int[testAgents.Length];
+            for (int i = 0; i < testAgents.Length; i++)
+            {
+                leaderIDs[i] = testAgents[i].AgentID;
+            }
+
+            // Create setup configuration
+            var config = new RealmSetupUtility.RealmSetupConfig
+            {
+                RealmName = "Test Kingdom",
+                CityIDs = cityIDs,
+                LeaderIDs = leaderIDs,
+                RegimeForm = Government.RegimeForm.Monarchy,
+                StateStructure = Government.StateStructure.Unitary,
+                GovernmentName = "Royal Government",
+                TaxationLaw = Government.TaxationLaw.Tribute,
+                StartingGold = startingGold,
+                CultureID = testCulture != null ? testCulture.GetCultureID() : -1
+            };
+
+            // Add starting resources
+            config.StartingResources[ResourceType.Food] = 5000;
+            config.StartingResources[ResourceType.Wood] = 2000;
+            config.StartingResources[ResourceType.Stone] = 1000;
+
+            // Setup the realm
+            RealmSetupUtility.SetupRealm(realm, config);
+
+            // Add some offices if enabled
+            if (createTestOffices)
+            {
+                RealmSetupUtility.AddOffices(realm.RealmID,
+                    "Chancellor",
+                    "Marshal",
+                    "Steward",
+                    "Spymaster"
+                );
+
+                // Assign first agent to Chancellor if available
+                if (leaderIDs.Length > 0)
+                {
+                    RealmSetupUtility.AssignOffice(realm.RealmID, "Chancellor", leaderIDs[0]);
+                }
+            }
+
+            Debug.Log("[SimulationManager] Test realm setup complete!");
+        }
+
         public void AdvanceDayDebug() //Test Method
         {
             foreach (var city in testCities)
@@ -146,7 +225,55 @@ namespace TWK.Core
                     agent.Initialize(worldTimeManager);
                 }
             }
-            
+
+            // Auto-setup realms if enabled
+            if (autoSetupRealms && testRealms.Length > 0)
+            {
+                SetupTestRealm();
+            }
+        }
+
+        /// <summary>
+        /// Create a vassal realm for testing.
+        /// Example: CreateTestVassal(overlordRealmID, "Duchy of Test", new int[] { cityID })
+        /// </summary>
+        [ContextMenu("Create Test Vassal Realm")]
+        public void CreateTestVassalExample()
+        {
+            if (testRealms.Length < 2)
+            {
+                Debug.LogWarning("[SimulationManager] Need at least 2 test realms to create vassal relationship");
+                return;
+            }
+
+            var overlord = testRealms[0];
+            var vassal = testRealms[1];
+
+            // Setup vassal realm
+            var config = new RealmSetupUtility.RealmSetupConfig
+            {
+                RealmName = "Duchy of Vassal",
+                CityIDs = new int[0], // Give it specific cities if needed
+                LeaderIDs = new int[0],
+                RegimeForm = Government.RegimeForm.Monarchy,
+                StateStructure = Government.StateStructure.Unitary,
+                GovernmentName = "Ducal Government",
+                StartingGold = 5000
+            };
+
+            RealmSetupUtility.SetupRealm(vassal, config);
+
+            // Create vassal relationship
+            RealmSetupUtility.CreateVassalRelationship(
+                overlordRealmID: overlord.RealmID,
+                vassalRealmID: vassal.RealmID,
+                contractType: Government.ContractType.Vassal,
+                goldPercentage: 50f,
+                levyPercentage: 25f,
+                initialLoyalty: 75f
+            );
+
+            Debug.Log($"[SimulationManager] Created vassal relationship: {vassal.RealmName} -> {overlord.RealmName}");
         }
         #endregion
     }
