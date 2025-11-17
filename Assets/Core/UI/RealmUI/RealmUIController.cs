@@ -515,9 +515,14 @@ namespace TWK.UI
         private void RefreshOfficers()
         {
             if (officersContainer == null || officerItemPrefab == null)
+            {
+                Debug.LogWarning($"[RealmUIController] Cannot refresh officers - Container: {(officersContainer == null ? "NULL" : "OK")}, Prefab: {(officerItemPrefab == null ? "NULL" : "OK")}");
                 return;
+            }
 
             ClearContainer(officersContainer);
+
+            Debug.Log($"[RealmUIController] Spawning {viewModel.Officers.Count} officer UI items");
 
             foreach (var officer in viewModel.Officers)
             {
@@ -539,6 +544,7 @@ namespace TWK.UI
                     salaryText.text = $"Salary: {officer.Salary:N0}g";
 
                 spawnedItems.Add(item);
+                Debug.Log($"[RealmUIController] Spawned officer UI: {officer.OfficeName}, Holder: {officer.HolderName}");
             }
         }
 
@@ -616,13 +622,43 @@ namespace TWK.UI
             if (unityText != null)
                 unityText.text = $"<b>Cultural Unity:</b> {viewModel.CulturalUnity:F0}%";
 
-            // TODO: Populate culture demographics when data available
+            Debug.Log($"[RealmUIController] Refreshing culture view - Dominant: {viewModel.DominantCulture}, Unity: {viewModel.CulturalUnity:F0}%");
+
+            // Clear containers
             if (byCityContainer != null)
                 ClearContainer(byCityContainer);
             if (byPopulationContainer != null)
                 ClearContainer(byPopulationContainer);
             if (byClassContainer != null)
                 ClearContainer(byClassContainer);
+
+            // Spawn demographic items for cultures by city
+            if (byCityContainer != null && demographicItemPrefab != null && viewModel.CulturesByCity != null)
+            {
+                Debug.Log($"[RealmUIController] Spawning {viewModel.CulturesByCity.Count} culture by city items");
+                foreach (var item in viewModel.CulturesByCity)
+                {
+                    SpawnDemographicItem(byCityContainer, item.CityName, item.CultureName, item.Population, item.Percentage);
+                }
+            }
+
+            // Spawn demographic items for cultures by population archetype
+            if (byPopulationContainer != null && demographicItemPrefab != null && viewModel.CulturesByPopulation != null)
+            {
+                foreach (var item in viewModel.CulturesByPopulation)
+                {
+                    SpawnDemographicItem(byPopulationContainer, item.CultureName, item.PopulationArchetype, item.Count, item.Percentage);
+                }
+            }
+
+            // Spawn demographic items for cultures by class
+            if (byClassContainer != null && demographicItemPrefab != null && viewModel.CulturesByClass != null)
+            {
+                foreach (var item in viewModel.CulturesByClass)
+                {
+                    SpawnDemographicItem(byClassContainer, item.CultureName, item.ClassName, item.Population, item.Percentage);
+                }
+            }
         }
 
         private void RefreshReligionView()
@@ -633,13 +669,65 @@ namespace TWK.UI
             if (unityText != null)
                 unityText.text = $"<b>Religious Unity:</b> {viewModel.ReligiousUnity:F0}%";
 
-            // TODO: Populate religion demographics when data available
+            Debug.Log($"[RealmUIController] Refreshing religion view - Dominant: {viewModel.DominantReligion}, Unity: {viewModel.ReligiousUnity:F0}%");
+
+            // Clear containers
             if (byCityContainer != null)
                 ClearContainer(byCityContainer);
             if (byPopulationContainer != null)
                 ClearContainer(byPopulationContainer);
             if (byClassContainer != null)
                 ClearContainer(byClassContainer);
+
+            // Spawn demographic items for religions by city
+            if (byCityContainer != null && demographicItemPrefab != null && viewModel.ReligionsByCity != null)
+            {
+                foreach (var item in viewModel.ReligionsByCity)
+                {
+                    SpawnDemographicItem(byCityContainer, item.CityName, item.ReligionName, item.Population, item.Percentage);
+                }
+            }
+
+            // Spawn demographic items for religions by population archetype
+            if (byPopulationContainer != null && demographicItemPrefab != null && viewModel.ReligionsByPopulation != null)
+            {
+                foreach (var item in viewModel.ReligionsByPopulation)
+                {
+                    SpawnDemographicItem(byPopulationContainer, item.ReligionName, item.PopulationArchetype, item.Count, item.Percentage);
+                }
+            }
+
+            // Spawn demographic items for religions by class
+            if (byClassContainer != null && demographicItemPrefab != null && viewModel.ReligionsByClass != null)
+            {
+                foreach (var item in viewModel.ReligionsByClass)
+                {
+                    SpawnDemographicItem(byClassContainer, item.ReligionName, item.ClassName, item.Population, item.Percentage);
+                }
+            }
+        }
+
+        private void SpawnDemographicItem(Transform container, string primaryText, string secondaryText, int population, float percentage)
+        {
+            var item = Instantiate(demographicItemPrefab, container);
+
+            var primaryTextComponent = item.transform.Find("PrimaryText")?.GetComponent<TextMeshProUGUI>();
+            if (primaryTextComponent != null)
+                primaryTextComponent.text = primaryText;
+
+            var secondaryTextComponent = item.transform.Find("SecondaryText")?.GetComponent<TextMeshProUGUI>();
+            if (secondaryTextComponent != null)
+                secondaryTextComponent.text = secondaryText;
+
+            var populationText = item.transform.Find("Population")?.GetComponent<TextMeshProUGUI>();
+            if (populationText != null)
+                populationText.text = $"{population:N0}";
+
+            var percentageText = item.transform.Find("Percentage")?.GetComponent<TextMeshProUGUI>();
+            if (percentageText != null)
+                percentageText.text = $"{percentage:F1}%";
+
+            spawnedItems.Add(item);
         }
 
         private void OnCultureReligionToggleChanged(int value)
