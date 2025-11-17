@@ -150,7 +150,7 @@ namespace TWK.UI
         /// </summary>
         public static void SetupRegimeFormDropdown(TMP_Dropdown dropdown, TWK.Government.RegimeForm currentValue)
         {
-            PopulateEnumDropdown(dropdown, currentValue);
+            PopulateEnumDropdown<TWK.Government.RegimeForm>(dropdown, currentValue);
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace TWK.UI
         /// </summary>
         public static void SetupStateStructureDropdown(TMP_Dropdown dropdown, TWK.Government.StateStructure currentValue)
         {
-            PopulateEnumDropdown(dropdown, currentValue);
+            PopulateEnumDropdown<TWK.Government.StateStructure>(dropdown, currentValue);
         }
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace TWK.UI
         /// </summary>
         public static void SetupSuccessionLawDropdown(TMP_Dropdown dropdown, TWK.Government.SuccessionLaw currentValue)
         {
-            PopulateEnumDropdown(dropdown, currentValue);
+            PopulateEnumDropdown<TWK.Government.SuccessionLaw>(dropdown, currentValue);
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace TWK.UI
         /// </summary>
         public static void SetupTaxationLawDropdown(TMP_Dropdown dropdown, TWK.Government.TaxationLaw currentValue)
         {
-            PopulateEnumDropdown(dropdown, currentValue);
+            PopulateEnumDropdown<TWK.Government.TaxationLaw>(dropdown, currentValue);
         }
 
         // Add more specialized dropdown setups as needed for other government enums
