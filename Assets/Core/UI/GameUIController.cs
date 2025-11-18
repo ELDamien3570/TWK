@@ -39,19 +39,30 @@ namespace TWK.UI
         // ========== MENU CONTROLLERS ==========
         [Header("Menu Controllers")]
         [SerializeField] private AgentUIController agentUIController;
-        [SerializeField] private GameObject diplomacyUIController;
         [SerializeField] private GameObject realmUIController;
         [SerializeField] private GameObject cityUIController;
+        [SerializeField] private GameObject cultureTechTreeUIController;
+        [SerializeField] private GameObject religionUIController;
+        [SerializeField] private GameObject governmentUIController;
+        [SerializeField] private GameObject contractUIController;
+        [SerializeField] private GameObject bureaucracyUIController;
         [SerializeField] private GameObject debugMenuPanel;
 
         // ========== UI PANELS ==========
         [Header("Main UI")]
         [SerializeField] private GameObject mainMenuPanel;
         [SerializeField] private TextMeshProUGUI playerContextText;
+
+        [Header("Menu Buttons")]
         [SerializeField] private Button agentMenuButton;
-        [SerializeField] private Button diplomacyMenuButton;
         [SerializeField] private Button realmMenuButton;
         [SerializeField] private Button cityMenuButton;
+        [SerializeField] private Button cultureTechTreeMenuButton;
+        [SerializeField] private Button religionMenuButton;
+        [SerializeField] private Button governmentMenuButton;
+        [SerializeField] private Button contractMenuButton;
+        [SerializeField] private Button bureaucracyMenuButton;
+        [SerializeField] private Button diplomacyMenuButton;
         [SerializeField] private Button toggleDebugButton;
 
         // ========== EVENTS ==========
@@ -202,9 +213,14 @@ namespace TWK.UI
         private void SetupButtons()
         {
             agentMenuButton?.onClick.AddListener(OpenAgentMenu);
-            diplomacyMenuButton?.onClick.AddListener(OpenDiplomacyMenu);
             realmMenuButton?.onClick.AddListener(OpenRealmMenu);
             cityMenuButton?.onClick.AddListener(OpenCityMenu);
+            cultureTechTreeMenuButton?.onClick.AddListener(OpenCultureTechTreeMenu);
+            religionMenuButton?.onClick.AddListener(OpenReligionMenu);
+            governmentMenuButton?.onClick.AddListener(OpenGovernmentMenu);
+            contractMenuButton?.onClick.AddListener(OpenContractMenu);
+            bureaucracyMenuButton?.onClick.AddListener(OpenBureaucracyMenu);
+            diplomacyMenuButton?.onClick.AddListener(OpenDiplomacyMenu);
             toggleDebugButton?.onClick.AddListener(ToggleDebugMenu);
         }
 
@@ -237,23 +253,6 @@ namespace TWK.UI
             {
                 agentUIController.gameObject.SetActive(true);
                 agentUIController.SetAgent(agentID);
-            }
-        }
-
-        /// <summary>
-        /// Open the diplomacy menu.
-        /// </summary>
-        public void OpenDiplomacyMenu()
-        {
-            CloseAllMenus();
-
-            if (diplomacyUIController != null)
-            {
-                diplomacyUIController.SetActive(true);
-            }
-            else
-            {
-                Debug.LogWarning("[GameUIController] DiplomacyUIController not assigned");
             }
         }
 
@@ -292,6 +291,100 @@ namespace TWK.UI
         }
 
         /// <summary>
+        /// Open the culture tech tree menu.
+        /// </summary>
+        public void OpenCultureTechTreeMenu()
+        {
+            CloseAllMenus();
+
+            if (cultureTechTreeUIController != null)
+            {
+                cultureTechTreeUIController.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[GameUIController] CultureTechTreeUIController not assigned");
+            }
+        }
+
+        /// <summary>
+        /// Open the religion menu.
+        /// </summary>
+        public void OpenReligionMenu()
+        {
+            CloseAllMenus();
+
+            if (religionUIController != null)
+            {
+                religionUIController.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[GameUIController] ReligionUIController not assigned");
+            }
+        }
+
+        /// <summary>
+        /// Open the government menu.
+        /// </summary>
+        public void OpenGovernmentMenu()
+        {
+            CloseAllMenus();
+
+            if (governmentUIController != null)
+            {
+                governmentUIController.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[GameUIController] GovernmentUIController not assigned");
+            }
+        }
+
+        /// <summary>
+        /// Open the contract menu.
+        /// </summary>
+        public void OpenContractMenu()
+        {
+            CloseAllMenus();
+
+            if (contractUIController != null)
+            {
+                contractUIController.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[GameUIController] ContractUIController not assigned");
+            }
+        }
+
+        /// <summary>
+        /// Open the bureaucracy menu.
+        /// </summary>
+        public void OpenBureaucracyMenu()
+        {
+            CloseAllMenus();
+
+            if (bureaucracyUIController != null)
+            {
+                bureaucracyUIController.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[GameUIController] BureaucracyUIController not assigned");
+            }
+        }
+
+        /// <summary>
+        /// Open the diplomacy menu (stub - not yet implemented).
+        /// </summary>
+        public void OpenDiplomacyMenu()
+        {
+            CloseAllMenus();
+            Debug.Log("[GameUIController] Diplomacy menu not yet implemented");
+        }
+
+        /// <summary>
         /// Toggle the debug menu.
         /// </summary>
         public void ToggleDebugMenu()
@@ -310,14 +403,26 @@ namespace TWK.UI
             if (agentUIController != null)
                 agentUIController.gameObject.SetActive(false);
 
-            if (diplomacyUIController != null)
-                diplomacyUIController.SetActive(false);
-
             if (realmUIController != null)
                 realmUIController.SetActive(false);
 
             if (cityUIController != null)
                 cityUIController.SetActive(false);
+
+            if (cultureTechTreeUIController != null)
+                cultureTechTreeUIController.SetActive(false);
+
+            if (religionUIController != null)
+                religionUIController.SetActive(false);
+
+            if (governmentUIController != null)
+                governmentUIController.SetActive(false);
+
+            if (contractUIController != null)
+                contractUIController.SetActive(false);
+
+            if (bureaucracyUIController != null)
+                bureaucracyUIController.SetActive(false);
 
             if (debugMenuPanel != null)
                 debugMenuPanel.SetActive(false);
