@@ -7,6 +7,7 @@ using TWK.Simulation;
 using TWK.Religion;
 using TWK.Cultures;
 using TWK.Government;
+using TWK.Agents;
 
 namespace TWK.UI.ViewModels
 {
@@ -27,6 +28,7 @@ namespace TWK.UI.ViewModels
         private Dictionary<int, GovernmentViewModel> governmentViewModels = new Dictionary<int, GovernmentViewModel>();
         private Dictionary<int, BureaucracyViewModel> bureaucracyViewModels = new Dictionary<int, BureaucracyViewModel>();
         private Dictionary<int, ContractViewModel> contractViewModels = new Dictionary<int, ContractViewModel>();
+        private Dictionary<int, AgentViewModel> agentViewModels = new Dictionary<int, AgentViewModel>();
 
         // ========== EVENTS ==========
         /// <summary>
@@ -64,6 +66,11 @@ namespace TWK.UI.ViewModels
         /// </summary>
         public event Action<int> OnContractViewModelUpdated;
 
+        /// <summary>
+        /// Invoked when a specific agent ViewModel is updated.
+        /// </summary>
+        public event Action<int> OnAgentViewModelUpdated;
+
         // ========== LIFECYCLE ==========
         private void Awake()
         {
@@ -94,7 +101,7 @@ namespace TWK.UI.ViewModels
         }
 
         /// <summary>
-        /// Register all existing religions and cultures that are already in the managers.
+        /// Register all existing religions, cultures, and agents that are already in the managers.
         /// </summary>
         private void RegisterExistingData()
         {
@@ -116,6 +123,16 @@ namespace TWK.UI.ViewModels
                     RegisterCulture(culture);
                 }
                 Debug.Log($"[ViewModelService] Auto-registered {cultureViewModels.Count} cultures");
+            }
+
+            // Register existing agents
+            if (AgentManager.Instance != null)
+            {
+                foreach (var agent in AgentManager.Instance.GetAllAgents())
+                {
+                    RegisterAgent(agent);
+                }
+                Debug.Log($"[ViewModelService] Auto-registered {agentViewModels.Count} agents");
             }
         }
 
@@ -154,6 +171,23 @@ namespace TWK.UI.ViewModels
                 ContractManager.Instance.OnContractTerminated += OnContractTerminated;
                 ContractManager.Instance.OnLoyaltyChanged += OnContractLoyaltyChanged;
             }
+
+            // Subscribe to AgentManager events
+            if (AgentManager.Instance != null)
+            {
+                AgentManager.Instance.OnAgentCreated += OnAgentCreated;
+                AgentManager.Instance.OnAgentDied += OnAgentDied;
+                AgentManager.Instance.OnAgentAssignedToOffice += OnAgentAssignedToOffice;
+                AgentManager.Instance.OnAgentRemovedFromOffice += OnAgentRemovedFromOffice;
+            }
+
+            // Subscribe to RelationshipManager events
+            if (RelationshipManager.Instance != null)
+            {
+                RelationshipManager.Instance.OnRelationshipFormed += OnRelationshipFormed;
+                RelationshipManager.Instance.OnRelationshipEnded += OnRelationshipEnded;
+                RelationshipManager.Instance.OnRelationshipStrengthChanged += OnRelationshipStrengthChanged;
+            }
         }
 
         private void UnsubscribeFromManagerEvents()
@@ -190,6 +224,23 @@ namespace TWK.UI.ViewModels
                 ContractManager.Instance.OnContractCreated -= OnContractCreated;
                 ContractManager.Instance.OnContractTerminated -= OnContractTerminated;
                 ContractManager.Instance.OnLoyaltyChanged -= OnContractLoyaltyChanged;
+            }
+
+            // Unsubscribe from AgentManager events
+            if (AgentManager.Instance != null)
+            {
+                AgentManager.Instance.OnAgentCreated -= OnAgentCreated;
+                AgentManager.Instance.OnAgentDied -= OnAgentDied;
+                AgentManager.Instance.OnAgentAssignedToOffice -= OnAgentAssignedToOffice;
+                AgentManager.Instance.OnAgentRemovedFromOffice -= OnAgentRemovedFromOffice;
+            }
+
+            // Unsubscribe from RelationshipManager events
+            if (RelationshipManager.Instance != null)
+            {
+                RelationshipManager.Instance.OnRelationshipFormed -= OnRelationshipFormed;
+                RelationshipManager.Instance.OnRelationshipEnded -= OnRelationshipEnded;
+                RelationshipManager.Instance.OnRelationshipStrengthChanged -= OnRelationshipStrengthChanged;
             }
         }
 
@@ -309,6 +360,11 @@ namespace TWK.UI.ViewModels
             }
 
             foreach (var viewModel in contractViewModels.Values)
+            {
+                viewModel.Refresh();
+            }
+
+            foreach (var viewModel in agentViewModels.Values)
             {
                 viewModel.Refresh();
             }
@@ -571,6 +627,81 @@ namespace TWK.UI.ViewModels
             contractViewModels.Remove(contractID);
         }
 
+        // ========== AGENT VIEWMODEL MANAGEMENT ==========
+        /// <summary>
+        /// Register an agent and create its ViewModel.
+        /// </summary>
+        public void RegisterAgent(Agent agent)
+        {
+            if (agent == null)
+            {
+                Debug.LogError("[ViewModelService] Cannot register null agent");
+                return;
+            }
+
+            if (agentViewModels.ContainsKey(agent.Data.AgentID))
+            {
+                //Debug.LogWarning($"[ViewModelService] Agent {agent.Data.AgentName} (ID: {agent.Data.AgentID}) already registered");
+                return;
+            }
+
+            var viewModel = new AgentViewModel(agent.Data, agent);
+            agentViewModels[agent.Data.AgentID] = viewModel;
+
+            //Debug.Log($"[ViewModelService] Registered agent: {agent.Data.AgentName} (ID: {agent.Data.AgentID})");
+        }
+
+        /// <summary>
+        /// Get an agent ViewModel by ID.
+        /// </summary>
+        public AgentViewModel GetAgentViewModel(int agentID)
+        {
+            if (agentViewModels.TryGetValue(agentID, out var viewModel))
+                return viewModel;
+
+            Debug.LogWarning($"[ViewModelService] Agent ViewModel not found for ID: {agentID}");
+            return null;
+        }
+
+        /// <summary>
+        /// Get all agent ViewModels.
+        /// </summary>
+        public IEnumerable<AgentViewModel> GetAllAgentViewModels()
+        {
+            return agentViewModels.Values;
+        }
+
+        /// <summary>
+        /// Refresh a specific agent ViewModel.
+        /// </summary>
+        public void RefreshAgentViewModel(int agentID)
+        {
+            if (agentViewModels.TryGetValue(agentID, out var viewModel))
+            {
+                viewModel.Refresh();
+                OnAgentViewModelUpdated?.Invoke(agentID);
+            }
+        }
+
+        /// <summary>
+        /// Refresh all agent ViewModels.
+        /// </summary>
+        public void RefreshAllAgentViewModels()
+        {
+            foreach (var viewModel in agentViewModels.Values)
+            {
+                viewModel.Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Remove an agent ViewModel when agent dies.
+        /// </summary>
+        public void UnregisterAgent(int agentID)
+        {
+            agentViewModels.Remove(agentID);
+        }
+
         // ========== EVENT HANDLERS ==========
         private void OnNewReligionRegistered()
         {
@@ -671,6 +802,57 @@ namespace TWK.UI.ViewModels
             RefreshContractViewModel(contract.ContractID);
         }
 
+        // ========== AGENT EVENT HANDLERS ==========
+        private void OnAgentCreated(int agentID)
+        {
+            // Auto-register the agent ViewModel
+            var agent = AgentManager.Instance?.GetAgent(agentID);
+            if (agent != null)
+            {
+                RegisterAgent(agent);
+            }
+        }
+
+        private void OnAgentDied(int agentID)
+        {
+            // Unregister the agent ViewModel
+            UnregisterAgent(agentID);
+        }
+
+        private void OnAgentAssignedToOffice(int agentID, int officeID)
+        {
+            // Refresh the agent ViewModel when assigned to office
+            RefreshAgentViewModel(agentID);
+        }
+
+        private void OnAgentRemovedFromOffice(int agentID)
+        {
+            // Refresh the agent ViewModel when removed from office
+            RefreshAgentViewModel(agentID);
+        }
+
+        // ========== RELATIONSHIP EVENT HANDLERS ==========
+        private void OnRelationshipFormed(RelationshipData relationship)
+        {
+            // Refresh both agents involved in the relationship
+            RefreshAgentViewModel(relationship.Agent1ID);
+            RefreshAgentViewModel(relationship.Agent2ID);
+        }
+
+        private void OnRelationshipEnded(RelationshipData relationship)
+        {
+            // Refresh both agents involved in the relationship
+            RefreshAgentViewModel(relationship.Agent1ID);
+            RefreshAgentViewModel(relationship.Agent2ID);
+        }
+
+        private void OnRelationshipStrengthChanged(RelationshipData relationship, float strengthChange)
+        {
+            // Refresh both agents involved in the relationship
+            RefreshAgentViewModel(relationship.Agent1ID);
+            RefreshAgentViewModel(relationship.Agent2ID);
+        }
+
         // ========== DEBUGGING ==========
         [ContextMenu("Log All City ViewModels")]
         private void LogAllCityViewModels()
@@ -719,6 +901,29 @@ namespace TWK.UI.ViewModels
                 Debug.Log($"  {vm.GetTechTreeSummary()}");
                 Debug.Log($"  {vm.GetBuildingSummary()}");
                 Debug.Log($"  Pillars: {vm.GetPillarsList()}");
+            }
+        }
+
+        [ContextMenu("Log All Agent ViewModels")]
+        private void LogAllAgentViewModels()
+        {
+            Debug.Log($"[ViewModelService] Total Agents: {agentViewModels.Count}");
+
+            foreach (var kvp in agentViewModels)
+            {
+                var vm = kvp.Value;
+                Debug.Log($"--- Agent: {vm.AgentName} (ID: {vm.AgentID}) ---");
+                Debug.Log($"  {vm.GetIdentitySummary()}");
+                Debug.Log($"  Status: {vm.LifeStatus}");
+                Debug.Log($"  Reputation: {vm.ReputationLevel} ({vm.Reputation:F0})");
+                Debug.Log($"  Family: {vm.FamilySummary}");
+                Debug.Log($"  Social: {vm.SocialSummary}");
+                Debug.Log($"  Traits: {vm.TraitSummary}");
+                Debug.Log($"  Top Skill: {vm.TopSkill}");
+                Debug.Log($"  Combat: {vm.CombatPower}");
+                Debug.Log($"  Health: {vm.HealthStatus}");
+                Debug.Log($"  Wealth: {vm.WealthStatus} ({vm.Gold} gold)");
+                Debug.Log($"  Properties: {vm.PropertySummary}");
             }
         }
     }
