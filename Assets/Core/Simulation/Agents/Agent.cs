@@ -16,7 +16,7 @@ namespace TWK.Agents
     public class Agent : MonoBehaviour, ISimulationAgent
     {
         // ========== DATA MODEL ==========
-        [SerializeField] private AgentData agentData = new AgentData();
+        [SerializeField] public AgentData agentData = new AgentData();
 
         // ========== INSPECTOR CONFIGURATION (for initialization) ==========
         [Header("Agent Configuration")]
