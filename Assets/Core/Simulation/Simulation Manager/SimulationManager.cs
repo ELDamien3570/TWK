@@ -109,7 +109,7 @@ namespace TWK.Core
             // Create setup configuration
             var config = new RealmSetupUtility.RealmSetupConfig
             {
-                RealmName = "Test Kingdom",
+                RealmName = "",
                 CityIDs = cityIDs,
                 LeaderIDs = leaderIDs,
                 RegimeForm = Government.RegimeForm.Autocratic,

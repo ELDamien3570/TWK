@@ -500,19 +500,20 @@ namespace TWK.UI.ViewModels
 
             if (GovernmentManager.Instance == null)
             {
-                Debug.LogWarning($"[RealmViewModel] GovernmentManager.Instance is null for realm {_realmID}");
+               //
+               //Debug.LogWarning($"[RealmViewModel] GovernmentManager.Instance is null for realm {_realmID}");
                 return;
             }
 
             var offices = GovernmentManager.Instance.GetRealmOffices(_realmID);
             if (offices == null)
             {
-                Debug.LogWarning($"[RealmViewModel] No offices found for realm {_realmID}");
+               // Debug.LogWarning($"[RealmViewModel] No offices found for realm {_realmID}");
                 return;
             }
 
             TotalOffices = offices.Count;
-            Debug.Log($"[RealmViewModel] Found {TotalOffices} offices for realm {_realmID}");
+            //Debug.Log($"[RealmViewModel] Found {TotalOffices} offices for realm {_realmID}");
 
             foreach (var office in offices)
             {
@@ -530,7 +531,7 @@ namespace TWK.UI.ViewModels
                 }
                 else if (isFilled && AgentManager.Instance == null)
                 {
-                    Debug.LogWarning($"[RealmViewModel] AgentManager.Instance is null, cannot get agent name for office {office.OfficeName}");
+                    //Debug.LogWarning($"[RealmViewModel] AgentManager.Instance is null, cannot get agent name for office {office.OfficeName}");
                 }
 
                 var officerDisplay = new OfficerDisplay
@@ -542,10 +543,10 @@ namespace TWK.UI.ViewModels
                 };
 
                 Officers.Add(officerDisplay);
-                Debug.Log($"[RealmViewModel] Added officer: {office.OfficeName}, Holder: {holderName}, Filled: {isFilled}");
+               // Debug.Log($"[RealmViewModel] Added officer: {office.OfficeName}, Holder: {holderName}, Filled: {isFilled}");
             }
 
-            Debug.Log($"[RealmViewModel] Total officers in list: {Officers.Count}, Filled: {FilledOffices}/{TotalOffices}");
+          //  Debug.Log($"[RealmViewModel] Total officers in list: {Officers.Count}, Filled: {FilledOffices}/{TotalOffices}");
         }
 
         private void RefreshPopulationGroups()
@@ -596,7 +597,7 @@ namespace TWK.UI.ViewModels
                     UnstablePopulations.Add(display);
             }
 
-            Debug.Log($"[RealmViewModel] Populated population groups - Stable: {StablePopulations.Count}, Unstable: {UnstablePopulations.Count}");
+           // Debug.Log($"[RealmViewModel] Populated population groups - Stable: {StablePopulations.Count}, Unstable: {UnstablePopulations.Count}");
         }
 
         private void RefreshVassalLoyalty()
@@ -650,11 +651,11 @@ namespace TWK.UI.ViewModels
             {
                 DominantCulture = "No Cities";
                 CulturalUnity = 0f;
-                Debug.LogWarning($"[RealmViewModel] Realm {_realmID} has no cities for culture data");
+              //  Debug.LogWarning($"[RealmViewModel] Realm {_realmID} has no cities for culture data");
                 return;
             }
 
-            Debug.Log($"[RealmViewModel] Refreshing culture data for realm {_realmID} with {_realmData.DirectlyOwnedCityIDs.Count} cities");
+           // Debug.Log($"[RealmViewModel] Refreshing culture data for realm {_realmID} with {_realmData.DirectlyOwnedCityIDs.Count} cities");
 
             // Aggregate culture data from all cities
             Dictionary<CultureData, int> cultureTotalCounts = new Dictionary<CultureData, int>();
@@ -666,12 +667,12 @@ namespace TWK.UI.ViewModels
                 var city = FindCity(cityID);
                 if (city == null)
                 {
-                    Debug.LogWarning($"[RealmViewModel] City {cityID} not found");
+                  //  Debug.LogWarning($"[RealmViewModel] City {cityID} not found");
                     continue;
                 }
 
                 var breakdown = city.GetCultureBreakdown();
-                Debug.Log($"[RealmViewModel] City {city.Name} ({cityID}): Breakdown count = {breakdown?.Count ?? 0}");
+             //   Debug.Log($"[RealmViewModel] City {city.Name} ({cityID}): Breakdown count = {breakdown?.Count ?? 0}");
 
                 if (breakdown != null)
                 {
@@ -716,7 +717,7 @@ namespace TWK.UI.ViewModels
                             }
                         }
 
-                        Debug.Log($"[RealmViewModel]   - Culture: {culture.CultureName}, Count: {count}, Percentage: {percentage}%");
+                     //   Debug.Log($"[RealmViewModel]   - Culture: {culture.CultureName}, Count: {count}, Percentage: {percentage}%");
                     }
                 }
             }
@@ -758,14 +759,14 @@ namespace TWK.UI.ViewModels
                 var dominant = cultureTotalCounts.OrderByDescending(kvp => kvp.Value).First();
                 DominantCulture = dominant.Key.CultureName;
                 CulturalUnity = totalRealmPop > 0 ? (dominant.Value / (float)totalRealmPop) * 100f : 0f;
-                Debug.Log($"[RealmViewModel] Dominant culture: {DominantCulture}, Unity: {CulturalUnity}%, Total Pop: {totalRealmPop}");
-                Debug.Log($"[RealmViewModel] Populated lists - By City: {CulturesByCity.Count}, By Population: {CulturesByPopulation.Count}, By Class: {CulturesByClass.Count}");
+             //   Debug.Log($"[RealmViewModel] Dominant culture: {DominantCulture}, Unity: {CulturalUnity}%, Total Pop: {totalRealmPop}");
+              //  Debug.Log($"[RealmViewModel] Populated lists - By City: {CulturesByCity.Count}, By Population: {CulturesByPopulation.Count}, By Class: {CulturesByClass.Count}");
             }
             else
             {
                 DominantCulture = "No Population";
                 CulturalUnity = 0f;
-                Debug.LogWarning($"[RealmViewModel] No culture data found");
+             //   Debug.LogWarning($"[RealmViewModel] No culture data found");
             }
         }
 
@@ -782,7 +783,7 @@ namespace TWK.UI.ViewModels
                 return;
             }
 
-            Debug.Log($"[RealmViewModel] Refreshing religion data for realm {_realmID} with {_realmData.DirectlyOwnedCityIDs.Count} cities");
+           // Debug.Log($"[RealmViewModel] Refreshing religion data for realm {_realmID} with {_realmData.DirectlyOwnedCityIDs.Count} cities");
 
             // Aggregate religion data from all cities
             Dictionary<TWK.Religion.ReligionData, int> religionTotalCounts = new Dictionary<TWK.Religion.ReligionData, int>();
@@ -794,12 +795,12 @@ namespace TWK.UI.ViewModels
                 var city = FindCity(cityID);
                 if (city == null)
                 {
-                    Debug.LogWarning($"[RealmViewModel] City {cityID} not found");
+                  //  Debug.LogWarning($"[RealmViewModel] City {cityID} not found");
                     continue;
                 }
 
                 var breakdown = city.GetReligionBreakdown();
-                Debug.Log($"[RealmViewModel] City {city.Name} ({cityID}): Religion breakdown count = {breakdown?.Count ?? 0}");
+               // Debug.Log($"[RealmViewModel] City {city.Name} ({cityID}): Religion breakdown count = {breakdown?.Count ?? 0}");
 
                 if (breakdown != null)
                 {
@@ -844,7 +845,7 @@ namespace TWK.UI.ViewModels
                             }
                         }
 
-                        Debug.Log($"[RealmViewModel]   - Religion: {religion.ReligionName}, Count: {count}, Percentage: {percentage}%");
+                        //Debug.Log($"[RealmViewModel]   - Religion: {religion.ReligionName}, Count: {count}, Percentage: {percentage}%");
                     }
                 }
             }
@@ -886,14 +887,14 @@ namespace TWK.UI.ViewModels
                 var dominant = religionTotalCounts.OrderByDescending(kvp => kvp.Value).First();
                 DominantReligion = dominant.Key.ReligionName;
                 ReligiousUnity = totalRealmPop > 0 ? (dominant.Value / (float)totalRealmPop) * 100f : 0f;
-                Debug.Log($"[RealmViewModel] Dominant religion: {DominantReligion}, Unity: {ReligiousUnity}%, Total Pop: {totalRealmPop}");
-                Debug.Log($"[RealmViewModel] Populated lists - By City: {ReligionsByCity.Count}, By Population: {ReligionsByPopulation.Count}, By Class: {ReligionsByClass.Count}");
+               // Debug.Log($"[RealmViewModel] Dominant religion: {DominantReligion}, Unity: {ReligiousUnity}%, Total Pop: {totalRealmPop}");
+                //Debug.Log($"[RealmViewModel] Populated lists - By City: {ReligionsByCity.Count}, By Population: {ReligionsByPopulation.Count}, By Class: {ReligionsByClass.Count}");
             }
             else
             {
                 DominantReligion = "No Population";
                 ReligiousUnity = 0f;
-                Debug.LogWarning($"[RealmViewModel] No religion data found");
+               // Debug.LogWarning($"[RealmViewModel] No religion data found");
             }
         }
 
