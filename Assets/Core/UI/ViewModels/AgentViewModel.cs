@@ -73,7 +73,7 @@ namespace TWK.UI.ViewModels
         public bool IsCritical { get; private set; }
 
         // ========== MODIFIERS ==========
-        public List<ModifierSummary> ActiveModifiers { get; private set; }
+        public List<Modifier> ActiveModifiers { get; private set; }
         public int ActiveModifierCount { get; private set; }
 
         // ========== STATUS ==========
@@ -91,7 +91,7 @@ namespace TWK.UI.ViewModels
             SkillNodeCounts = new Dictionary<TreeType, int>();
             Traits = new List<PersonalityTrait>();
             TraitNames = new List<string>();
-            ActiveModifiers = new List<ModifierSummary>();
+            ActiveModifiers = new List<Modifier>();
             Refresh();
         }
 
@@ -323,12 +323,18 @@ namespace TWK.UI.ViewModels
             foreach (var trait in _agentSource.Traits)
             {
                 // Traits act as modifiers
-                var traitMod = new ModifierSummary
+                var traitMod = new Modifier(trait.ToString(), GetTraitDescription(trait));
+                traitMod.SourceType = "Trait";
+
+                // Add a simple effect with the trait description
+                var effect = new ModifierEffect
                 {
-                    Name = trait.ToString(),
-                    Source = "Trait",
-                    Description = GetTraitDescription(trait)
+                    Target = ModifierTarget.Character,
+                    EffectType = ModifierEffectType.CharacterPrestige
                 };
+                // The GetTraitDescription already provides the description
+                traitMod.Effects.Add(effect);
+
                 ActiveModifiers.Add(traitMod);
                 ActiveModifierCount++;
             }
@@ -338,18 +344,45 @@ namespace TWK.UI.ViewModels
             {
                 if (skill.Value > 0)
                 {
-                    var skillMod = new ModifierSummary
+                    var skillMod = new Modifier($"{skill.Key} Training", "Skill development bonus");
+                    skillMod.SourceType = "Skill";
+
+                    // Add effects based on skill tree
+                    var effect = new ModifierEffect
                     {
-                        Name = $"{skill.Key} Bonus",
-                        Source = "Skill",
-                        Description = $"+{skill.Value * 0.1f:F1}% effectiveness from {skill.Key} skill"
+                        Target = ModifierTarget.Character,
+                        EffectType = GetSkillEffectType(skill.Key),
+                        Value = skill.Value * 0.1f,
+                        IsPercentage = true
                     };
+                    skillMod.Effects.Add(effect);
+
                     ActiveModifiers.Add(skillMod);
                     ActiveModifierCount++;
                 }
             }
 
             // TODO: Get modifiers from unlocked skill tree nodes when implemented
+        }
+
+        private ModifierEffectType GetSkillEffectType(TreeType treeType)
+        {
+            // Map skill trees to appropriate effect types
+            switch (treeType)
+            {
+                case TreeType.Warfare:
+                    return ModifierEffectType.MilitaryPower;
+                case TreeType.Politics:
+                    return ModifierEffectType.CharacterPrestige;
+                case TreeType.Economics:
+                    return ModifierEffectType.PopulationIncomeGrowth;
+                case TreeType.Science:
+                    return ModifierEffectType.CultureXPGain;
+                case TreeType.Religion:
+                    return ModifierEffectType.CharacterPiety;
+                default:
+                    return ModifierEffectType.CharacterPrestige;
+            }
         }
 
         // ========== HELPER METHODS ==========
@@ -395,15 +428,5 @@ namespace TWK.UI.ViewModels
         {
             return $"{AgentName}, Age {Age}, {Gender}, {CultureReligionSummary}";
         }
-    }
-
-    /// <summary>
-    /// Summary of a modifier for display in UI.
-    /// </summary>
-    public struct ModifierSummary
-    {
-        public string Name;
-        public string Source; // "Trait", "Skill", "Building", etc.
-        public string Description;
     }
 }

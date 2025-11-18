@@ -5,6 +5,7 @@ using TMPro;
 using TWK.Agents;
 using TWK.Cultures;
 using TWK.UI.ViewModels;
+using TWK.UI.Common;
 
 namespace TWK.UI
 {
@@ -73,8 +74,7 @@ namespace TWK.UI
         [SerializeField] private TextMeshProUGUI religionSkillText;
 
         [Header("Main Tab - Modifiers")]
-        [SerializeField] private Transform modifiersContainer;
-        [SerializeField] private GameObject modifierItemPrefab;
+        [SerializeField] private ModifierDisplayPanel modifierDisplayPanel;
 
         // ========== EQUIPMENT TAB ==========
         [Header("Equipment Tab - Slots")]
@@ -367,26 +367,10 @@ namespace TWK.UI
 
         private void RefreshModifiers()
         {
-            if (modifiersContainer == null || modifierItemPrefab == null) return;
+            if (modifierDisplayPanel == null) return;
 
-            // Clear existing modifiers
-            foreach (Transform child in modifiersContainer)
-            {
-                Destroy(child.gameObject);
-            }
-
-            // Create modifier items
-            foreach (var modifier in currentViewModel.ActiveModifiers)
-            {
-                var modItem = Instantiate(modifierItemPrefab, modifiersContainer);
-                var modNameText = modItem.transform.Find("NameText")?.GetComponent<TextMeshProUGUI>();
-                var modDescText = modItem.transform.Find("DescriptionText")?.GetComponent<TextMeshProUGUI>();
-                var modSourceText = modItem.transform.Find("SourceText")?.GetComponent<TextMeshProUGUI>();
-
-                if (modNameText != null) modNameText.text = modifier.Name;
-                if (modDescText != null) modDescText.text = modifier.Description;
-                if (modSourceText != null) modSourceText.text = $"Source: {modifier.Source}";
-            }
+            // Use ModifierDisplayPanel to display all active modifiers
+            modifierDisplayPanel.DisplayModifiers(currentViewModel.ActiveModifiers);
         }
 
         // ========== EQUIPMENT TAB ==========
