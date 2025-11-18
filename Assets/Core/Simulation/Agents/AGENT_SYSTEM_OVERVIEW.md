@@ -1,14 +1,67 @@
 # Agent System Overview
 
 ## Introduction
-The Agent system has been comprehensively fleshed out to support complex character simulation including relationships, combat, personality, and reputation. All data structures are in place for future integration.
+The Agent system has been comprehensively fleshed out to support complex character simulation including relationships, combat, personality, and reputation. Follows the established MVVM architecture pattern used throughout the codebase.
+
+## MVVM Architecture
+
+The Agent system follows the same pattern as City and Realm systems:
+
+**Model (Data)**: `AgentData.cs` - Pure serializable data, no logic
+**View (MonoBehaviour)**: `Agent.cs` - Unity wrapper, delegates to simulation
+**Logic (Simulation)**: `AgentSimulation.cs` - Pure static functions for all calculations
+**Manager**: `AgentManager.cs` - Singleton registry and coordination
+**Supporting**: `AgentLedger.cs` - Personal wealth management
 
 ## File Structure
 - **AgentEnums.cs** - Contains all enums (Gender, Sexuality, PersonalityTrait)
-- **AgentData.cs** - Pure data model with all agent properties and helper methods
-- **Agent.cs** - MonoBehaviour that wraps AgentData and handles Unity-specific logic
-- **AgentLedger.cs** - Manages personal wealth and resources
-- **AgentManager.cs** - Central manager for all agents
+- **AgentData.cs** - Pure data model (Model in MVVM)
+- **Agent.cs** - MonoBehaviour wrapper (View in MVVM)
+- **AgentSimulation.cs** - Static simulation logic (Logic layer)
+- **AgentLedger.cs** - Personal wealth and resource management
+- **AgentManager.cs** - Singleton manager for all agents
+
+## Simulation Pattern
+
+### AgentData.cs - Pure Data
+Contains only:
+- Public fields/properties for serialization
+- Simple Add/Remove methods (AddChild, RemoveSpouse, etc.)
+- Simple boolean checks (HasTrait, IsCriticalHealth, ShouldRoute)
+- No calculations, no clamping, no complex logic
+
+### AgentSimulation.cs - Pure Logic
+Static methods that operate on AgentData:
+- `SimulateDay(AgentData, AgentLedger)` - Daily simulation
+- `SimulateSeason(AgentData, AgentLedger)` - Seasonal updates
+- `SimulateYear(AgentData)` - Aging and death checks
+- `CalculateReputation(AgentData)` - Reputation calculation
+- `ApplyDamage/Heal/ModifyMorale` - Combat operations
+- `RecalculateCombatStats` - Equipment stat recalculation
+- All trait-based modifiers and calculations
+
+### Agent.cs - Unity Wrapper
+MonoBehaviour that:
+- Wraps AgentData with property accessors
+- Handles Unity lifecycle (Awake, Initialize, OnDestroy)
+- Subscribes to WorldTimeManager events
+- Delegates all logic to AgentSimulation
+- Provides convenient methods (TakeDamage, Heal, etc.) that call AgentSimulation
+- Manages death through AgentManager
+
+### Example Usage Pattern
+```csharp
+// CORRECT - Via Agent MonoBehaviour
+agent.TakeDamage(50f);  // Delegates to AgentSimulation.ApplyDamage()
+agent.ModifyPrestige(10f);  // Delegates to AgentSimulation.ModifyPrestige()
+float rep = agent.Reputation;  // Calls AgentSimulation.CalculateReputation()
+
+// CORRECT - Direct simulation call (from Manager or other systems)
+AgentSimulation.SimulateDay(agentData, ledger);
+
+// INCORRECT - Don't access AgentData logic methods directly (they don't exist anymore)
+// agentData.CalculateReputation();  // REMOVED - use AgentSimulation
+```
 
 ## Core Systems
 
@@ -205,42 +258,51 @@ agent.AddRival(30);
 
 ### Combat Example
 ```csharp
-// During battle
-agent.TakeDamage(75f); // Takes damage
+// During battle - damage automatically checks for death
+agent.TakeDamage(75f);  // Internally calls AgentSimulation.ApplyDamage() and CheckCombatDeath()
 
-if (agent.IsCriticalHealth())
+// Check combat state (these are simple data reads from AgentData)
+if (agent.Data.IsCriticalHealth())
 {
-    // 50% chance of death
-    KillInCombat();
+    Debug.Log("Agent is critically wounded!");
 }
 
-// Check morale
-if (agent.ShouldRoute())
+// Check morale for routing
+if (agent.Data.ShouldRoute())
 {
     // Unit retreats
+    PerformRetreat();
 }
 
-if (agent.HasLowMoralePenalty())
+if (agent.Data.HasLowMoralePenalty())
 {
-    // Apply combat penalties
+    // Apply combat penalties (multiply attack by 0.8, for example)
+    float penalty = 0.8f;
 }
+
+// Modify morale after battle events
+agent.ModifyMorale(-10f);  // Lost a battle
+agent.ModifyMorale(15f);   // Won a battle
 ```
 
 ### Managing Equipment
 ```csharp
-// Equip weapons
-bool equipped = agent.EquipWeapon(swordID);
-equipped = agent.EquipWeapon(spearID);
-equipped = agent.EquipWeapon(bowID);
+// Equip weapons (simple list operations in AgentData)
+bool equipped = agent.Data.EquipWeapon(swordID);
+equipped = agent.Data.EquipWeapon(spearID);
+equipped = agent.Data.EquipWeapon(bowID);
 
-// Equip armor
-agent.HeadEquipmentID = helmetID;
-agent.BodyEquipmentID = breastplateID;
-agent.LegsEquipmentID = greavesID;
-agent.ShieldID = shieldID;
+// Equip armor (direct field access)
+agent.Data.HeadEquipmentID = helmetID;
+agent.Data.BodyEquipmentID = breastplateID;
+agent.Data.LegsEquipmentID = greavesID;
+agent.Data.ShieldID = shieldID;
 
 // Mount a horse
-agent.MountID = horseID;
+agent.Data.MountID = horseID;
+
+// IMPORTANT: Recalculate combat stats after equipment changes
+agent.RecalculateCombatStats();  // Calls AgentSimulation.RecalculateCombatStats()
 ```
 
 ### Relationship Building
@@ -264,13 +326,18 @@ agent1.AddRival(agent4.AgentID);
 ### Reputation Management
 ```csharp
 // Gain prestige from victory
-agent.ModifyPrestige(10f);
+agent.ModifyPrestige(10f);  // Delegates to AgentSimulation
 
 // Lose morality from scandal
-agent.ModifyMorality(-20f); // Illegitimate child exposed
+agent.ModifyMorality(-20f);  // Illegitimate child exposed - delegates to AgentSimulation
 
-// Recalculate reputation
-float rep = agent.CalculateReputation();
+// Get current reputation (automatically calculated)
+float rep = agent.Reputation;  // Property calls AgentSimulation.CalculateReputation()
+
+// Calculate opinion between two agents
+Agent agent1 = AgentManager.Instance.GetAgent(agentID1);
+Agent agent2 = AgentManager.Instance.GetAgent(agentID2);
+float opinion = AgentSimulation.CalculateOpinionModifier(agent1.Data, agent2.Data);
 ```
 
 ## Integration Status

@@ -123,7 +123,7 @@ namespace TWK.Agents
             set => agentData.Morality = value;
         }
 
-        public float Reputation => agentData.CalculateReputation();
+        public float Reputation => AgentSimulation.CalculateReputation(agentData);
 
         // ========== DATA ACCESS ==========
         /// <summary>
@@ -215,7 +215,7 @@ namespace TWK.Agents
             if (!agentData.IsAlive)
                 return;
 
-            OnDailySkillGain();
+            AgentSimulation.SimulateDay(agentData, _ledger);
         }
 
         public void AdvanceSeason()
@@ -223,7 +223,7 @@ namespace TWK.Agents
             if (!agentData.IsAlive)
                 return;
 
-            // Seasonal agent logic
+            AgentSimulation.SimulateSeason(agentData, _ledger);
         }
 
         public void AdvanceYear()
@@ -231,99 +231,130 @@ namespace TWK.Agents
             if (!agentData.IsAlive)
                 return;
 
-            // Age the agent
-            agentData.Age++;
+            // Simulate year - includes aging and natural death check
+            AgentSimulation.SimulateYear(agentData);
 
-            // Check for natural death (simple age-based for now)
-            // TODO: Implement more sophisticated death chances based on health, age, etc.
-            if (agentData.Age > 60)
+            // If agent died, process through manager
+            if (!agentData.IsAlive)
             {
-                float deathChance = (agentData.Age - 60) * 0.01f; // 1% per year over 60
-                if (UnityEngine.Random.value < deathChance)
-                {
-                    HandleDeath();
-                }
+                ProcessDeath();
             }
         }
 
         // ========== DEATH & INHERITANCE ==========
 
         /// <summary>
-        /// Handle agent death - distribute inheritance, update relationships.
+        /// Process agent death through AgentManager.
+        /// Determines heir and delegates to AgentManager.ProcessAgentDeath().
         /// </summary>
-        public void HandleDeath()
+        private void ProcessDeath()
         {
-            if (!agentData.IsAlive)
-                return;
-
-            agentData.IsAlive = false;
-            Debug.Log($"[Agent] {agentData.AgentName} has died at age {agentData.Age}");
-
-            // Distribute inheritance to children
-            if (_ledger != null && agentData.ChildrenIDs.Count > 0)
+            if (AgentManager.Instance == null)
             {
-                var inheritance = _ledger.CalculateInheritance();
-                int childCount = agentData.ChildrenIDs.Count;
-
-                foreach (int childID in agentData.ChildrenIDs)
-                {
-                    var childAgent = AgentManager.Instance?.GetAgent(childID);
-                    if (childAgent != null && childAgent.Ledger != null)
-                    {
-                        // Divide inheritance equally among children
-                        var childShare = new Dictionary<TWK.Economy.ResourceType, int>();
-                        foreach (var kvp in inheritance)
-                        {
-                            childShare[kvp.Key] = kvp.Value / childCount;
-                        }
-                        childAgent.Ledger.ReceiveInheritance(childShare, agentData.AgentID);
-                    }
-                }
-
-                _ledger.ClearWealth();
+                Debug.LogWarning($"[Agent] Cannot process death for {agentData.AgentName} - AgentManager not found");
+                return;
             }
 
-            // TODO: Transfer properties (estates, caravans, cities) to heirs
+            Debug.Log($"[Agent] {agentData.AgentName} has died at age {agentData.Age}");
+
+            // Determine primary heir (first child, or -1 if no children)
+            int heirID = agentData.ChildrenIDs.Count > 0 ? agentData.ChildrenIDs[0] : -1;
+
+            // Process death through manager
+            AgentManager.Instance.ProcessAgentDeath(agentData.AgentID, heirID);
+
+            // TODO: More sophisticated heir selection (consider legitimacy, age, gender, culture rules)
+            // TODO: Distribute properties (estates, caravans, cities) among heirs
             // TODO: Update relationships (widows, orphans, etc.)
         }
 
         /// <summary>
-        /// Kill this agent in combat (when health reaches critical).
+        /// Check for combat death when agent takes damage.
+        /// Call this after ApplyDamage in combat.
         /// </summary>
-        public void KillInCombat()
+        public void CheckCombatDeath()
         {
-            if (agentData.IsCriticalHealth())
+            if (!agentData.IsAlive)
+                return;
+
+            if (AgentSimulation.CheckCombatDeath(agentData))
             {
-                float deathChance = 0.5f; // 50% chance at critical health
-                if (UnityEngine.Random.value < deathChance)
-                {
-                    Debug.Log($"[Agent] {agentData.AgentName} died in combat!");
-                    HandleDeath();
-                }
+                Debug.Log($"[Agent] {agentData.AgentName} died in combat!");
+                agentData.IsAlive = false;
+                ProcessDeath();
             }
         }
 
         // ========== SKILL SYSTEM ==========
 
+        /// <summary>
+        /// Manually add skill experience to a specific tree.
+        /// </summary>
         public void GainSkill(TreeType tree, float amount)
         {
-            agentData.SkillLevels[tree] += amount;
+            if (agentData.SkillLevels.ContainsKey(tree))
+            {
+                agentData.SkillLevels[tree] += amount;
+            }
         }
 
-        private void OnDailySkillGain()
+        // ========== COMBAT OPERATIONS ==========
+
+        /// <summary>
+        /// Apply damage to this agent.
+        /// Delegates to AgentSimulation.
+        /// </summary>
+        public void TakeDamage(float damage)
         {
-            var trees = new List<TreeType>(agentData.SkillLevels.Keys); // snapshot of keys
+            AgentSimulation.ApplyDamage(agentData, damage);
+            CheckCombatDeath(); // Check if damage was fatal
+        }
 
-            foreach (var tree in trees)
-            {
-                float gain = agentData.DailySkillGain;
-                if (tree == agentData.SkillFocus)
-                    gain += agentData.DailyFocusBonus;
-                else
-                    gain -= agentData.DailyFocusBonus * 0.5f;
+        /// <summary>
+        /// Heal this agent.
+        /// Delegates to AgentSimulation.
+        /// </summary>
+        public void Heal(float amount)
+        {
+            AgentSimulation.Heal(agentData, amount);
+        }
 
-                GainSkill(tree, gain);
-            }
+        /// <summary>
+        /// Modify morale.
+        /// Delegates to AgentSimulation.
+        /// </summary>
+        public void ModifyMorale(float amount)
+        {
+            AgentSimulation.ModifyMorale(agentData, amount);
+        }
+
+        /// <summary>
+        /// Recalculate combat stats after equipment change.
+        /// Delegates to AgentSimulation.
+        /// </summary>
+        public void RecalculateCombatStats()
+        {
+            AgentSimulation.RecalculateCombatStats(agentData);
+        }
+
+        // ========== REPUTATION OPERATIONS ==========
+
+        /// <summary>
+        /// Modify prestige.
+        /// Delegates to AgentSimulation.
+        /// </summary>
+        public void ModifyPrestige(float amount)
+        {
+            AgentSimulation.ModifyPrestige(agentData, amount);
+        }
+
+        /// <summary>
+        /// Modify morality.
+        /// Delegates to AgentSimulation.
+        /// </summary>
+        public void ModifyMorality(float amount)
+        {
+            AgentSimulation.ModifyMorality(agentData, amount);
         }
 
         // ========== WEALTH & PROPERTY ==========

@@ -502,49 +502,6 @@ namespace TWK.Agents
             return Traits.Contains(trait);
         }
 
-        /// <summary>
-        /// Modify prestige by a given amount.
-        /// </summary>
-        public void ModifyPrestige(float amount)
-        {
-            Prestige += amount;
-            if (Prestige < 0) Prestige = 0;
-        }
-
-        /// <summary>
-        /// Modify morality by a given amount.
-        /// </summary>
-        public void ModifyMorality(float amount)
-        {
-            Morality += amount;
-            if (Morality < 0) Morality = 0;
-            if (Morality > 100) Morality = 100;
-        }
-
-        /// <summary>
-        /// Calculate reputation based on stats, traits, prestige, and morality.
-        /// </summary>
-        public float CalculateReputation()
-        {
-            // Base reputation from prestige and morality
-            float rep = Prestige + (Morality * 0.5f);
-
-            // Add skill bonuses
-            foreach (var skill in SkillLevels.Values)
-            {
-                rep += skill * 0.1f;
-            }
-
-            // Trait modifiers (example - can be expanded)
-            if (HasTrait(PersonalityTrait.Charismatic)) rep += 10f;
-            if (HasTrait(PersonalityTrait.Honest)) rep += 5f;
-            if (HasTrait(PersonalityTrait.Cruel)) rep -= 10f;
-            if (HasTrait(PersonalityTrait.Tyrannical)) rep -= 15f;
-
-            Reputation = rep;
-            return rep;
-        }
-
         // --- Equipment Management ---
 
         /// <summary>
@@ -574,40 +531,7 @@ namespace TWK.Agents
             EquippedWeaponIDs.Remove(weaponID);
         }
 
-        /// <summary>
-        /// Calculate weapon slots based on strength.
-        /// Every 25 strength past 50 adds one slot.
-        /// </summary>
-        public void RecalculateWeaponSlots()
-        {
-            WeaponSlots = 3; // Base slots
-
-            if (Strength > 50f)
-            {
-                int bonusSlots = (int)((Strength - 50f) / 25f);
-                WeaponSlots += bonusSlots;
-            }
-        }
-
-        // --- Combat Stats ---
-
-        /// <summary>
-        /// Take damage and update health.
-        /// </summary>
-        public void TakeDamage(float damage)
-        {
-            Health -= damage;
-            if (Health < 0) Health = 0;
-        }
-
-        /// <summary>
-        /// Heal this agent.
-        /// </summary>
-        public void Heal(float amount)
-        {
-            Health += amount;
-            if (Health > MaxHealth) Health = MaxHealth;
-        }
+        // --- Combat Stats (Read-Only Checks) ---
 
         /// <summary>
         /// Is this agent at critical health?
@@ -615,16 +539,6 @@ namespace TWK.Agents
         public bool IsCriticalHealth()
         {
             return Health < (MaxHealth * 0.25f);
-        }
-
-        /// <summary>
-        /// Modify morale by a given amount.
-        /// </summary>
-        public void ModifyMorale(float amount)
-        {
-            Morale += amount;
-            if (Morale < 0) Morale = 0;
-            if (Morale > 100) Morale = 100;
         }
 
         /// <summary>
