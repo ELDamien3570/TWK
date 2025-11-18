@@ -99,6 +99,32 @@ namespace TWK.Agents
             set => agentData.DailyFocusBonus = value;
         }
 
+        public Gender Gender
+        {
+            get => agentData.Gender;
+            set => agentData.Gender = value;
+        }
+
+        public Sexuality Sexuality
+        {
+            get => agentData.Sexuality;
+            set => agentData.Sexuality = value;
+        }
+
+        public float Prestige
+        {
+            get => agentData.Prestige;
+            set => agentData.Prestige = value;
+        }
+
+        public float Morality
+        {
+            get => agentData.Morality;
+            set => agentData.Morality = value;
+        }
+
+        public float Reputation => agentData.CalculateReputation();
+
         // ========== DATA ACCESS ==========
         /// <summary>
         /// Direct access to the underlying data model for ViewModels.
@@ -207,6 +233,74 @@ namespace TWK.Agents
 
             // Age the agent
             agentData.Age++;
+
+            // Check for natural death (simple age-based for now)
+            // TODO: Implement more sophisticated death chances based on health, age, etc.
+            if (agentData.Age > 60)
+            {
+                float deathChance = (agentData.Age - 60) * 0.01f; // 1% per year over 60
+                if (UnityEngine.Random.value < deathChance)
+                {
+                    HandleDeath();
+                }
+            }
+        }
+
+        // ========== DEATH & INHERITANCE ==========
+
+        /// <summary>
+        /// Handle agent death - distribute inheritance, update relationships.
+        /// </summary>
+        public void HandleDeath()
+        {
+            if (!agentData.IsAlive)
+                return;
+
+            agentData.IsAlive = false;
+            Debug.Log($"[Agent] {agentData.AgentName} has died at age {agentData.Age}");
+
+            // Distribute inheritance to children
+            if (_ledger != null && agentData.ChildrenIDs.Count > 0)
+            {
+                var inheritance = _ledger.CalculateInheritance();
+                int childCount = agentData.ChildrenIDs.Count;
+
+                foreach (int childID in agentData.ChildrenIDs)
+                {
+                    var childAgent = AgentManager.Instance?.GetAgent(childID);
+                    if (childAgent != null && childAgent.Ledger != null)
+                    {
+                        // Divide inheritance equally among children
+                        var childShare = new Dictionary<TWK.Economy.ResourceType, int>();
+                        foreach (var kvp in inheritance)
+                        {
+                            childShare[kvp.Key] = kvp.Value / childCount;
+                        }
+                        childAgent.Ledger.ReceiveInheritance(childShare, agentData.AgentID);
+                    }
+                }
+
+                _ledger.ClearWealth();
+            }
+
+            // TODO: Transfer properties (estates, caravans, cities) to heirs
+            // TODO: Update relationships (widows, orphans, etc.)
+        }
+
+        /// <summary>
+        /// Kill this agent in combat (when health reaches critical).
+        /// </summary>
+        public void KillInCombat()
+        {
+            if (agentData.IsCriticalHealth())
+            {
+                float deathChance = 0.5f; // 50% chance at critical health
+                if (UnityEngine.Random.value < deathChance)
+                {
+                    Debug.Log($"[Agent] {agentData.AgentName} died in combat!");
+                    HandleDeath();
+                }
+            }
         }
 
         // ========== SKILL SYSTEM ==========
@@ -279,19 +373,45 @@ namespace TWK.Agents
         public void PrintAgentInfo()
         {
             Debug.Log($"=== Agent: {agentData.AgentName} (ID: {agentData.AgentID}) ===");
-            Debug.Log($"Age: {agentData.Age}");
-            Debug.Log($"Home Realm: {agentData.HomeRealmID}");
-            Debug.Log($"Culture: {agentData.CultureID}");
+            Debug.Log($"Age: {agentData.Age} | Gender: {agentData.Gender} | Sexuality: {agentData.Sexuality}");
+            Debug.Log($"Home Realm: {agentData.HomeRealmID} | Culture: {agentData.CultureID}");
             Debug.Log($"Office: {(agentData.HasOffice ? agentData.CurrentOfficeID.ToString() : "None")}");
-            Debug.Log($"Salary: {agentData.MonthlySalary}");
-            Debug.Log($"Gold: {GetGold()}");
-            Debug.Log($"Wealth Status: {GetWealthStatus()}");
-            Debug.Log($"Skill Focus: {agentData.SkillFocus}");
+            Debug.Log($"Salary: {agentData.MonthlySalary} | Gold: {GetGold()} | Wealth: {GetWealthStatus()}");
 
+            Debug.Log($"\n--- Reputation ---");
+            Debug.Log($"Prestige: {agentData.Prestige:F1} | Morality: {agentData.Morality:F1} | Reputation: {Reputation:F1}");
+
+            Debug.Log($"\n--- Skills ---");
+            Debug.Log($"Skill Focus: {agentData.SkillFocus}");
             foreach (var skill in agentData.SkillLevels)
             {
                 Debug.Log($"  {skill.Key}: {skill.Value:F1}");
             }
+
+            Debug.Log($"\n--- Personality Traits ---");
+            foreach (var trait in agentData.Traits)
+            {
+                Debug.Log($"  - {trait}");
+            }
+
+            Debug.Log($"\n--- Relationships ---");
+            Debug.Log($"Parents: Mother={agentData.MotherID}, Father={agentData.FatherID}");
+            Debug.Log($"Spouses: {agentData.SpouseIDs.Count} | Children: {agentData.ChildrenIDs.Count}");
+            Debug.Log($"Friends: {agentData.FriendIDs.Count} | Rivals: {agentData.RivalIDs.Count}");
+            Debug.Log($"Companions: {agentData.CompanionIDs.Count}");
+
+            Debug.Log($"\n--- Combat Stats ---");
+            Debug.Log($"Health: {agentData.Health:F1}/{agentData.MaxHealth:F1}");
+            Debug.Log($"Strength: {agentData.Strength:F1} | Leadership: {agentData.Leadership:F1} | Morale: {agentData.Morale:F1}");
+            Debug.Log($"Melee: {agentData.MeleeAttack:F1} ATK / {agentData.MeleeArmor:F1} ARM");
+            Debug.Log($"Missile: {agentData.MissileAttack:F1} ATK / {agentData.MissileDefense:F1} DEF");
+            Debug.Log($"Speed: {agentData.Speed:F1} | Charge: {agentData.ChargeSpeed:F1} | Agility: {agentData.Agility:F1}");
+            Debug.Log($"Weapon Slots: {agentData.WeaponSlots} | Equipped: {agentData.EquippedWeaponIDs.Count}");
+
+            Debug.Log($"\n--- Properties ---");
+            Debug.Log($"Buildings: {agentData.OwnedBuildingIDs.Count}");
+            Debug.Log($"Caravans: {agentData.OwnedCaravanIDs.Count}");
+            Debug.Log($"Cities: {agentData.ControlledCityIDs.Count}");
         }
     }
 }
