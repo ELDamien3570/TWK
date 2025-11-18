@@ -3,6 +3,7 @@ using UnityEngine;
 using TWK.Agents;
 using TWK.Cultures;
 using TWK.Modifiers;
+using TWK.Religion;
 
 namespace TWK.UI.ViewModels
 {
@@ -26,6 +27,13 @@ namespace TWK.UI.ViewModels
         public string Sexuality { get; private set; }
         public string LifeStatus { get; private set; } // "Alive, Age 35" or "Deceased at 67"
         public string BirthDate { get; private set; } // "Day 15, Month 3, Year 1025"
+
+        // ========== CULTURE & RELIGION ==========
+        public int CultureID { get; private set; }
+        public int ReligionID { get; private set; }
+        public string CultureName { get; private set; }
+        public string ReligionName { get; private set; }
+        public string CultureReligionSummary { get; private set; } // "Roman Culture, Hellenistic Faith"
 
         // ========== REPUTATION ==========
         public float Prestige { get; private set; }
@@ -113,6 +121,9 @@ namespace TWK.UI.ViewModels
 
             BirthDate = $"Day {_agentSource.BirthDay}, Month {_agentSource.BirthMonth}, Year {_agentSource.BirthYear}";
 
+            // Culture & Religion
+            RefreshCultureAndReligion();
+
             // Reputation
             Prestige = _agentSource.Prestige;
             Morality = _agentSource.Morality;
@@ -147,6 +158,37 @@ namespace TWK.UI.ViewModels
         }
 
         // ========== REFRESH HELPERS ==========
+
+        private void RefreshCultureAndReligion()
+        {
+            CultureID = _agentSource.CultureID;
+            ReligionID = _agentSource.ReligionID;
+
+            // Get culture name
+            if (CultureID >= 0 && CultureManager.Instance != null)
+            {
+                var culture = CultureManager.Instance.GetCulture(CultureID);
+                CultureName = culture != null ? culture.CultureName : "Unknown Culture";
+            }
+            else
+            {
+                CultureName = "No Culture";
+            }
+
+            // Get religion name
+            if (ReligionID >= 0 && ReligionManager.Instance != null)
+            {
+                var religion = ReligionManager.Instance.GetReligion(ReligionID);
+                ReligionName = religion != null ? religion.ReligionName : "Unknown Religion";
+            }
+            else
+            {
+                ReligionName = "No Religion";
+            }
+
+            // Create summary
+            CultureReligionSummary = $"{CultureName}, {ReligionName}";
+        }
 
         private void RefreshRelationships()
         {
@@ -351,7 +393,7 @@ namespace TWK.UI.ViewModels
 
         public string GetIdentitySummary()
         {
-            return $"{AgentName}, Age {Age}, {Gender}, {LifeStatus}";
+            return $"{AgentName}, Age {Age}, {Gender}, {CultureReligionSummary}";
         }
     }
 

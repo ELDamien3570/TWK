@@ -915,6 +915,8 @@ namespace TWK.UI.ViewModels
                 Debug.Log($"--- Agent: {vm.AgentName} (ID: {vm.AgentID}) ---");
                 Debug.Log($"  {vm.GetIdentitySummary()}");
                 Debug.Log($"  Status: {vm.LifeStatus}");
+                Debug.Log($"  Culture: {vm.CultureName}");
+                Debug.Log($"  Religion: {vm.ReligionName}");
                 Debug.Log($"  Reputation: {vm.ReputationLevel} ({vm.Reputation:F0})");
                 Debug.Log($"  Family: {vm.FamilySummary}");
                 Debug.Log($"  Social: {vm.SocialSummary}");

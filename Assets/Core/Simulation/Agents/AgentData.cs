@@ -43,8 +43,9 @@ namespace TWK.Agents
         /// </summary>
         public int OfficeRealmID = -1;
 
-        // ========== CULTURE ==========
+        // ========== CULTURE & RELIGION ==========
         public int CultureID = -1;
+        public int ReligionID = -1;
 
         // ========== RELATIONSHIPS ==========
         /// <summary>
@@ -193,12 +194,13 @@ namespace TWK.Agents
             CombatStats = new SoldierStats();
         }
 
-        public AgentData(int agentID, string name, int homeRealmID, int cultureID = -1)
+        public AgentData(int agentID, string name, int homeRealmID, int cultureID = -1, int religionID = -1)
         {
             this.AgentID = agentID;
             this.AgentName = name;
             this.HomeRealmID = homeRealmID;
             this.CultureID = cultureID;
+            this.ReligionID = religionID;
 
             _skillLevels = new Dictionary<TreeType, float>();
             PersonalWealth = new Dictionary<TWK.Economy.ResourceType, int>();

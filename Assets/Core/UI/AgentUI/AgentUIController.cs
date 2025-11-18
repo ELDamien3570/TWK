@@ -38,6 +38,8 @@ namespace TWK.UI
         [SerializeField] private TextMeshProUGUI genderText;
         [SerializeField] private TextMeshProUGUI sexualityText;
         [SerializeField] private TextMeshProUGUI lifeStatusText;
+        [SerializeField] private TextMeshProUGUI cultureText;
+        [SerializeField] private TextMeshProUGUI religionText;
 
         [Header("Main Tab - Reputation")]
         [SerializeField] private TextMeshProUGUI prestigeText;
@@ -295,6 +297,8 @@ namespace TWK.UI
             if (genderText != null) genderText.text = currentViewModel.Gender;
             if (sexualityText != null) sexualityText.text = currentViewModel.Sexuality;
             if (lifeStatusText != null) lifeStatusText.text = currentViewModel.LifeStatus;
+            if (cultureText != null) cultureText.text = $"Culture: {currentViewModel.CultureName}";
+            if (religionText != null) religionText.text = $"Religion: {currentViewModel.ReligionName}";
 
             // Reputation
             if (prestigeText != null) prestigeText.text = $"Prestige: {currentViewModel.Prestige:F1}";
