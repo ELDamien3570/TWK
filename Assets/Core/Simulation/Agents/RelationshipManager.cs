@@ -330,6 +330,15 @@ namespace TWK.Agents
             return null;
         }
 
+        /// <summary>
+        /// Get all relationships in the game.
+        /// Useful for debugging and global queries.
+        /// </summary>
+        public List<RelationshipData> GetAllRelationships()
+        {
+            return new List<RelationshipData>(_relationships.Values);
+        }
+
         // ========== INTERNAL HELPERS ==========
 
         private void AddToAgentIndex(int agentID, int relationshipID)

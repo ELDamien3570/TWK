@@ -187,7 +187,12 @@ namespace TWK.UI
             agentData.Age = Random.Range(18, 45);
             agentData.BirthYear = WorldTimeManager.Instance.CurrentYear - agentData.Age;
 
-            var agent = AgentManager.Instance.CreateAgent(agentData);
+            // Instantiate agent GameObject and initialize
+            var agentObj = new GameObject($"Agent_{agentData.AgentID}_{agentData.AgentName}");
+            var agent = agentObj.AddComponent<Agent>();
+            agent.agentData = agentData;
+            agent.Initialize(WorldTimeManager.Instance);
+
             LogDebug($"Spawned agent: {agent.Data.AgentName} (ID: {agent.Data.AgentID})");
         }
 
@@ -321,15 +326,25 @@ namespace TWK.UI
             int agent1ID = GameUIController.Instance.CurrentPlayerAgentID;
             int agent2ID = GetSelectedAgentID();
 
-            var relationships = RelationshipManager.Instance.GetRelationshipsBetween(agent1ID, agent2ID);
+            // Get relationships for agent 1
+            var relationships = RelationshipManager.Instance.GetAgentRelationships(agent1ID);
             if (relationships != null && relationships.Count > 0)
             {
-                RelationshipManager.Instance.ModifyRelationshipStrength(relationships[0].RelationshipID, strengthChange);
-                LogDebug($"Modified relationship strength by {strengthChange}");
+                // Find relationship with agent 2
+                var targetRel = relationships.Find(r => r.Agent1ID == agent2ID || r.Agent2ID == agent2ID);
+                if (targetRel != null)
+                {
+                    RelationshipManager.Instance.ModifyRelationshipStrength(targetRel.RelationshipID, strengthChange);
+                    LogDebug($"Modified relationship strength by {strengthChange}");
+                }
+                else
+                {
+                    LogDebug("No relationship found between these agents");
+                }
             }
             else
             {
-                LogDebug("No relationship found to modify");
+                LogDebug("No relationships found to modify");
             }
         }
 
@@ -387,9 +402,9 @@ namespace TWK.UI
             var offices = GovernmentManager.Instance.GetRealmOffices(realmID);
             if (offices != null && officeIndex < offices.Count)
             {
-                int officeID = offices[officeIndex].OfficeID;
-                GovernmentManager.Instance.AssignOffice(realmID, offices[officeIndex], agentID);
-                LogDebug($"Assigned agent {agentID} to office {offices[officeIndex].OfficeName}");
+                var office = offices[officeIndex];
+                GovernmentManager.Instance.AssignOffice(realmID, office, agentID);
+                LogDebug($"Assigned agent {agentID} to office {office.OfficeName}");
             }
         }
 
@@ -408,7 +423,7 @@ namespace TWK.UI
                 {
                     if (office.AssignedAgentID == agentID)
                     {
-                        GovernmentManager.Instance.RemoveOfficeHolder(realmID, office.OfficeID);
+                        office.ClearAssignment();
                         LogDebug($"Removed agent from {office.OfficeName}");
                         return;
                     }
