@@ -1,5 +1,9 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 using TWK.Cultures;
+using TWK.Government;
+using TWK.Realms;
 
 namespace TWK.Agents
 {
@@ -341,6 +345,252 @@ namespace TWK.Agents
             if (agent.HasTrait(PersonalityTrait.Blunt)) modifier *= 0.9f;
 
             return modifier;
+        }
+
+        // ========== HEIR SELECTION ==========
+
+        /// <summary>
+        /// Select the best heir for an agent based on realm succession laws.
+        /// Returns -1 if no valid heir found.
+        /// </summary>
+        public static int SelectHeir(AgentData deceasedAgent)
+        {
+            if (deceasedAgent.ChildrenIDs == null || deceasedAgent.ChildrenIDs.Count == 0)
+                return -1; // No children, no heir
+
+            // Get realm succession law if agent is a ruler
+            SuccessionLaw successionLaw = GetSuccessionLaw(deceasedAgent);
+
+            switch (successionLaw)
+            {
+                case SuccessionLaw.Hereditary:
+                    return SelectHeirHereditary(deceasedAgent);
+
+                case SuccessionLaw.Elective:
+                case SuccessionLaw.Republican:
+                    return SelectHeirElective(deceasedAgent);
+
+                case SuccessionLaw.Kinship:
+                    return SelectHeirKinship(deceasedAgent);
+
+                case SuccessionLaw.Theocratic:
+                case SuccessionLaw.Divinity:
+                    return SelectHeirTheocratic(deceasedAgent);
+
+                case SuccessionLaw.Chosen:
+                    return SelectHeirChosen(deceasedAgent);
+
+                case SuccessionLaw.Oligarchical:
+                    return SelectHeirOligarchical(deceasedAgent);
+
+                default:
+                    // Fallback to eldest child
+                    return SelectHeirHereditary(deceasedAgent);
+            }
+        }
+
+        private static SuccessionLaw GetSuccessionLaw(AgentData agent)
+        {
+            // Check if agent is a realm leader
+            if (RealmManager.Instance != null)
+            {
+                var realms = RealmManager.Instance.GetAllRealms();
+                foreach (var realm in realms)
+                {
+                    if (realm.Data.LeaderIDs.Contains(agent.AgentID))
+                    {
+                        // Get government succession law
+                        if (GovernmentManager.Instance != null)
+                        {
+                            var government = GovernmentManager.Instance.GetRealmGovernment(realm.RealmID);
+                            if (government != null)
+                            {
+                                return government.SuccessionLaw;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Default to hereditary for non-rulers or when system not found
+            return SuccessionLaw.Hereditary;
+        }
+
+        private static int SelectHeirHereditary(AgentData deceasedAgent)
+        {
+            // Primogeniture: Eldest living child
+            // TODO: Add gender preference based on culture (agnatic, cognatic, absolute)
+            // TODO: Add legitimacy checks (bastards inherit last)
+
+            if (deceasedAgent.ChildrenIDs.Count == 0)
+                return -1;
+
+            // Get all living children with their ages
+            var heirs = new List<(int agentID, int age)>();
+
+            foreach (int childID in deceasedAgent.ChildrenIDs)
+            {
+                var child = AgentManager.Instance?.GetAgent(childID);
+                if (child != null && child.Data.IsAlive)
+                {
+                    heirs.Add((childID, child.Data.Age));
+                }
+            }
+
+            if (heirs.Count == 0)
+                return -1;
+
+            // Return eldest child
+            return heirs.OrderByDescending(h => h.age).First().agentID;
+        }
+
+        private static int SelectHeirElective(AgentData deceasedAgent)
+        {
+            // Elective: Choose based on prestige and legitimacy
+            // In a full implementation, nobles would vote
+            // For now, select child with highest prestige
+
+            if (deceasedAgent.ChildrenIDs.Count == 0)
+                return -1;
+
+            int bestHeir = -1;
+            float bestScore = float.MinValue;
+
+            foreach (int childID in deceasedAgent.ChildrenIDs)
+            {
+                var child = AgentManager.Instance?.GetAgent(childID);
+                if (child == null || !child.Data.IsAlive)
+                    continue;
+
+                // Score based on prestige, reputation, and age
+                float score = child.Data.Prestige;
+                score += CalculateReputation(child.Data) * 0.5f;
+                score += child.Data.Age * 0.1f; // Slight bonus for maturity
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestHeir = childID;
+                }
+            }
+
+            return bestHeir;
+        }
+
+        private static int SelectHeirKinship(AgentData deceasedAgent)
+        {
+            // Kinship: Extended family, consider siblings and cousins
+            // For now, similar to hereditary but with wider pool
+
+            if (deceasedAgent.ChildrenIDs.Count == 0)
+                return -1;
+
+            // TODO: Add support for siblings, nephews/nieces when family tree is expanded
+            return SelectHeirHereditary(deceasedAgent);
+        }
+
+        private static int SelectHeirTheocratic(AgentData deceasedAgent)
+        {
+            // Theocratic: Religious authority chooses based on piety
+            if (deceasedAgent.ChildrenIDs.Count == 0)
+                return -1;
+
+            int bestHeir = -1;
+            float bestPiety = float.MinValue;
+
+            foreach (int childID in deceasedAgent.ChildrenIDs)
+            {
+                var child = AgentManager.Instance?.GetAgent(childID);
+                if (child == null || !child.Data.IsAlive)
+                    continue;
+
+                // Score based on piety from religion skill tree
+                float piety = child.Data.SkillLevels.ContainsKey(TreeType.Religion)
+                    ? child.Data.SkillLevels[TreeType.Religion]
+                    : 0f;
+
+                // Pious traits boost selection
+                if (child.Data.HasTrait(PersonalityTrait.Pious))
+                    piety += 20f;
+                if (child.Data.HasTrait(PersonalityTrait.Zealous))
+                    piety += 15f;
+
+                if (piety > bestPiety)
+                {
+                    bestPiety = piety;
+                    bestHeir = childID;
+                }
+            }
+
+            return bestHeir != -1 ? bestHeir : SelectHeirHereditary(deceasedAgent);
+        }
+
+        private static int SelectHeirChosen(AgentData deceasedAgent)
+        {
+            // Chosen: Ruler chooses their successor
+            // TODO: Add designated heir field to AgentData
+            // For now, favor most skilled child
+
+            if (deceasedAgent.ChildrenIDs.Count == 0)
+                return -1;
+
+            int bestHeir = -1;
+            float bestSkillTotal = float.MinValue;
+
+            foreach (int childID in deceasedAgent.ChildrenIDs)
+            {
+                var child = AgentManager.Instance?.GetAgent(childID);
+                if (child == null || !child.Data.IsAlive)
+                    continue;
+
+                // Sum all skill levels
+                float skillTotal = 0f;
+                foreach (var skill in child.Data.SkillLevels.Values)
+                {
+                    skillTotal += skill;
+                }
+
+                if (skillTotal > bestSkillTotal)
+                {
+                    bestSkillTotal = skillTotal;
+                    bestHeir = childID;
+                }
+            }
+
+            return bestHeir != -1 ? bestHeir : SelectHeirHereditary(deceasedAgent);
+        }
+
+        private static int SelectHeirOligarchical(AgentData deceasedAgent)
+        {
+            // Oligarchical: Elite families rotate power
+            // Select child with best combination of prestige and wealth
+
+            if (deceasedAgent.ChildrenIDs.Count == 0)
+                return -1;
+
+            int bestHeir = -1;
+            float bestScore = float.MinValue;
+
+            foreach (int childID in deceasedAgent.ChildrenIDs)
+            {
+                var child = AgentManager.Instance?.GetAgent(childID);
+                if (child == null || !child.Data.IsAlive)
+                    continue;
+
+                // Score combines prestige and wealth
+                var ledger = AgentManager.Instance?.GetAgentLedger(childID);
+                float wealth = ledger != null ? ledger.GetTotalWealth() : 0f;
+
+                float score = child.Data.Prestige * 2f + wealth * 0.001f; // Prestige weighted higher
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestHeir = childID;
+                }
+            }
+
+            return bestHeir != -1 ? bestHeir : SelectHeirHereditary(deceasedAgent);
         }
     }
 }

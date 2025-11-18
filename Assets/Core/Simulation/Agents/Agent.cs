@@ -257,14 +257,23 @@ namespace TWK.Agents
 
             Debug.Log($"[Agent] {agentData.AgentName} has died at age {agentData.Age}");
 
-            // Determine primary heir (first child, or -1 if no children)
-            int heirID = agentData.ChildrenIDs.Count > 0 ? agentData.ChildrenIDs[0] : -1;
+            // Determine heir using succession laws
+            int heirID = AgentSimulation.SelectHeir(agentData);
+
+            if (heirID != -1)
+            {
+                var heir = AgentManager.Instance.GetAgent(heirID);
+                Debug.Log($"[Agent] Heir selected: {heir?.Data.AgentName ?? "Unknown"} (ID: {heirID})");
+            }
+            else
+            {
+                Debug.Log($"[Agent] No valid heir found for {agentData.AgentName}");
+            }
 
             // Process death through manager
             AgentManager.Instance.ProcessAgentDeath(agentData.AgentID, heirID);
 
-            // TODO: More sophisticated heir selection (consider legitimacy, age, gender, culture rules)
-            // TODO: Distribute properties (estates, caravans, cities) among heirs
+            // TODO: Distribute properties (estates, caravans, cities) among multiple heirs
             // TODO: Update relationships (widows, orphans, etc.)
         }
 

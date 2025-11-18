@@ -8,6 +8,7 @@ using TWK.Economy;
 using TWK.UI.ViewModels;
 using TWK.Cultures;
 using TWK.Religion;
+using TWK.Government;
 
 
 namespace TWK.Core
@@ -62,6 +63,16 @@ namespace TWK.Core
                 ReligionManager.Instance.Initialize(worldTimeManager);
             else
                 Debug.LogError("ReligionManager not found in scene!");
+
+            if (ContractManager.Instance != null)
+                ContractManager.Instance.Initialize(worldTimeManager);
+            else
+                Debug.LogWarning("ContractManager not found in scene! Contracts will not process.");
+
+            if (GovernmentManager.Instance != null)
+                GovernmentManager.Instance.Initialize(worldTimeManager);
+            else
+                Debug.LogWarning("GovernmentManager not found in scene! Government systems will not work.");
 
             // Initialize ViewModelService for UI
             if (ViewModelService.Instance != null)

@@ -365,10 +365,18 @@ namespace TWK.Government
 
         private void TransferResources(Contract contract, float leakageRate)
         {
-            // TODO: Integrate with ResourceManager
-            // For now, just calculate what would be transferred
+            // Get subject and parent realms
+            var subjectRealm = RealmManager.Instance?.GetRealm(contract.SubjectRealmID);
+            var parentRealm = RealmManager.Instance?.GetRealm(contract.ParentRealmID);
+
+            if (subjectRealm == null || parentRealm == null)
+            {
+                Debug.LogWarning($"[ContractManager] Cannot transfer resources: Subject or parent realm not found (Contract {contract.ContractID})");
+                return;
+            }
 
             var resourceTypes = new[] { ResourceType.Food, ResourceType.Gold, ResourceType.Piety, ResourceType.Prestige };
+            int totalTransferred = 0;
 
             foreach (var resourceType in resourceTypes)
             {
@@ -376,15 +384,42 @@ namespace TWK.Government
                 if (percentage <= 0f)
                     continue;
 
-                // Calculate actual transfer after leakage
-                float effectiveRate = percentage * (1f - leakageRate) / 100f;
+                // Get subject's current resources
+                int subjectAmount = subjectRealm.Treasury.GetResource(resourceType);
+                if (subjectAmount <= 0)
+                    continue;
 
-                Debug.Log($"[ContractManager] Contract {contract.ContractID}: {resourceType} {percentage:F0}% (effective: {effectiveRate * 100:F1}% after leakage)");
+                // Calculate transfer amount
+                float rawPercentage = percentage / 100f;
+                int rawAmount = Mathf.FloorToInt(subjectAmount * rawPercentage);
 
-                // TODO: Get subject realm resources
-                // TODO: Calculate amount based on percentage
-                // TODO: Apply leakage
-                // TODO: Transfer to parent realm via ResourceManager
+                if (rawAmount <= 0)
+                    continue;
+
+                // Apply leakage (corruption, raiders, administrative inefficiency)
+                int leakedAmount = Mathf.FloorToInt(rawAmount * leakageRate);
+                int transferAmount = rawAmount - leakedAmount;
+
+                if (transferAmount <= 0)
+                    continue;
+
+                // Execute transfer: Subject -> Parent
+                if (subjectRealm.Treasury.SpendResource(resourceType, transferAmount, -1))
+                {
+                    parentRealm.Treasury.AddResource(resourceType, transferAmount);
+                    totalTransferred++;
+
+                    Debug.Log($"[ContractManager] Contract {contract.ContractID}: Transferred {transferAmount} {resourceType} from Realm {contract.SubjectRealmID} to {contract.ParentRealmID} (rate: {percentage:F0}%, leakage: {leakedAmount})");
+                }
+                else
+                {
+                    Debug.LogWarning($"[ContractManager] Contract {contract.ContractID}: Failed to deduct {transferAmount} {resourceType} from subject realm {contract.SubjectRealmID}");
+                }
+            }
+
+            if (totalTransferred > 0)
+            {
+                Debug.Log($"[ContractManager] Contract {contract.ContractID}: Completed resource transfer ({totalTransferred} resource types transferred, {leakageRate * 100:F0}% leakage)");
             }
         }
 
