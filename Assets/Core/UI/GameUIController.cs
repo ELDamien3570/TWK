@@ -39,12 +39,10 @@ namespace TWK.UI
         // ========== MENU CONTROLLERS ==========
         [Header("Menu Controllers")]
         [SerializeField] private AgentUIController agentUIController;
+        [SerializeField] private GameObject diplomacyUIController;
+        [SerializeField] private GameObject realmUIController;
+        [SerializeField] private GameObject cityUIController;
         [SerializeField] private GameObject debugMenuPanel;
-
-        // Future menu controllers
-        // [SerializeField] private CityUIController cityUIController;
-        // [SerializeField] private DiplomacyUIController diplomacyUIController;
-        // [SerializeField] private RealmUIController realmUIController;
 
         // ========== UI PANELS ==========
         [Header("Main UI")]
@@ -55,14 +53,6 @@ namespace TWK.UI
         [SerializeField] private Button realmMenuButton;
         [SerializeField] private Button cityMenuButton;
         [SerializeField] private Button toggleDebugButton;
-
-        // ========== TIME CONTROLS ==========
-        [Header("Time Controls")]
-        [SerializeField] private Button pauseButton;
-        [SerializeField] private Button playButton;
-        [SerializeField] private Button fastForwardButton;
-        [SerializeField] private TextMeshProUGUI currentDateText;
-        [SerializeField] private TextMeshProUGUI timeSpeedText;
 
         // ========== EVENTS ==========
         public event System.Action<int> OnPlayerAgentChanged;
@@ -83,7 +73,6 @@ namespace TWK.UI
         private void Start()
         {
             SetupButtons();
-            SetupTimeControls();
             InitializePlayerContext();
             UpdatePlayerContextDisplay();
 
@@ -95,12 +84,9 @@ namespace TWK.UI
 
         private void Update()
         {
-            UpdateCurrentDateDisplay();
-
             // Hotkeys
             if (Input.GetKeyDown(KeyCode.F1)) ToggleDebugMenu();
             if (Input.GetKeyDown(KeyCode.Escape)) CloseAllMenus();
-            if (Input.GetKeyDown(KeyCode.Space)) TogglePause();
         }
 
         // ========== PLAYER CONTEXT MANAGEMENT ==========
@@ -260,8 +246,15 @@ namespace TWK.UI
         public void OpenDiplomacyMenu()
         {
             CloseAllMenus();
-            // TODO: Implement when DiplomacyUIController exists
-            Debug.Log("[GameUIController] Diplomacy menu not yet implemented");
+
+            if (diplomacyUIController != null)
+            {
+                diplomacyUIController.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[GameUIController] DiplomacyUIController not assigned");
+            }
         }
 
         /// <summary>
@@ -270,8 +263,15 @@ namespace TWK.UI
         public void OpenRealmMenu()
         {
             CloseAllMenus();
-            // TODO: Implement when RealmUIController exists
-            Debug.Log("[GameUIController] Realm menu not yet implemented");
+
+            if (realmUIController != null)
+            {
+                realmUIController.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[GameUIController] RealmUIController not assigned");
+            }
         }
 
         /// <summary>
@@ -280,8 +280,15 @@ namespace TWK.UI
         public void OpenCityMenu()
         {
             CloseAllMenus();
-            // TODO: Implement when CityUIController exists
-            Debug.Log("[GameUIController] City menu not yet implemented");
+
+            if (cityUIController != null)
+            {
+                cityUIController.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("[GameUIController] CityUIController not assigned");
+            }
         }
 
         /// <summary>
@@ -303,84 +310,17 @@ namespace TWK.UI
             if (agentUIController != null)
                 agentUIController.gameObject.SetActive(false);
 
+            if (diplomacyUIController != null)
+                diplomacyUIController.SetActive(false);
+
+            if (realmUIController != null)
+                realmUIController.SetActive(false);
+
+            if (cityUIController != null)
+                cityUIController.SetActive(false);
+
             if (debugMenuPanel != null)
                 debugMenuPanel.SetActive(false);
-
-            // TODO: Close other menus when they exist
-            // cityUIController?.gameObject.SetActive(false);
-            // diplomacyUIController?.gameObject.SetActive(false);
-            // realmUIController?.gameObject.SetActive(false);
-        }
-
-        // ========== TIME CONTROLS ==========
-
-        private void SetupTimeControls()
-        {
-            pauseButton?.onClick.AddListener(PauseTime);
-            playButton?.onClick.AddListener(PlayTime);
-            fastForwardButton?.onClick.AddListener(FastForwardTime);
-        }
-
-        private void UpdateCurrentDateDisplay()
-        {
-            if (currentDateText == null || WorldTimeManager.Instance == null) return;
-
-            var time = WorldTimeManager.Instance;
-            currentDateText.text = $"Day {time.CurrentDay}, Season {time.CurrentSeason}, Year {time.CurrentYear}";
-        }
-
-        private void PauseTime()
-        {
-            if (WorldTimeManager.Instance != null)
-            {
-                WorldTimeManager.Instance.SetPaused(true);
-                UpdateTimeSpeedDisplay();
-            }
-        }
-
-        private void PlayTime()
-        {
-            if (WorldTimeManager.Instance != null)
-            {
-                WorldTimeManager.Instance.SetPaused(false);
-                WorldTimeManager.Instance.SetTimeScale(1f);
-                UpdateTimeSpeedDisplay();
-            }
-        }
-
-        private void FastForwardTime()
-        {
-            if (WorldTimeManager.Instance != null)
-            {
-                WorldTimeManager.Instance.SetPaused(false);
-                WorldTimeManager.Instance.SetTimeScale(3f);
-                UpdateTimeSpeedDisplay();
-            }
-        }
-
-        private void TogglePause()
-        {
-            if (WorldTimeManager.Instance != null)
-            {
-                bool isPaused = WorldTimeManager.Instance.IsPaused;
-                WorldTimeManager.Instance.SetPaused(!isPaused);
-                UpdateTimeSpeedDisplay();
-            }
-        }
-
-        private void UpdateTimeSpeedDisplay()
-        {
-            if (timeSpeedText == null || WorldTimeManager.Instance == null) return;
-
-            if (WorldTimeManager.Instance.IsPaused)
-            {
-                timeSpeedText.text = "PAUSED";
-            }
-            else
-            {
-                float speed = WorldTimeManager.Instance.GetTimeScale();
-                timeSpeedText.text = $"Speed: {speed:F1}x";
-            }
         }
 
         // ========== DEBUG HELPERS ==========
