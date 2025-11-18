@@ -126,7 +126,7 @@ namespace TWK.Simulation
 
         public int CurrentDay => timeSystem?.CurrentDay ?? 0;
         public string CurrentSeason => timeSystem?.CurrentSeason ?? "Spring";
-        public int CurrentYear => timeSystem?.CurrentYear.Year ?? 0;
+        public int CurrentYear => timeSystem?.CurrentYear.year ?? 0;
     }
 }
 

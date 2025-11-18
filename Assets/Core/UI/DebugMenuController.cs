@@ -8,6 +8,7 @@ using TWK.Government;
 using TWK.Cultures;
 using TWK.Religion;
 using TWK.UI.ViewModels;
+using TWK.Simulation;
 
 namespace TWK.UI
 {
@@ -152,7 +153,7 @@ namespace TWK.UI
                     {
                         foreach (var office in offices)
                         {
-                            options.Add($"{office.OfficeName} (ID: {office.OfficeID})");
+                            options.Add($"{office.OfficeName} (ID: {office.AssignedAgentID})"); 
                         }
                     }
                 }
@@ -232,8 +233,8 @@ namespace TWK.UI
 
             if (ledger != null)
             {
-                ledger.AddGold(amount);
-                LogDebug($"Added {amount} gold to agent (new total: {ledger.GetTotalWealth()})");
+                ledger.AddResource(Economy.ResourceType.Gold, amount);
+                LogDebug($"Added {amount} gold to agent (new total: {ledger.GetResource(Economy.ResourceType.Gold)})");
             }
         }
 
@@ -387,7 +388,7 @@ namespace TWK.UI
             if (offices != null && officeIndex < offices.Count)
             {
                 int officeID = offices[officeIndex].OfficeID;
-                GovernmentManager.Instance.AssignOffice(realmID, officeID, agentID);
+                GovernmentManager.Instance.AssignOffice(realmID, offices[officeIndex], agentID);
                 LogDebug($"Assigned agent {agentID} to office {offices[officeIndex].OfficeName}");
             }
         }
@@ -520,7 +521,7 @@ namespace TWK.UI
 
             foreach (var contract in contracts)
             {
-                output += $"- Contract {contract.ContractID}: {contract.Type} (Loyalty: {contract.GetLoyaltyLabel()})\n";
+                output += $"- Contract {contract.ContractID}: {contract.Type} (Loyalty: {contract.CurrentLoyalty})\n";
             }
 
             LogDebug(output);

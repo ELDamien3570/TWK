@@ -510,9 +510,9 @@ namespace TWK.Agents
                     : 0f;
 
                 // Pious traits boost selection
-                if (child.Data.HasTrait(PersonalityTrait.Pious))
+                if (child.Data.HasTrait(PersonalityTrait.Chaste))
                     piety += 20f;
-                if (child.Data.HasTrait(PersonalityTrait.Zealous))
+                if (child.Data.HasTrait(PersonalityTrait.Generous))
                     piety += 15f;
 
                 if (piety > bestPiety)
@@ -579,7 +579,7 @@ namespace TWK.Agents
 
                 // Score combines prestige and wealth
                 var ledger = AgentManager.Instance?.GetAgentLedger(childID);
-                float wealth = ledger != null ? ledger.GetTotalWealth() : 0f;
+                float wealth = ledger != null ? ledger.GetResource(Economy.ResourceType.Gold) : 0f;
 
                 float score = child.Data.Prestige * 2f + wealth * 0.001f; // Prestige weighted higher
 

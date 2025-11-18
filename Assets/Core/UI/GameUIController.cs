@@ -5,6 +5,7 @@ using TMPro;
 using TWK.Agents;
 using TWK.Realms;
 using TWK.Core;
+using TWK.Simulation;
 using TWK.UI.ViewModels;
 
 namespace TWK.UI
