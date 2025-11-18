@@ -140,8 +140,8 @@ namespace TWK.Agents
         /// </summary>
         public static void ApplyDamage(AgentData agent, float damage)
         {
-            agent.Health -= damage;
-            if (agent.Health < 0) agent.Health = 0;
+            agent.CombatStats.Health -= damage;
+            if (agent.CombatStats.Health < 0) agent.CombatStats.Health = 0;
         }
 
         /// <summary>
@@ -149,8 +149,9 @@ namespace TWK.Agents
         /// </summary>
         public static void Heal(AgentData agent, float amount)
         {
-            agent.Health += amount;
-            if (agent.Health > agent.MaxHealth) agent.Health = agent.MaxHealth;
+            agent.CombatStats.Health += amount;
+            if (agent.CombatStats.Health > agent.CombatStats.MaxHealth)
+                agent.CombatStats.Health = agent.CombatStats.MaxHealth;
         }
 
         /// <summary>
@@ -158,9 +159,9 @@ namespace TWK.Agents
         /// </summary>
         public static void ModifyMorale(AgentData agent, float amount)
         {
-            agent.Morale += amount;
-            if (agent.Morale < 0) agent.Morale = 0;
-            if (agent.Morale > 100) agent.Morale = 100;
+            agent.CombatStats.Morale += amount;
+            if (agent.CombatStats.Morale < 0) agent.CombatStats.Morale = 0;
+            if (agent.CombatStats.Morale > 100) agent.CombatStats.Morale = 100;
         }
 
         /// <summary>
@@ -169,7 +170,7 @@ namespace TWK.Agents
         /// </summary>
         public static bool CheckCombatDeath(AgentData agent)
         {
-            if (!agent.IsCriticalHealth())
+            if (!agent.CombatStats.IsCriticalHealth())
                 return false;
 
             float deathChance = 0.5f; // 50% chance at critical health
@@ -184,12 +185,12 @@ namespace TWK.Agents
         /// </summary>
         public static void RecalculateWeaponSlots(AgentData agent)
         {
-            agent.WeaponSlots = 3; // Base slots
+            agent.CombatStats.WeaponSlots = 3; // Base slots
 
-            if (agent.Strength > 50f)
+            if (agent.CombatStats.Strength > 50f)
             {
-                int bonusSlots = (int)((agent.Strength - 50f) / 25f);
-                agent.WeaponSlots += bonusSlots;
+                int bonusSlots = (int)((agent.CombatStats.Strength - 50f) / 25f);
+                agent.CombatStats.WeaponSlots += bonusSlots;
             }
         }
 
@@ -239,10 +240,10 @@ namespace TWK.Agents
         /// </summary>
         private static void SimulateDailyCosts(AgentData agent, AgentLedger ledger)
         {
-            if (ledger == null || agent.DailyCost == null || agent.DailyCost.Count == 0)
+            if (ledger == null || agent.CombatStats.DailyCost == null || agent.CombatStats.DailyCost.Count == 0)
                 return;
 
-            foreach (var cost in agent.DailyCost)
+            foreach (var cost in agent.CombatStats.DailyCost)
             {
                 // Try to pay cost from personal wealth
                 if (!ledger.SpendResource(cost.Key, cost.Value))

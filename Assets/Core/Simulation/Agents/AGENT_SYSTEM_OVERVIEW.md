@@ -16,6 +16,7 @@ The Agent system follows the same pattern as City and Realm systems:
 ## File Structure
 - **AgentEnums.cs** - Contains all enums (Gender, Sexuality, PersonalityTrait)
 - **AgentData.cs** - Pure data model (Model in MVVM)
+- **SoldierStats.cs** - Reusable combat stats structure (used by agents AND army units)
 - **Agent.cs** - MonoBehaviour wrapper (View in MVVM)
 - **AgentSimulation.cs** - Static simulation logic (Logic layer)
 - **AgentLedger.cs** - Personal wealth and resource management
@@ -62,6 +63,33 @@ AgentSimulation.SimulateDay(agentData, ledger);
 // INCORRECT - Don't access AgentData logic methods directly (they don't exist anymore)
 // agentData.CalculateReputation();  // REMOVED - use AgentSimulation
 ```
+
+## SoldierStats Structure
+
+**Important Design Decision:** Combat/unit stats are in a separate `SoldierStats` class that can be used by both:
+- Individual agents (when fighting personally)
+- Army units (representing groups of soldiers)
+
+This shared structure ensures consistency across the combat system.
+
+**Access Pattern:**
+```csharp
+// Access combat stats through AgentData.CombatStats
+agent.Data.CombatStats.Health
+agent.Data.CombatStats.Strength
+agent.Data.CombatStats.Morale
+
+// AgentSimulation works with this structure
+AgentSimulation.ApplyDamage(agentData, 50f);  // Modifies agentData.CombatStats.Health
+```
+
+**SoldierStats Contains:**
+- Basic Attributes: Strength, Leadership, Morale, WeaponSlots, MountID, DailyCost
+- Combat Stats: Health, MaxHealth, Speed, Agility, Accuracy, ChargeSpeed, ChargeBonus
+- Melee: MeleeAttack, MeleeArmor, MeleeAttackBonusVsMount
+- Missile: MissileAttack, MissileDefense, MissileAttackBonusVsMount, Ammunition
+- Equipment: EquippedWeaponIDs, HeadEquipmentID, BodyEquipmentID, LegsEquipmentID, ShieldID
+- Helper Methods: EquipWeapon(), UnequipWeapon(), IsCriticalHealth(), ShouldRoute(), HasLowMoralePenalty()
 
 ## Core Systems
 
@@ -237,11 +265,11 @@ agent.AddTrait(PersonalityTrait.Just);
 agent.AddTrait(PersonalityTrait.Scholarly);
 agent.AddTrait(PersonalityTrait.Brave);
 
-// Set combat stats
-agent.Strength = 75f;
-agent.Leadership = 80f;
-agent.Morale = 100f;
-agent.RecalculateWeaponSlots(); // Now has 4 slots (75 STR)
+// Set combat stats (through CombatStats structure)
+agent.CombatStats.Strength = 75f;
+agent.CombatStats.Leadership = 80f;
+agent.CombatStats.Morale = 100f;
+AgentSimulation.RecalculateWeaponSlots(agent); // Now has 4 slots (75 STR)
 
 // Set reputation
 agent.Prestige = 50f;
@@ -261,45 +289,49 @@ agent.AddRival(30);
 // During battle - damage automatically checks for death
 agent.TakeDamage(75f);  // Internally calls AgentSimulation.ApplyDamage() and CheckCombatDeath()
 
-// Check combat state (these are simple data reads from AgentData)
-if (agent.Data.IsCriticalHealth())
+// Check combat state (these are simple data reads from SoldierStats)
+if (agent.Data.CombatStats.IsCriticalHealth())
 {
     Debug.Log("Agent is critically wounded!");
 }
 
 // Check morale for routing
-if (agent.Data.ShouldRoute())
+if (agent.Data.CombatStats.ShouldRoute())
 {
     // Unit retreats
     PerformRetreat();
 }
 
-if (agent.Data.HasLowMoralePenalty())
+if (agent.Data.CombatStats.HasLowMoralePenalty())
 {
     // Apply combat penalties (multiply attack by 0.8, for example)
     float penalty = 0.8f;
 }
 
+// Direct stats access
+float currentHealth = agent.Data.CombatStats.Health;
+float strength = agent.Data.CombatStats.Strength;
+
 // Modify morale after battle events
-agent.ModifyMorale(-10f);  // Lost a battle
+agent.ModifyMorale(-10f);  // Lost a battle - delegates to AgentSimulation
 agent.ModifyMorale(15f);   // Won a battle
 ```
 
 ### Managing Equipment
 ```csharp
-// Equip weapons (simple list operations in AgentData)
-bool equipped = agent.Data.EquipWeapon(swordID);
-equipped = agent.Data.EquipWeapon(spearID);
-equipped = agent.Data.EquipWeapon(bowID);
+// Equip weapons (through SoldierStats)
+bool equipped = agent.Data.CombatStats.EquipWeapon(swordID);
+equipped = agent.Data.CombatStats.EquipWeapon(spearID);
+equipped = agent.Data.CombatStats.EquipWeapon(bowID);
 
-// Equip armor (direct field access)
-agent.Data.HeadEquipmentID = helmetID;
-agent.Data.BodyEquipmentID = breastplateID;
-agent.Data.LegsEquipmentID = greavesID;
-agent.Data.ShieldID = shieldID;
+// Equip armor (direct field access on SoldierStats)
+agent.Data.CombatStats.HeadEquipmentID = helmetID;
+agent.Data.CombatStats.BodyEquipmentID = breastplateID;
+agent.Data.CombatStats.LegsEquipmentID = greavesID;
+agent.Data.CombatStats.ShieldID = shieldID;
 
 // Mount a horse
-agent.Data.MountID = horseID;
+agent.Data.CombatStats.MountID = horseID;
 
 // IMPORTANT: Recalculate combat stats after equipment changes
 agent.RecalculateCombatStats();  // Calls AgentSimulation.RecalculateCombatStats()

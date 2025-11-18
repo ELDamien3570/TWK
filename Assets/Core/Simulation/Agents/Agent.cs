@@ -432,12 +432,12 @@ namespace TWK.Agents
             Debug.Log($"Companions: {agentData.CompanionIDs.Count}");
 
             Debug.Log($"\n--- Combat Stats ---");
-            Debug.Log($"Health: {agentData.Health:F1}/{agentData.MaxHealth:F1}");
-            Debug.Log($"Strength: {agentData.Strength:F1} | Leadership: {agentData.Leadership:F1} | Morale: {agentData.Morale:F1}");
-            Debug.Log($"Melee: {agentData.MeleeAttack:F1} ATK / {agentData.MeleeArmor:F1} ARM");
-            Debug.Log($"Missile: {agentData.MissileAttack:F1} ATK / {agentData.MissileDefense:F1} DEF");
-            Debug.Log($"Speed: {agentData.Speed:F1} | Charge: {agentData.ChargeSpeed:F1} | Agility: {agentData.Agility:F1}");
-            Debug.Log($"Weapon Slots: {agentData.WeaponSlots} | Equipped: {agentData.EquippedWeaponIDs.Count}");
+            Debug.Log($"Health: {agentData.CombatStats.Health:F1}/{agentData.CombatStats.MaxHealth:F1}");
+            Debug.Log($"Strength: {agentData.CombatStats.Strength:F1} | Leadership: {agentData.CombatStats.Leadership:F1} | Morale: {agentData.CombatStats.Morale:F1}");
+            Debug.Log($"Melee: {agentData.CombatStats.MeleeAttack:F1} ATK / {agentData.CombatStats.MeleeArmor:F1} ARM");
+            Debug.Log($"Missile: {agentData.CombatStats.MissileAttack:F1} ATK / {agentData.CombatStats.MissileDefense:F1} DEF");
+            Debug.Log($"Speed: {agentData.CombatStats.Speed:F1} | Charge: {agentData.CombatStats.ChargeSpeed:F1} | Agility: {agentData.CombatStats.Agility:F1}");
+            Debug.Log($"Weapon Slots: {agentData.CombatStats.WeaponSlots} | Equipped: {agentData.CombatStats.EquippedWeaponIDs.Count}");
 
             Debug.Log($"\n--- Properties ---");
             Debug.Log($"Buildings: {agentData.OwnedBuildingIDs.Count}");
