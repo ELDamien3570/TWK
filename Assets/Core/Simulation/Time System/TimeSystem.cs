@@ -20,6 +20,7 @@ namespace TWK.Simulation
         public int CurrentSeasonIndex => currentSeasonIndex;
         public int CurrentDay => dayOfSeason;
         public GameYear CurrentYear => currentYear;
+        public float CurrentMultiplier => currentMultiplier;
 
         public event Action<int, GameYear, string> OnDayAdvanced;
         public event Action<string, GameYear> OnSeasonChanged;

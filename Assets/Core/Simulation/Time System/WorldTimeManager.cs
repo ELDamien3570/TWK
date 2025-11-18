@@ -89,6 +89,44 @@ namespace TWK.Simulation
         {
             // Yearly world updates can go here
         }
+
+        // ========== TIME CONTROL HELPERS ==========
+
+        public void AdvanceDay()
+        {
+            if (timeSystem != null)
+            {
+                // Manually trigger day advance
+                HandleDayAdvanced(timeSystem.CurrentDay + 1, timeSystem.CurrentYear, timeSystem.CurrentSeason);
+            }
+        }
+
+        public void SetPaused(bool paused)
+        {
+            if (timeSystem != null)
+            {
+                timeSystem.SetTimeScale(paused ? 0f : 1f);
+            }
+        }
+
+        public void SetTimeScale(float scale)
+        {
+            if (timeSystem != null)
+            {
+                timeSystem.SetTimeScale(scale);
+            }
+        }
+
+        public bool IsPaused => timeSystem != null && timeSystem.CurrentMultiplier == 0f;
+
+        public float GetTimeScale()
+        {
+            return timeSystem?.CurrentMultiplier ?? 0f;
+        }
+
+        public int CurrentDay => timeSystem?.CurrentDay ?? 0;
+        public string CurrentSeason => timeSystem?.CurrentSeason ?? "Spring";
+        public int CurrentYear => timeSystem?.CurrentYear.Year ?? 0;
     }
 }
 
