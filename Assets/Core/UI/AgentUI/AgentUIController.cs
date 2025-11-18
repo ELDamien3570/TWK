@@ -131,18 +131,32 @@ namespace TWK.UI
 
         private void Start()
         {
-            SetupAgentDropdown();
             SetupTabButtons();
             SetupSkillButtons();
             SetupDynastyButton();
             SubscribeToEvents();
 
-            if (agentDropdown.options.Count > 0)
+            // Delay agent dropdown setup to ensure ViewModelService is initialized
+            StartCoroutine(DelayedInitialization());
+
+            ShowTab(TabType.Main);
+        }
+
+        private System.Collections.IEnumerator DelayedInitialization()
+        {
+            // Wait one frame to ensure ViewModelService has registered agents
+            yield return null;
+
+            SetupAgentDropdown();
+
+            if (agentDropdown != null && agentDropdown.options.Count > 0)
             {
                 OnAgentChanged(0);
             }
-
-            ShowTab(TabType.Main);
+            else
+            {
+                Debug.LogWarning("[AgentUIController] No agents available in dropdown");
+            }
         }
 
         private void SubscribeToEvents()
@@ -251,19 +265,33 @@ namespace TWK.UI
         private void OnAgentChanged(int dropdownIndex)
         {
             var agents = AgentManager.Instance?.GetAllAgents();
-            if (agents == null || dropdownIndex >= agents.Count) return;
+            if (agents == null || dropdownIndex >= agents.Count)
+            {
+                Debug.LogWarning($"[AgentUIController] Invalid agent selection: index {dropdownIndex}");
+                return;
+            }
 
             var selectedAgent = agents[dropdownIndex];
             currentAgentID = selectedAgent.Data.AgentID;
 
-            // Get or create ViewModel
-            currentViewModel = ViewModelService.Instance?.GetAgentViewModel(currentAgentID);
-            if (currentViewModel == null)
+            Debug.Log($"[AgentUIController] Agent changed to: {selectedAgent.Data.AgentName} (ID: {currentAgentID})");
+
+            // Check if ViewModelService is available
+            if (ViewModelService.Instance == null)
             {
-                Debug.LogError($"[AgentUIController] Failed to get ViewModel for agent {currentAgentID}");
+                Debug.LogError("[AgentUIController] ViewModelService.Instance is null!");
                 return;
             }
 
+            // Get or create ViewModel
+            currentViewModel = ViewModelService.Instance.GetAgentViewModel(currentAgentID);
+            if (currentViewModel == null)
+            {
+                Debug.LogError($"[AgentUIController] Failed to get ViewModel for agent {currentAgentID}. Agent may not be registered in ViewModelService.");
+                return;
+            }
+
+            Debug.Log($"[AgentUIController] ViewModel retrieved successfully for {selectedAgent.Data.AgentName}");
             RefreshCurrentTab();
         }
 
@@ -285,11 +313,40 @@ namespace TWK.UI
             ShowTab(currentTab);
         }
 
+        /// <summary>
+        /// Public method to set the displayed agent by ID.
+        /// Useful for external code that wants to open the agent UI to a specific agent.
+        /// </summary>
+        public void SetAgent(int agentID)
+        {
+            // Find the agent in the dropdown
+            var agents = AgentManager.Instance?.GetAllAgents();
+            if (agents == null) return;
+
+            for (int i = 0; i < agents.Count; i++)
+            {
+                if (agents[i].Data.AgentID == agentID)
+                {
+                    agentDropdown.value = i;
+                    OnAgentChanged(i);
+                    return;
+                }
+            }
+
+            Debug.LogWarning($"[AgentUIController] Agent {agentID} not found in agent list");
+        }
+
         // ========== MAIN TAB ==========
 
         private void RefreshMainTab()
         {
-            if (currentViewModel == null) return;
+            if (currentViewModel == null)
+            {
+                Debug.LogWarning("[AgentUIController] RefreshMainTab called but currentViewModel is null");
+                return;
+            }
+
+            Debug.Log($"[AgentUIController] Refreshing main tab for agent {currentViewModel.AgentName}");
 
             // Identity
             if (agentNameText != null) agentNameText.text = currentViewModel.AgentName;
@@ -569,6 +626,40 @@ namespace TWK.UI
         public void ForceRefresh()
         {
             RefreshCurrentTab();
+        }
+
+        [ContextMenu("Debug Current State")]
+        public void DebugCurrentState()
+        {
+            Debug.Log("===== AgentUIController Debug State =====");
+            Debug.Log($"Current Agent ID: {currentAgentID}");
+            Debug.Log($"Current ViewModel: {(currentViewModel != null ? "EXISTS" : "NULL")}");
+            Debug.Log($"ViewModelService.Instance: {(ViewModelService.Instance != null ? "EXISTS" : "NULL")}");
+            Debug.Log($"AgentManager.Instance: {(AgentManager.Instance != null ? "EXISTS" : "NULL")}");
+
+            if (AgentManager.Instance != null)
+            {
+                var agents = AgentManager.Instance.GetAllAgents();
+                Debug.Log($"Total Agents in AgentManager: {agents?.Count ?? 0}");
+            }
+
+            if (ViewModelService.Instance != null)
+            {
+                var allViewModels = ViewModelService.Instance.GetAllAgentViewModels();
+                int count = 0;
+                foreach (var vm in allViewModels) count++;
+                Debug.Log($"Total Agent ViewModels in ViewModelService: {count}");
+            }
+
+            if (currentViewModel != null)
+            {
+                Debug.Log($"ViewModel Agent Name: {currentViewModel.AgentName}");
+                Debug.Log($"ViewModel Age: {currentViewModel.Age}");
+                Debug.Log($"ViewModel Culture: {currentViewModel.CultureName}");
+                Debug.Log($"ViewModel Religion: {currentViewModel.ReligionName}");
+            }
+
+            Debug.Log("=========================================");
         }
     }
 }
